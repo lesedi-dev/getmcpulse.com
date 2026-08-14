@@ -1,0 +1,45 @@
+---
+/**
+ * The mark.
+ *
+ * Same geometry as `public/favicon.svg`, the dashboard's `Logo.tsx` and the
+ * SDK repo's `assets/logo.svg`. It was drawn on its own 44×24 grid before,
+ * which meant the header and the browser tab showed two different marks.
+ *
+ * The box is cropped to the artwork.  The favicon keeps the full `0 0 32 32`
+ * because it needs the dark tile behind it, but that box is mostly padding —
+ * inline at `h-4` it left the mark about five pixels tall.
+ */
+
+interface Props {
+  class?: string;
+  /** The trace only animates in the hero. In the nav it is a mark, not a show. */
+  animate?: boolean;
+}
+
+const { class: klass = "h-5 w-auto", animate = false } = Astro.props;
+---
+
+<svg
+  class={klass}
+  viewBox="2.5 9 27 14"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2.2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+>
+  <path
+    d="M4 16h4.5l2-5.5 3.5 11 2.5-6.5 2 3h3"
+    class={animate ? "pulse-trace" : undefined}
+    style={animate ? "--trace-length: 46" : undefined}
+  ></path>
+  <circle cx="26" cy="16" r="2.2" fill="currentColor" stroke="none">
+    {
+      animate && (
+        <animate attributeName="opacity" values="1;0.25;1" dur="4s" repeatCount="indefinite" />
+      )
+    }
+  </circle>
+</svg>

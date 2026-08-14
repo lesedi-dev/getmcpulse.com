@@ -1,0 +1,35 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Not found" description="That page does not exist.">
+  <section class="relative overflow-hidden">
+    <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>
+
+    <div class="mx-auto flex min-h-[70vh] max-w-3xl flex-col justify-center px-5 py-32 sm:px-8">
+      <p class="font-mono text-sm text-cyan">404</p>
+      <h1 class="mt-4 text-4xl font-semibold tracking-tight text-ink-100 sm:text-5xl">
+        Nothing here
+      </h1>
+      <p class="mt-4 max-w-lg text-lg leading-8 text-ink-500">
+        The page you asked for does not exist — which, unlike an empty tool result, at least says so
+        plainly.
+      </p>
+
+      <div class="mt-9 flex flex-col gap-3 sm:flex-row">
+        <a
+          href="/"
+          class="inline-flex h-11 items-center justify-center rounded-xl bg-btn px-5 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover"
+        >
+          Home
+        </a>
+        <a
+          href="/blog"
+          class="inline-flex h-11 items-center justify-center rounded-xl border border-line px-5 text-sm font-medium text-ink-300 transition-colors hover:border-line-strong hover:text-ink-100"
+        >
+          Read the blog
+        </a>
+      </div>
+    </div>
+  </section>
+</Base>

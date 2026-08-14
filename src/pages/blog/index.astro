@@ -1,0 +1,108 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import PostCover from "../../components/PostCover.astro";
+
+const posts = (await getCollection("blog")).sort(
+  (a, b) => b.data.published.valueOf() - a.data.published.valueOf(),
+);
+
+const [featured, ...rest] = posts;
+
+const format = (date: Date) =>
+  date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+---
+
+<Base
+  title="Blog"
+  description="Writing about MCP server observability — retries, empty results, schema cost, and what the four outcomes actually tell you."
+>
+  <section class="relative overflow-hidden border-b border-line-soft">
+    <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>
+
+    <div class="mx-auto max-w-6xl px-5 pt-36 pb-16 sm:px-8 sm:pt-44">
+      <div class="reveal max-w-3xl">
+        <p class="text-sm font-medium text-cyan">Blog</p>
+        <h1 class="mt-3 text-4xl font-semibold tracking-tight text-balance text-ink-100 sm:text-5xl">
+          Notes on measuring what models do with your tools
+        </h1>
+        <p class="mt-5 max-w-2xl text-lg leading-8 text-pretty text-ink-500">
+          Everything here comes out of building MCPulse: the metrics that turned out to matter, the
+          ones that did not, and the parts of MCP that are easy to get wrong.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8">
+    {
+      featured && (
+        <a
+          href={`/blog/${featured.id}`}
+          class="reveal group grid gap-7 rounded-2xl border border-line bg-ink-900/40 p-7 transition-colors hover:border-cyan/25 sm:p-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-center"
+        >
+          <div>
+          <div class="flex flex-wrap items-center gap-3 text-xs text-ink-700">
+            <span class="rounded-full bg-cyan/12 px-2.5 py-1 font-medium text-cyan">
+              {featured.data.topic}
+            </span>
+            <time datetime={featured.data.published.toISOString()}>
+              {format(featured.data.published)}
+            </time>
+            <span>·</span>
+            <span>{featured.data.minutes} min read</span>
+          </div>
+
+          <h2 class="mt-5 max-w-3xl text-2xl font-semibold tracking-tight text-balance text-ink-100 transition-colors group-hover:text-cyan sm:text-3xl">
+            {featured.data.title}
+          </h2>
+          <p class="mt-3 max-w-2xl text-[15px] leading-7 text-pretty text-ink-500">
+            {featured.data.description}
+          </p>
+          </div>
+
+          <div class="overflow-hidden rounded-xl border border-line bg-ink-950/60">
+            <PostCover topic={featured.data.topic} seed={featured.id} class="h-40 w-full" />
+          </div>
+        </a>
+      )
+    }
+
+    <ul class="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {
+        rest.map((post, i) => (
+          <li class="reveal" style={`--reveal-delay: ${(i % 3) * 80}ms`}>
+            <a
+              href={`/blog/${post.id}`}
+              class="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-colors hover:border-cyan/25 hover:bg-surface-2"
+            >
+              <div class="border-b border-line bg-ink-950/40">
+                <PostCover topic={post.data.topic} seed={post.id} class="h-28 w-full" />
+              </div>
+
+              <div class="flex flex-1 flex-col p-6">
+              <div class="flex items-center gap-2.5 text-xs text-ink-700">
+                <span class="text-cyan-dim">{post.data.topic}</span>
+                <span>·</span>
+                <span>{post.data.minutes} min</span>
+              </div>
+
+              <h2 class="mt-3 text-lg leading-7 font-semibold tracking-tight text-balance text-ink-100 transition-colors group-hover:text-cyan">
+                {post.data.title}
+              </h2>
+              <p class="mt-2.5 flex-1 text-sm leading-6.5 text-ink-500">{post.data.description}</p>
+
+              <time
+                datetime={post.data.published.toISOString()}
+                class="mt-5 text-xs text-ink-700"
+              >
+                {format(post.data.published)}
+              </time>
+              </div>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</Base>

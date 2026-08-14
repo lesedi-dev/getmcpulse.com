@@ -1,0 +1,210 @@
+---
+/**
+ * A drawn cover for every post.
+ *
+ * Not photography and not stock illustration: one motif per topic, varied by
+ * a hash of the slug so no two posts draw the same figure. It is SVG, so it
+ * costs about 400 bytes, stays sharp anywhere, and there is no image pipeline
+ * to run when a post is added — the file name is enough.
+ */
+
+interface Props {
+  topic: "Measurement" | "Tool design" | "Engineering" | "Privacy";
+  /** The slug. Same input always draws the same cover. */
+  seed: string;
+  class?: string;
+}
+
+const { topic, seed, class: klass = "" } = Astro.props;
+
+/** Cheap deterministic hash — enough to vary a drawing, not a security thing. */
+function hash(input: string) {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+const h = hash(seed);
+/**
+ * A stream of values in [0,1) drawn from the seed.
+ *
+ * The shift must be unsigned. `>>` coerces to int32, so any seed with its top
+ * bit set produced a negative value, which reached the markup as
+ * `width="-38.42"` and was rejected outright.
+ */
+const rand = (n: number) => ((h >>> (n * 3)) % 1000) / 1000;
+
+const ACCENT = {
+  Measurement: "var(--color-cyan)",
+  "Tool design": "var(--color-ok)",
+  Engineering: "var(--color-cyan-dim)",
+  Privacy: "var(--color-warn)",
+} as const;
+
+const accent = ACCENT[topic];
+
+const W = 320;
+const H = 130;
+
+// ── Measurement — a rising series, the shape the product draws all day ──────
+// The seed has to out-weigh the trend, or every Measurement post draws the
+// same gently rising line and the covers stop distinguishing anything.
+const points = Array.from({ length: 9 }, (_, i) => {
+  const x = 12 + (i / 8) * (W - 24);
+  const drift = (i / 8) * 30;
+  const y = H - 18 - drift - rand(i) * 52;
+  return [x, y] as const;
+});
+const line = points.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
+const area = `${line} L${W - 12} ${H - 12} L12 ${H - 12} Z`;
+
+// ── Tool design — schema fields, some long, some short ─────────────────────
+const fields = Array.from({ length: 4 }, (_, i) => ({
+  y: 26 + i * 24,
+  w: 70 + rand(i + 2) * 130,
+  lit: i === Math.floor(rand(5) * 4),
+}));
+
+// ── Engineering — a pipeline of stages ─────────────────────────────────────
+const stages = Array.from({ length: 5 }, (_, i) => ({
+  x: 34 + i * ((W - 68) / 4),
+  y: 44 + (rand(i + 1) - 0.5) * 34,
+}));
+const wire = stages.map((s, i) => `${i === 0 ? "M" : "L"}${s.x.toFixed(1)} ${s.y.toFixed(1)}`).join(" ");
+
+// ── Privacy — a field of data, all but one column masked away ──────────────
+const cells = Array.from({ length: 40 }, (_, i) => ({
+  x: 16 + (i % 10) * 29,
+  y: 30 + Math.floor(i / 10) * 22,
+  on: rand(i % 8) > 0.35,
+}));
+---
+
+<svg
+  viewBox={`0 0 ${W} ${H}`}
+  class={klass}
+  fill="none"
+  preserveAspectRatio="xMidYMid slice"
+  role="img"
+  aria-label={`${topic} — decorative`}
+>
+  <defs>
+    <linearGradient id={`cover-${seed}`} x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color={accent} stop-opacity="0.3"></stop>
+      <stop offset="100%" stop-color={accent} stop-opacity="0"></stop>
+    </linearGradient>
+  </defs>
+
+  {
+    topic === "Measurement" && (
+      <>
+        <path d={area} fill={`url(#cover-${seed})`} />
+        <path
+          d={line}
+          stroke={accent}
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          vector-effect="non-scaling-stroke"
+        />
+        {points.map(([x, y]) => (
+          <circle cx={x} cy={y} r="2.5" fill={accent} opacity="0.55" />
+        ))}
+      </>
+    )
+  }
+
+  {
+    topic === "Tool design" && (
+      <>
+        <path
+          d="M14 18 q-6 0 -6 8 v34 q0 8 -6 8 q6 0 6 8 v34 q0 8 6 8"
+          stroke={accent}
+          stroke-width="1.5"
+          opacity="0.5"
+          vector-effect="non-scaling-stroke"
+        />
+        {fields.map((field) => (
+          <>
+            <rect x="30" y={field.y} width="14" height="7" rx="3.5" fill={accent} opacity="0.5" />
+            <rect
+              x="52"
+              y={field.y}
+              width={field.w}
+              height="7"
+              rx="3.5"
+              fill={field.lit ? accent : "currentColor"}
+              class={field.lit ? "" : "text-line"}
+              opacity={field.lit ? "0.8" : "1"}
+            />
+          </>
+        ))}
+      </>
+    )
+  }
+
+  {
+    topic === "Engineering" && (
+      <>
+        <path
+          d={wire}
+          stroke={accent}
+          stroke-width="1.5"
+          stroke-dasharray="4 5"
+          opacity="0.55"
+          vector-effect="non-scaling-stroke"
+        />
+        {stages.map((stage, i) => (
+          <>
+            <circle cx={stage.x} cy={stage.y} r="9" fill="currentColor" class="text-ink-950" />
+            <circle
+              cx={stage.x}
+              cy={stage.y}
+              r="9"
+              stroke={accent}
+              stroke-width="1.5"
+              opacity={i === stages.length - 1 ? "1" : "0.5"}
+              vector-effect="non-scaling-stroke"
+            />
+            {i === stages.length - 1 && <circle cx={stage.x} cy={stage.y} r="3.5" fill={accent} />}
+          </>
+        ))}
+        <rect x="12" y={H - 26} width={W - 24} height="1" fill="currentColor" class="text-line" />
+      </>
+    )
+  }
+
+  {
+    topic === "Privacy" && (
+      <>
+        {cells.map((cell) => (
+          <rect
+            x={cell.x}
+            y={cell.y}
+            width="20"
+            height="9"
+            rx="2"
+            fill="currentColor"
+            class={cell.on ? "text-line" : "text-line-soft"}
+          />
+        ))}
+        {/* The one column that survives: a hash, standing in for everything
+            the other columns used to hold. */}
+        <rect x="16" y="24" width="49" height="80" rx="6" fill={accent} opacity="0.12" />
+        <text
+          x="40"
+          y="70"
+          text-anchor="middle"
+          font-family="var(--font-mono)"
+          font-size="11"
+          fill={accent}
+        >
+          9c1b
+        </text>
+      </>
+    )
+  }
+</svg>

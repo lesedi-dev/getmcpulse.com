@@ -1,0 +1,94 @@
+---
+import Detail from "../layouts/Detail.astro";
+import PillarVisual from "../components/PillarVisual.astro";
+import { OUTCOMES, PILLARS } from "../lib/content";
+
+const PAYLOAD = `{
+  "v": 1,
+  "type": "call",
+  "session_id": "s_7f2a91",
+  "tool_name": "search_orders",
+  "client_name": "claude-desktop",
+  "started_at": "2026-08-09T14:22:31Z",
+  "duration_ms": 240,
+  "outcome": "ok",
+  "response_bytes": 1420,
+  "is_empty": false,
+  "args_hash": "9c1b4e2f0a11"
+}`;
+---
+
+<Detail
+  eyebrow="How it works"
+  title="Three decisions, and they are all the same decision"
+  lead="Nothing about your server should have to change so that you can see it — not its URL, not its auth, not its dependencies, and not its uptime."
+  description="How MCPulse collects data: an npm package inside your own server, sizes and hashes only, two lines to install."
+>
+  <div class="space-y-14">
+    {
+      PILLARS.map((pillar, i) => (
+        <section class="reveal">
+          <PillarVisual kind={pillar.kind} />
+          <span class="mt-6 block font-mono text-xs text-ink-700">0{i + 1}</span>
+          <h2 class="mt-3 text-xl font-semibold tracking-tight text-ink-100">{pillar.title}</h2>
+          <p class="mt-3 text-[15px] leading-7 text-ink-500">{pillar.body}</p>
+        </section>
+      ))
+    }
+  </div>
+
+  <section class="reveal mt-16 border-t border-line-soft pt-14">
+    <h2 class="text-xl font-semibold tracking-tight text-ink-100">What leaves your process</h2>
+    <p class="mt-3 text-[15px] leading-7 text-ink-500">
+      One object per tool call. Every field is a dimension, a duration, a size or a hash — there is
+      no field that could hold customer data, which is a stronger statement than a promise about
+      how the fields are used.
+    </p>
+
+    <pre
+      class="mt-5 overflow-x-auto rounded-xl border border-line bg-surface p-5 font-mono text-[13px] leading-6 text-ink-300"><code>{PAYLOAD}</code></pre>
+
+    <p class="mt-4 text-sm leading-6.5 text-ink-700">
+      And once at startup, the tool list with the byte size of each schema. That second payload is
+      what makes dead tools findable: a tool with no calls has no rows anywhere, so absence has to
+      be recorded from the other side.
+    </p>
+  </section>
+
+  <section class="reveal mt-14 border-t border-line-soft pt-14">
+    <h2 class="text-xl font-semibold tracking-tight text-ink-100">
+      Every call ends as exactly one of four things
+    </h2>
+    <p class="mt-3 text-[15px] leading-7 text-ink-500">
+      Telling <code class="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-ink-100"
+        >crashed</code
+      > from <code class="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-ink-100"
+        >tool_error</code
+      > takes some doing. The MCP SDK catches everything a tool throws and turns it into a result with
+      <code class="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-ink-100"
+        >isError: true</code
+      >, so from outside the request handler a bug and a deliberate error are the same object. The
+      SDK wraps your tool callbacks as well as the request, so what actually happened is known
+      rather than guessed from an error message.
+    </p>
+
+    <ul class="mt-6 grid gap-3 sm:grid-cols-2">
+      {
+        OUTCOMES.map((outcome) => (
+          <li class="rounded-xl border border-line bg-surface p-5">
+            <p class={`font-mono text-sm ${outcome.tone}`}>{outcome.name}</p>
+            <p class="mt-2 text-sm leading-6 text-ink-500">{outcome.detail}</p>
+          </li>
+        ))
+      }
+    </ul>
+
+    <p class="mt-6 text-sm leading-6.5 text-ink-700">
+      A fifth state rides alongside them. <code
+        class="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-ink-100">is_empty</code
+      > marks a call that succeeded and returned nothing usable — an empty array, an empty object, a
+      blank string. Those are the failures nobody reports: the protocol calls them success, the model
+      gets nothing it can use, and you never hear about it.
+    </p>
+  </section>
+</Detail>

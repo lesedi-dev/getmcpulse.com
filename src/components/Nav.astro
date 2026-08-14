@@ -1,0 +1,136 @@
+---
+import Logo from "./Logo.astro";
+import { NAV, SITE } from "../lib/site";
+
+const path = Astro.url.pathname;
+---
+
+<header class="fixed inset-x-0 top-0 z-40 border-b border-line-soft bg-ink-950/70 backdrop-blur-xl">
+  <nav aria-label="Primary" class="mx-auto max-w-6xl px-5 sm:px-8">
+    <!-- Three tracks, not a flex row. `1fr auto 1fr` centres the menu against
+         the page rather than against whatever is left over after the mark and
+         the button — those two are different widths, so a flex row put the
+         links visibly off-centre. -->
+    <div class="grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-4">
+      <a
+        href="/"
+        class="-my-2 flex w-fit shrink-0 items-center gap-2.5 py-2 text-ink-100 transition-colors hover:text-cyan"
+      >
+        <Logo class="h-4 w-auto text-cyan" />
+        <span class="text-[15px] font-semibold tracking-tight">{SITE.name}</span>
+      </a>
+
+      <!-- ── Wide: the links, centred ────────────────────────────────────
+           Four items and a button need about 560px. Below that they used to
+           become a horizontal scroller with no affordance, so "Blog" sat off
+           the edge of a phone with nothing to say it was there. -->
+      <ul class="col-start-2 hidden items-center gap-1 text-sm md:flex">
+        {
+          NAV.map((item) => {
+            const current = path === item.href || path.startsWith(`${item.href}/`);
+
+            return (
+              <li>
+                <a
+                  href={item.href}
+                  aria-current={current ? "page" : undefined}
+                  class="block rounded-lg px-3 py-1.5 whitespace-nowrap text-ink-500 transition-colors hover:bg-surface-2 hover:text-ink-100 aria-[current=page]:bg-cyan/12 aria-[current=page]:font-medium aria-[current=page]:text-cyan"
+                >
+                  {item.label}
+                </a>
+              </li>
+            );
+          })
+        }
+      </ul>
+
+      <a
+        href={SITE.app}
+        class="col-start-3 hidden w-fit shrink-0 justify-self-end rounded-lg bg-btn px-3.5 py-1.5 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover md:block"
+      >
+        Sign in
+      </a>
+
+      <!-- ── Narrow: a disclosure ────────────────────────────────────────
+           `details` rather than a scripted menu — it is a real toggle with
+           keyboard and screen-reader behaviour already attached, so the menu
+           works before any JavaScript runs. -->
+      <details class="group relative col-start-3 justify-self-end md:hidden" data-menu>
+        <summary
+          class="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-ink-300 transition-colors hover:text-ink-100 [&::-webkit-details-marker]:hidden"
+          aria-label="Menu"
+        >
+          <svg
+            class="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M3 6h14M3 10h14M3 14h14" class="group-open:hidden"></path>
+            <path d="M5 5l10 10M15 5L5 15" class="hidden group-open:block"></path>
+          </svg>
+        </summary>
+
+        <!-- Anchored to the header rather than the summary, so it spans the
+             full width instead of hanging off one corner. -->
+        <!-- Solid, not translucent. At 95% with a blur the hero headline was
+             still legible straight through the menu, which made the links hard
+             to read over it. -->
+        <div
+          class="fixed inset-x-0 top-16 border-b border-line bg-ink-950 px-5 pt-2 pb-5 shadow-2xl shadow-shade"
+        >
+          <ul class="flex flex-col">
+            {
+              NAV.map((item) => {
+                const current = path === item.href || path.startsWith(`${item.href}/`);
+
+                return (
+                  <li>
+                    <a
+                      href={item.href}
+                      aria-current={current ? "page" : undefined}
+                      class="-mx-2 block border-b border-line-soft px-2 py-3.5 text-[15px] text-ink-300 transition-colors hover:text-ink-100 aria-[current=page]:font-medium aria-[current=page]:text-cyan"
+                    >
+                      {item.label}
+                    </a>
+                  </li>
+                );
+              })
+            }
+          </ul>
+
+          <a
+            href={SITE.app}
+            class="mt-5 flex h-11 items-center justify-center rounded-xl bg-btn text-sm font-medium text-btn-fg"
+          >
+            Sign in
+          </a>
+        </div>
+      </details>
+    </div>
+  </nav>
+</header>
+
+<script>
+  /**
+   * Close the menu after a choice.
+   *
+   * Only an enhancement: without it the panel stays open behind you, which is
+   * untidy on an in-page jump and invisible on a real navigation. The menu
+   * itself needs no script to work.
+   */
+  const menu = document.querySelector<HTMLDetailsElement>("[data-menu]");
+
+  menu?.addEventListener("click", (event) => {
+    if ((event.target as HTMLElement).closest("a")) menu.open = false;
+  });
+
+  // A tap outside it should dismiss it too — a panel covering the page with
+  // no way back except the same small button reads as stuck.
+  document.addEventListener("click", (event) => {
+    if (menu?.open && !menu.contains(event.target as Node)) menu.open = false;
+  });
+</script>

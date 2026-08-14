@@ -1,0 +1,144 @@
+---
+import Detail from "../layouts/Detail.astro";
+import { WRAP_SNIPPET, SITE } from "../lib/site";
+
+const MANAGERS = [
+  "npm install @mcpulse/sdk",
+  "pnpm add @mcpulse/sdk",
+  "yarn add @mcpulse/sdk",
+  "bun add @mcpulse/sdk",
+];
+
+const HTTP_SNIPPET = `function createServer() {
+  const server = new McpServer({ name: "my-server", version: "1.0.0" });
+
+  // … your registerTool calls …
+
+  return watch(server, { key: process.env.MCPULSE_KEY });
+}`;
+
+const OPTIONS = [
+  { name: "key", type: "string", fallback: "—", detail: "Required. Without one the SDK does nothing." },
+  {
+    name: "debug",
+    type: "boolean",
+    fallback: "false",
+    detail: "Log every batch to stderr — never stdout, which is the transport.",
+  },
+];
+
+const CODE = "rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-ink-100";
+const PRE =
+  "mt-4 overflow-x-auto rounded-xl border border-line bg-surface p-5 font-mono text-[13px] leading-6 text-ink-300";
+---
+
+<Detail
+  eyebrow="Install"
+  title="Two lines, and it is measuring"
+  lead="The package runs inside your own server. It is not a proxy — your URL does not change, your OAuth does not break, and if MCPulse is down your server keeps serving."
+  description="Install @mcpulse/sdk: add the package, set your key, wrap your server. Four steps, about two minutes."
+>
+  <ol class="space-y-12">
+    <li class="reveal">
+      <p class="font-mono text-xs text-ink-700">01</p>
+      <h2 class="mt-2 text-xl font-semibold tracking-tight text-ink-100">Add the package</h2>
+      <p class="mt-3 text-[15px] leading-7 text-ink-500">
+        No runtime dependencies at all, so it will not drag anything into your tree.
+      </p>
+      <pre class={PRE}><code>{MANAGERS.map((m) => `$ ${m}`).join("\n")}</code></pre>
+    </li>
+
+    <li class="reveal">
+      <p class="font-mono text-xs text-ink-700">02</p>
+      <h2 class="mt-2 text-xl font-semibold tracking-tight text-ink-100">
+        Put the key in your environment
+      </h2>
+      <p class="mt-3 text-[15px] leading-7 text-ink-500">
+        An ingest key is a secret — anyone holding it can write data into this MCP. Keep it out of
+        the repository and out of your client bundle. You are shown the full key once, at creation,
+        because only a hash of it is stored.
+      </p>
+      <pre class={PRE}><code>MCPULSE_KEY=mp_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code></pre>
+    </li>
+
+    <li class="reveal">
+      <p class="font-mono text-xs text-ink-700">03</p>
+      <h2 class="mt-2 text-xl font-semibold tracking-tight text-ink-100">Wrap your server</h2>
+      <p class="mt-3 text-[15px] leading-7 text-ink-500">
+        One import, one call, after your tools are registered.
+        <code class={CODE}>watch</code> returns the same server, so nothing downstream changes.
+      </p>
+      <pre class={PRE}><code>{WRAP_SNIPPET}</code></pre>
+
+      <p class="mt-6 text-[15px] leading-7 text-ink-500">
+        Serving over HTTP instead? Those servers build a new <code class={CODE}>McpServer</code> per
+        request, so there is no long-lived instance to wrap — put it inside the factory, beside the
+        tool registration. Calling <code class={CODE}>watch</code> once per request is expected and
+        cheap: the session and its buffer are shared for the life of the process, which is what keeps
+        your calls grouped into one session rather than one per request.
+      </p>
+      <pre class={PRE}><code>{HTTP_SNIPPET}</code></pre>
+    </li>
+
+    <li class="reveal">
+      <p class="font-mono text-xs text-ink-700">04</p>
+      <h2 class="mt-2 text-xl font-semibold tracking-tight text-ink-100">Restart and check back</h2>
+      <p class="mt-3 text-[15px] leading-7 text-ink-500">
+        On start the SDK sends one payload listing your tools and their schema sizes — that is what
+        fills the tools table, so a server that has booted but never been called still shows what it
+        costs per session. Tool calls follow as they happen, batched every 30 calls or 5 seconds.
+      </p>
+      <p class="mt-4 text-[15px] leading-7 text-ink-500">
+        Nothing arriving? Set <code class={CODE}>debug: true</code> to log every batch to stderr, and
+        confirm the key has not been revoked.
+      </p>
+    </li>
+  </ol>
+
+  <section class="reveal mt-16 border-t border-line-soft pt-14">
+    <h2 class="text-xl font-semibold tracking-tight text-ink-100">Options</h2>
+    <p class="mt-3 text-[15px] leading-7 text-ink-500">
+      Two, and there will not be more than there need to be. Every option is another way for
+      something to go wrong inside a process we do not control.
+    </p>
+
+    <div class="mt-6 overflow-x-auto">
+      <table class="w-full min-w-[30rem] border-collapse text-left text-sm">
+        <thead>
+          <tr class="text-[11px] tracking-wide text-ink-700 uppercase">
+            <th class="border-b border-line pb-2.5 font-medium">Option</th>
+            <th class="border-b border-line pb-2.5 font-medium">Type</th>
+            <th class="border-b border-line pb-2.5 font-medium">Default</th>
+            <th class="border-b border-line pb-2.5 font-medium"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            OPTIONS.map((option) => (
+              <tr class="align-top">
+                <td class="border-b border-line-soft py-3 pr-4 font-mono text-[13px] whitespace-nowrap text-ink-100">
+                  {option.name}
+                </td>
+                <td class="border-b border-line-soft py-3 pr-4 font-mono text-[13px] text-ink-700">
+                  {option.type}
+                </td>
+                <td class="border-b border-line-soft py-3 pr-4 font-mono text-[13px] text-ink-700">
+                  {option.fallback}
+                </td>
+                <td class="border-b border-line-soft py-3 text-ink-500">{option.detail}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p class="mt-6 text-sm leading-6.5 text-ink-700">
+      Requires Node 20.12 or newer and <code class={CODE}>@modelcontextprotocol/sdk</code> as a peer
+      — whatever version your server already uses. The package is on
+      <a href={SITE.npm} class="text-cyan underline underline-offset-2 hover:text-cyan-dim"
+        >npm</a
+      >.
+    </p>
+  </section>
+</Detail>

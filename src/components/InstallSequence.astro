@@ -1,0 +1,325 @@
+---
+/**
+ * The install, played rather than listed.
+ *
+ * Four steps, advancing on their own, each one rendering the file you would
+ * actually be looking at. The payoff is the fourth panel: the point of the
+ * first three is that numbers show up, so the sequence ends on the numbers
+ * rather than on a fourth instruction.
+ *
+ * Every panel is in the DOM from the first paint and the panel box has a fixed
+ * min-height, so switching steps never reflows the page around it.
+ */
+
+const STEPS = [
+  { n: 1, title: "Add the package", note: "No runtime dependencies." },
+  { n: 2, title: "Add your key", note: "Shown once, at creation." },
+  { n: 3, title: "Wrap your server", note: "One import, one call." },
+  { n: 4, title: "Watch it arrive", note: "Batched every 5s." },
+] as const;
+---
+
+<section
+  id="install"
+  class="mx-auto max-w-6xl scroll-mt-24 px-5 py-24 sm:px-8"
+  aria-labelledby="install-heading"
+>
+  <div class="reveal max-w-2xl">
+    <p class="text-sm font-medium text-cyan">Install</p>
+    <h2
+      id="install-heading"
+      class="mt-3 text-3xl font-semibold tracking-tight text-ink-100 sm:text-4xl"
+    >
+      Two lines, and it is measuring
+    </h2>
+    <p class="mt-4 text-lg leading-7 text-ink-500">
+      The package runs inside your own server. It is not a proxy — your URL does not change, your
+      OAuth does not break, and if MCPulse is down your server keeps serving.
+    </p>
+  </div>
+
+  <div
+    data-install
+    data-active="0"
+    class="reveal mt-12 grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:gap-12"
+  >
+    <!-- ── The steps ────────────────────────────────────────────────────── -->
+    <ol class="flex flex-col gap-1">
+      {
+        STEPS.map((step, index) => (
+          <li>
+            <button
+              type="button"
+              data-step={index}
+              aria-current={index === 0 ? "step" : "false"}
+              class="group relative flex w-full items-start gap-3.5 rounded-xl px-3 py-3 text-left transition-colors hover:bg-surface-2 aria-[current=step]:bg-surface-3"
+            >
+              <span
+                data-marker
+                class="mt-px flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-ink-800 font-mono text-[11px] text-ink-500 transition-colors group-aria-[current=step]:border-cyan group-aria-[current=step]:bg-cyan group-aria-[current=step]:text-ink-950"
+              >
+                {step.n}
+              </span>
+
+              <span class="min-w-0">
+                <span class="block text-sm font-medium text-ink-500 transition-colors group-aria-[current=step]:text-ink-100">
+                  {step.title}
+                </span>
+                <span class="mt-0.5 block text-xs text-ink-700">{step.note}</span>
+              </span>
+            </button>
+
+            {/* The bar under the active step is the timer — it is how long you
+                have before it moves on, made visible instead of implied. */}
+            <span
+              data-progress={index}
+              aria-hidden="true"
+              class="mx-3 block h-px origin-left scale-x-0 bg-cyan/50"
+            />
+          </li>
+        ))
+      }
+    </ol>
+
+    <!-- ── The window ───────────────────────────────────────────────────── -->
+    <div
+      class="relative min-h-[22rem] overflow-hidden rounded-2xl border border-line bg-ink-900/60 shadow-2xl shadow-shade"
+    >
+      <div class="flex items-center gap-2 border-b border-line-soft px-4 py-3">
+        <span class="h-2.5 w-2.5 rounded-full bg-ink-800"></span>
+        <span class="h-2.5 w-2.5 rounded-full bg-ink-800"></span>
+        <span class="h-2.5 w-2.5 rounded-full bg-ink-800"></span>
+        <span data-filename class="ml-2 font-mono text-xs text-ink-700">terminal</span>
+      </div>
+
+      <div class="relative p-5 font-mono text-[13px] leading-6 sm:p-6 sm:text-sm">
+        <!-- Step 1 — the install -->
+        <div data-panel="0" class="panel">
+          <p class="line" style="--i:0">
+            <span class="text-cyan-dim">$</span> <span class="text-ink-100">npm install @mcpulse/sdk</span>
+          </p>
+          <p class="line mt-4 text-ink-700" style="--i:1">added 1 package in 1.2s</p>
+          <p class="line mt-4 text-ink-500" style="--i:2">
+            <span class="text-ok">✓</span> 0 dependencies
+          </p>
+          <p class="line text-ink-500" style="--i:3">
+            <span class="text-ok">✓</span> 0 vulnerabilities
+          </p>
+        </div>
+
+        <!-- Step 2 — the key -->
+        <div data-panel="1" class="panel">
+          <p class="line text-ink-700" style="--i:0"># .env</p>
+          <p class="line mt-3" style="--i:1">
+            <span class="text-cyan">MCPULSE_KEY</span><span class="text-ink-500">=</span
+            ><span class="text-ink-100">mp_live_4f8a2c19bd7e</span>
+          </p>
+          <p class="line mt-6 text-ink-700" style="--i:2">
+            # An ingest key is a secret. Anyone holding it
+          </p>
+          <p class="line text-ink-700" style="--i:3"># can write data into this MCP.</p>
+        </div>
+
+        <!-- Step 3 — the wrap -->
+        <div data-panel="2" class="panel">
+          <p class="line" style="--i:0">
+            <span class="text-cyan-dim">import</span> <span class="text-ink-500">&#123;</span>
+            <span class="text-ink-100">watch</span> <span class="text-ink-500">&#125;</span>
+            <span class="text-cyan-dim">from</span> <span class="text-ok">"@mcpulse/sdk"</span><span
+              class="text-ink-500">;</span
+            >
+          </p>
+          <p class="line mt-4 text-ink-700" style="--i:1">// … your registerTool calls …</p>
+          <p class="line mt-4" style="--i:2">
+            <span class="text-ink-100">watch</span><span class="text-ink-500">(</span><span
+              class="text-ink-300">server</span
+            ><span class="text-ink-500">, &#123; </span><span class="text-ink-300">key</span><span
+              class="text-ink-500">: </span
+            ><span class="text-ink-300">process.env.MCPULSE_KEY</span><span class="text-ink-500"
+              > &#125;);</span
+            >
+          </p>
+          <p class="line mt-6 text-ink-700" style="--i:3">
+            // Returns the same server. Nothing downstream changes.
+          </p>
+        </div>
+
+        <!-- Step 4 — the payoff -->
+        <div data-panel="3" class="panel">
+          <p class="line font-sans text-xs tracking-wide text-ink-700 uppercase" style="--i:0">
+            Overview · last 7 days
+          </p>
+
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <div class="line rounded-xl border border-line-soft bg-surface p-3.5" style="--i:1">
+              <p class="font-sans text-[11px] tracking-wide text-ink-700 uppercase">Calls</p>
+              <p class="mt-1 text-2xl font-semibold text-ink-100">12,481</p>
+              <p class="mt-0.5 font-sans text-xs text-ok">+18% vs prior 7 days</p>
+            </div>
+
+            <div class="line rounded-xl border border-line-soft bg-surface p-3.5" style="--i:2">
+              <p class="font-sans text-[11px] tracking-wide text-ink-700 uppercase">First-call</p>
+              <p class="mt-1 text-2xl font-semibold text-ink-100">68%</p>
+              <p class="mt-0.5 font-sans text-xs text-bad">−4% vs prior 7 days</p>
+            </div>
+          </div>
+
+          <p
+            class="line mt-4 rounded-xl border border-warn/20 bg-warn/[0.06] p-3.5 font-sans text-[13px] leading-6 text-ink-300"
+            style="--i:3"
+          >
+            Agents retried <span class="font-mono text-warn">search_orders</span> 2.4 times on average
+            before getting a usable answer.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .panel {
+    position: absolute;
+    inset: 1.25rem;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.35s ease,
+      visibility 0.35s;
+  }
+
+  @media (min-width: 640px) {
+    .panel {
+      inset: 1.5rem;
+    }
+  }
+
+  .panel.is-active {
+    position: static;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Lines arrive in order, the way a file is read rather than pasted. */
+  .panel.is-active .line {
+    animation: install-line-in 0.45s var(--ease-out-quint) both;
+    animation-delay: calc(var(--i) * 90ms);
+  }
+
+  @keyframes install-line-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  [data-progress] {
+    transition: transform linear;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .panel.is-active .line {
+      animation: none;
+    }
+    [data-progress] {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * The player.
+   *
+   * Autoplay only while the sequence is on screen — a panel cycling in a tab
+   * nobody is looking at is battery spent on nothing. Clicking a step takes
+   * control and stops the timer for good: someone reading step 3 should not
+   * have it slide away underneath them.
+   */
+  const STEP_MS = 4200;
+
+  const root = document.querySelector<HTMLElement>("[data-install]");
+
+  if (root) {
+    const steps = [...root.querySelectorAll<HTMLButtonElement>("[data-step]")];
+    const panels = [...root.querySelectorAll<HTMLElement>("[data-panel]")];
+    const bars = [...root.querySelectorAll<HTMLElement>("[data-progress]")];
+    const filename = root.querySelector<HTMLElement>("[data-filename]");
+    const names = ["terminal", ".env", "index.ts", "mcpulse.dev"];
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let index = 0;
+    let timer: number | undefined;
+    let manual = false;
+
+    function show(next: number) {
+      index = next;
+      root!.dataset.active = String(next);
+
+      steps.forEach((step, i) => step.setAttribute("aria-current", i === next ? "step" : "false"));
+      panels.forEach((panel, i) => panel.classList.toggle("is-active", i === next));
+      if (filename) filename.textContent = names[next] ?? "terminal";
+
+      bars.forEach((bar, i) => {
+        bar.style.transitionDuration = "0ms";
+        bar.style.transform = "scaleX(0)";
+
+        if (i !== next || manual || reduced) return;
+
+        // Two frames: the reset above has to be painted before the run starts,
+        // or the browser collapses both into one and the bar never moves.
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            bar.style.transitionDuration = `${STEP_MS}ms`;
+            bar.style.transform = "scaleX(1)";
+          }),
+        );
+      });
+    }
+
+    function play() {
+      if (manual || reduced) return;
+      stop();
+      timer = window.setInterval(() => show((index + 1) % panels.length), STEP_MS);
+      show(index);
+    }
+
+    function stop() {
+      if (timer !== undefined) window.clearInterval(timer);
+      timer = undefined;
+    }
+
+    steps.forEach((step, i) =>
+      step.addEventListener("click", () => {
+        manual = true;
+        stop();
+        show(i);
+      }),
+    );
+
+    // Reduced motion gets the finished state — the panel that actually pays
+    // off — rather than a sequence replayed at zero duration.
+    if (reduced) {
+      show(panels.length - 1);
+    } else {
+      show(0);
+
+      new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) play();
+            else stop();
+          }
+        },
+        { threshold: 0.25 },
+      ).observe(root);
+    }
+
+    document.addEventListener("visibilitychange", () => (document.hidden ? stop() : play()));
+  }
+</script>

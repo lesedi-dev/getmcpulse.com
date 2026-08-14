@@ -1,0 +1,337 @@
+---
+/**
+ * The overview, drawn at full size and floated past the container's right
+ * edge so it reads as the application rather than a thumbnail of one.
+ *
+ * Structure follows the real page exactly — four metric cards, the daily
+ * chart, then outcomes beside tool health — because the point of putting it
+ * here is that this is what you get, not an illustration of what you get.
+ *
+ * Drawn rather than screenshotted: it stays sharp at any width, weighs
+ * nothing, and cannot go stale the next time the dashboard moves.
+ */
+
+/** A sparkline path, the same hand-drawn SVG approach the dashboard uses. */
+function spark(values: number[], w = 120, h = 28) {
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const span = max - min || 1;
+
+  return values
+    .map((value, i) => {
+      const x = (i / (values.length - 1)) * w;
+      const y = h - 3 - ((value - min) / span) * (h - 6);
+      return `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(" ");
+}
+
+const CARDS = [
+  {
+    label: "Total calls",
+    value: "12,481",
+    context: "vs 10,577 prior period",
+    delta: "18%",
+    up: true,
+    good: true,
+    series: [820, 1140, 980, 1310, 1220, 1580, 1490, 1870, 1720, 2100, 1960, 2340],
+  },
+  {
+    label: "First-call success",
+    value: "68%",
+    context: "As of yesterday",
+    delta: "4%",
+    up: false,
+    good: false,
+    series: [78, 76, 77, 74, 72, 73, 70, 69, 71, 68, 67, 68],
+  },
+  {
+    label: "p95 latency",
+    value: "1.8s",
+    context: "95th percentile band",
+    delta: "12%",
+    up: true,
+    good: false,
+    series: [1.1, 1.2, 1.15, 1.3, 1.25, 1.4, 1.5, 1.45, 1.6, 1.7, 1.65, 1.8],
+  },
+  {
+    label: "Cost per session",
+    value: "$0.021",
+    context: "≈ 6.2k tokens",
+    delta: "6%",
+    up: false,
+    good: true,
+    series: [0.028, 0.027, 0.028, 0.026, 0.025, 0.026, 0.024, 0.023, 0.024, 0.022, 0.022, 0.021],
+  },
+] as const;
+
+const OUTCOMES = [
+  { label: "Succeeded", count: "11,204", pct: 90, bar: "bg-ok" },
+  { label: "Returned empty", count: "312", pct: 3, bar: "bg-warn" },
+  { label: "Bad arguments", count: "604", pct: 5, bar: "bg-orange-400" },
+  { label: "Tool error", count: "241", pct: 2, bar: "bg-bad" },
+  { label: "Crashed", count: "120", pct: 1, bar: "bg-red-600" },
+] as const;
+
+const TOOLS = [
+  { name: "search_orders", calls: "2,110", rate: "58%", size: "1.4 kb", status: "Low first-call", tone: "bad" },
+  { name: "get_customer", calls: "1,204", rate: "94%", size: "0.9 kb", status: "Healthy", tone: "ok" },
+  { name: "list_products", calls: "890", rate: "91%", size: "12.4 kb", status: "Heavy payload", tone: "warn" },
+  { name: "export_report", calls: "0", rate: "—", size: "—", status: "Never used", tone: "muted" },
+] as const;
+
+const STATUS_TONE = {
+  ok: "bg-ok/12 text-ok",
+  warn: "bg-warn/12 text-warn",
+  bad: "bg-bad/12 text-bad",
+  muted: "bg-line-soft text-ink-500",
+} as const;
+
+// The main chart.
+const SERIES = [820, 1140, 980, 1310, 1220, 1580, 1490, 1870, 1720, 2100, 1960, 2340];
+const W = 640;
+const H = 150;
+const max = Math.max(...SERIES);
+const min = Math.min(...SERIES);
+const points = SERIES.map((value, i) => {
+  const x = (i / (SERIES.length - 1)) * W;
+  const y = H - 8 - ((value - min) / (max - min)) * (H - 24);
+  return [x, y] as const;
+});
+const line = points.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
+const area = `${line} L${W} ${H} L0 ${H} Z`;
+---
+
+<div class="relative">
+  <div aria-hidden="true" class="absolute -inset-10 -z-10 rounded-[3rem] bg-cyan/[0.05] blur-3xl"></div>
+
+  <div
+    class="overflow-hidden rounded-2xl border border-line bg-ink-900/80 shadow-2xl shadow-shade backdrop-blur-sm"
+  >
+    <!-- ── App header ─────────────────────────────────────────────────── -->
+    <div class="flex items-center justify-between border-b border-line px-7 py-5">
+      <div>
+        <p class="text-lg font-semibold tracking-tight text-ink-100">Acme Orders MCP</p>
+        <p class="mt-0.5 text-[13px] text-ink-700">Overview</p>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <span class="rounded-lg border border-line px-3.5 py-2 text-[13px] text-ink-300">
+          All tools
+        </span>
+        <span
+          class="flex items-center gap-2 rounded-lg border border-line px-3.5 py-2 text-[13px] text-ink-300"
+        >
+          <svg class="h-3.5 w-3.5 text-ink-500" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <rect x="2" y="3.5" width="12" height="10.5" rx="1.5"></rect>
+            <path d="M2 6.5h12M5.5 2v3M10.5 2v3"></path>
+          </svg>
+          Last 7 days
+        </span>
+      </div>
+    </div>
+
+    <!-- ── Four metric cards ──────────────────────────────────────────── -->
+    <div class="grid grid-cols-4 gap-4 p-7 pb-5">
+      {
+        CARDS.map((card) => (
+          <div class="flex flex-col overflow-hidden rounded-xl border border-line bg-surface pt-4">
+            <div class="flex items-start justify-between gap-2 px-4">
+              <span class="text-[11px] font-medium tracking-wide text-ink-700 uppercase">
+                {card.label}
+              </span>
+              <span
+                class:list={[
+                  "flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-medium",
+                  card.good ? "bg-ok/12 text-ok" : "bg-bad/12 text-bad",
+                ]}
+              >
+                {card.up ? "↑" : "↓"}
+                {card.delta}
+              </span>
+            </div>
+
+            <p class="mt-2.5 px-4 text-[28px] leading-9 font-semibold text-ink-100">{card.value}</p>
+            <p class="mt-1 px-4 pb-3 text-xs text-ink-700">{card.context}</p>
+
+            {/* Flush to the card edges, the way the real one sits. */}
+            <svg
+              viewBox="0 0 120 28"
+              class="mt-auto h-8 w-full"
+              fill="none"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path
+                d={spark([...card.series])}
+                stroke={card.good ? "var(--color-ok)" : "var(--color-bad)"}
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                vector-effect="non-scaling-stroke"
+                opacity="0.75"
+              />
+            </svg>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- ── Calls per day ──────────────────────────────────────────────── -->
+    <div class="px-7 pb-5">
+      <div class="rounded-xl border border-line bg-surface p-5">
+        <div class="flex items-baseline justify-between">
+          <p class="text-sm font-medium text-ink-100">Calls per day</p>
+          <p class="text-xs text-ink-700">12 days</p>
+        </div>
+
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          class="mt-4 h-[9.5rem] w-full"
+          fill="none"
+          preserveAspectRatio="none"
+          role="img"
+          aria-label="Calls per day, rising across the range"
+        >
+          <defs>
+            <linearGradient id="hero-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--color-cyan)" stop-opacity="0.35"></stop>
+              <stop offset="100%" stop-color="var(--color-cyan)" stop-opacity="0"></stop>
+            </linearGradient>
+          </defs>
+
+          {
+            [0.25, 0.5, 0.75].map((at) => (
+              <line
+                x1="0"
+                x2={W}
+                y1={H * at}
+                y2={H * at}
+                stroke="currentColor"
+                stroke-width="1"
+                vector-effect="non-scaling-stroke"
+                class="text-line-soft"
+              />
+            ))
+          }
+
+          <path d={area} fill="url(#hero-fill)" class="hero-area"></path>
+          <path
+            d={line}
+            stroke="var(--color-cyan)"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            vector-effect="non-scaling-stroke"
+            class="hero-line"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ── Outcomes and tool health ───────────────────────────────────── -->
+    <div class="grid grid-cols-2 gap-4 px-7 pb-7">
+      <div class="rounded-xl border border-line bg-surface p-5">
+        <p class="text-sm font-medium text-ink-100">Outcomes</p>
+
+        <ul class="mt-4 space-y-3">
+          {
+            OUTCOMES.map((outcome) => (
+              <li>
+                <div class="flex items-baseline justify-between text-[13px]">
+                  <span class="text-ink-300">{outcome.label}</span>
+                  <span class="text-ink-500">{outcome.count}</span>
+                </div>
+                <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line-soft">
+                  <div class:list={["h-full rounded-full", outcome.bar]} style={`width: ${Math.max(outcome.pct, 2)}%`} />
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div class="rounded-xl border border-line bg-surface p-5">
+        <p class="text-sm font-medium text-ink-100">Tool health</p>
+
+        <table class="mt-4 w-full text-left">
+          <thead>
+            <tr class="text-[11px] tracking-wide text-ink-700 uppercase">
+              <th class="pb-2 font-medium">Tool</th>
+              <th class="pb-2 font-medium">Calls</th>
+              <th class="pb-2 font-medium">First-call</th>
+              <th class="pb-2 font-medium">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              TOOLS.map((tool) => (
+                <tr class="border-t border-line-soft">
+                  <td class="py-2.5 font-mono text-[13px] text-ink-100">{tool.name}</td>
+                  <td class="py-2.5 text-[13px] text-ink-500">{tool.calls}</td>
+                  <td class="py-2.5 text-[13px] text-ink-500">{tool.rate}</td>
+                  <td class="py-2.5">
+                    <span
+                      class:list={[
+                        "rounded-md px-2 py-0.5 text-[11px] font-medium whitespace-nowrap",
+                        STATUS_TONE[tool.tone],
+                      ]}
+                    >
+                      {tool.status}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Insight ────────────────────────────────────────────────────── -->
+    <div class="border-t border-line bg-warn/[0.05] px-7 py-5">
+      <p class="text-sm leading-6.5 text-ink-300">
+        Agents retried <span class="font-mono text-warn">search_orders</span> 2.4 times on average before
+        getting a usable answer.
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* The line draws itself once, on load. The fill follows it in. */
+  .hero-line {
+    stroke-dasharray: 900;
+    stroke-dashoffset: 900;
+    animation: hero-draw 1.8s var(--ease-out-quint) 0.3s forwards;
+  }
+
+  .hero-area {
+    opacity: 0;
+    /* Starts while the line is still drawing — waiting for it to finish left
+       the panel looking flat for the whole first second. */
+    animation: hero-fade 0.7s ease 0.7s forwards;
+  }
+
+  @keyframes hero-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes hero-fade {
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-line {
+      stroke-dashoffset: 0;
+      animation: none;
+    }
+    .hero-area {
+      opacity: 1;
+      animation: none;
+    }
+  }
+</style>

@@ -1,0 +1,171 @@
+---
+import "../styles/global.css";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import { SITE } from "../lib/site";
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Set on blog posts so the card renders as an article rather than the site. */
+  type?: "website" | "article";
+  published?: Date;
+}
+
+const {
+  title,
+  description = SITE.description,
+  type = "website",
+  published,
+} = Astro.props;
+
+const full_title = title ? `${title} — ${SITE.name}` : `${SITE.name} — ${SITE.tagline}`;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!--
+      Theme, applied before the first paint.
+
+      This has to be inline, synchronous, and in the head. A module script is
+      deferred, so the page would paint in the default theme and then snap to
+      the chosen one — a white flash on every navigation for anyone who picked
+      dark. Wrapped in try/catch because reading localStorage throws outright
+      when cookies are blocked, and a theme preference must never be the thing
+      that stops a page rendering.
+    -->
+    <script is:inline>
+      try {
+        const choice = localStorage.getItem("theme");
+        if (choice === "light" || choice === "dark") {
+          document.documentElement.setAttribute("data-theme", choice);
+        }
+      } catch {}
+    </script>
+    <link rel="canonical" href={canonical} />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <title>{full_title}</title>
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#fcfcfd" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0e14" media="(prefers-color-scheme: dark)" />
+
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={full_title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={full_title} />
+    <meta name="twitter:description" content={description} />
+    {published && <meta property="article:published_time" content={published.toISOString()} />}
+
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        name: SITE.name,
+        description: SITE.description,
+        applicationCategory: "DeveloperApplication",
+        operatingSystem: "Any",
+        url: SITE.url,
+      })}
+    />
+  </head>
+
+  <body class="min-h-screen antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-lg focus:bg-ink-900 focus:px-4 focus:py-2 focus:text-sm focus:text-ink-100"
+    >
+      Skip to content
+    </a>
+
+    <Nav />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+
+    <script>
+      /**
+       * Scroll reveals. Everything marked `.reveal` fades up once, the first
+       * time it is seen, and is then forgotten — elements that re-animate on
+       * every pass make a page feel restless rather than alive.
+       *
+       * `prefers-reduced-motion` is handled entirely in CSS, so nothing here
+       * needs to branch on it.
+       */
+      const targets = document.querySelectorAll<HTMLElement>(".reveal");
+
+      if (!("IntersectionObserver" in window)) {
+        targets.forEach((el) => el.classList.add("is-in"));
+      } else {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              entry.target.classList.add("is-in");
+              observer.unobserve(entry.target);
+            }
+          },
+          { rootMargin: "0px 0px -12% 0px", threshold: 0.1 },
+        );
+
+        targets.forEach((el) => observer.observe(el));
+      }
+
+      /**
+       * In-page navigation without leaving "#metrics" in the address bar.
+       *
+       * The links stay real anchors in the markup — they have to work with
+       * JavaScript off, and they are what a middle-click or a copied link
+       * needs. This only changes what the bar shows afterwards.
+       */
+      function scrollToHash(hash: string, smooth: boolean) {
+        const target = document.querySelector(hash);
+        if (!target) return false;
+
+        target.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+        return true;
+      }
+
+      function stripHash() {
+        history.replaceState(null, "", location.pathname + location.search);
+      }
+
+      // Arriving with a hash — following /#metrics from a post, say. Scroll
+      // there, then tidy the bar.
+      if (location.hash && location.hash !== "#main") {
+        const arrived = location.hash;
+        requestAnimationFrame(() => {
+          if (scrollToHash(arrived, false)) stripHash();
+        });
+      }
+
+      document.addEventListener("click", (event) => {
+        const link = (event.target as HTMLElement | null)?.closest?.("a[href*='#']");
+        if (!(link instanceof HTMLAnchorElement)) return;
+
+        const url = new URL(link.href, location.href);
+        // Another page's anchor, or the skip link — which must keep its native
+        // behaviour, because that is what moves focus for a keyboard user.
+        if (url.pathname !== location.pathname || !url.hash || url.hash === "#main") return;
+        if (!scrollToHash(url.hash, true)) return;
+
+        event.preventDefault();
+        stripHash();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,104 @@
+---
+/**
+ * Light · System · Dark.
+ *
+ * A segmented control rather than a button that cycles: with three states, a
+ * cycling button never tells you what the next press does, and "system" is
+ * invisible in it — you cannot see that you are following the OS rather than
+ * having picked the same value by hand.
+ *
+ * The stored value is the choice, not the outcome. Someone on "system" whose
+ * laptop turns dark at sunset should turn dark with it, which only works if
+ * we persist "system" and re-resolve rather than persisting "dark".
+ */
+
+const OPTIONS = [
+  { value: "light", label: "Light", d: "M10 3v1.5M10 15.5V17M17 10h-1.5M4.5 10H3M14.9 5.1l-1 1M6.1 13.9l-1 1M14.9 14.9l-1-1M6.1 6.1l-1-1", circle: true },
+  // `circle` is present on all three, not only the sun — otherwise the union
+  // has no such property and the check fails on the other two.
+  { value: "system", label: "System", d: "M3.5 5.5h13v7h-13zM7.5 16h5M10 12.5V16", circle: false },
+  { value: "dark", label: "Dark", d: "M15.5 11.5A6 6 0 0 1 8.5 4.5a6 6 0 1 0 7 7Z", circle: false },
+] as const;
+---
+
+<div
+  role="radiogroup"
+  aria-label="Colour theme"
+  data-theme-toggle
+  class="flex items-center gap-0.5 rounded-lg border border-line p-0.5"
+>
+  {
+    OPTIONS.map((option) => (
+      <button
+        type="button"
+        role="radio"
+        aria-checked="false"
+        aria-label={option.label}
+        title={option.label}
+        data-theme-option={option.value}
+        class="flex h-7 w-7 items-center justify-center rounded-md text-ink-500 transition-colors hover:text-ink-100 aria-checked:bg-surface-3 aria-checked:text-ink-100"
+      >
+        <svg
+          class="h-[15px] w-[15px]"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          {option.circle && <circle cx="10" cy="10" r="3.25" />}
+          <path d={option.d} />
+        </svg>
+      </button>
+    ))
+  }
+</div>
+
+<script>
+  /**
+   * The control. Applying the theme happens in a blocking script in the head —
+   * this only handles changing it, and keeping every copy of the control in
+   * step (there are two: the nav bar and the mobile menu).
+   */
+  type Choice = "light" | "system" | "dark";
+
+  const KEY = "theme";
+  const groups = document.querySelectorAll<HTMLElement>("[data-theme-toggle]");
+
+  function stored(): Choice {
+    const value = localStorage.getItem(KEY);
+    return value === "light" || value === "dark" ? value : "system";
+  }
+
+  function apply(choice: Choice) {
+    const root = document.documentElement;
+
+    // "system" means remove the override and let the media query decide —
+    // storing the resolved value instead would freeze someone's theme at
+    // whatever their OS happened to be the day they chose.
+    if (choice === "system") {
+      root.removeAttribute("data-theme");
+      localStorage.removeItem(KEY);
+    } else {
+      root.setAttribute("data-theme", choice);
+      localStorage.setItem(KEY, choice);
+    }
+
+    for (const group of groups) {
+      for (const button of group.querySelectorAll<HTMLButtonElement>("[data-theme-option]")) {
+        button.setAttribute("aria-checked", String(button.dataset.themeOption === choice));
+      }
+    }
+  }
+
+  for (const group of groups) {
+    group.addEventListener("click", (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLElement>("[data-theme-option]");
+      if (button?.dataset.themeOption) apply(button.dataset.themeOption as Choice);
+    });
+  }
+
+  apply(stored());
+</script>

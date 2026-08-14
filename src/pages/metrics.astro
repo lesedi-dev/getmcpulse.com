@@ -1,0 +1,119 @@
+---
+import Detail from "../layouts/Detail.astro";
+import { METRICS, INSIGHT_RULES } from "../lib/content";
+---
+
+<Detail
+  eyebrow="Metrics"
+  title="Sixteen numbers, and where each one comes from"
+  lead="Most are counted as your calls arrive. Three need a night's worth of calls in order and are labelled as of yesterday, because pretending otherwise would be the first lie the product told you."
+  description="The sixteen metrics MCPulse records, what each one tells you, and which are counted live versus computed overnight."
+>
+  <div class="space-y-12">
+    {
+      METRICS.map((column, groupIndex) => {
+        const offset = METRICS.slice(0, groupIndex).reduce((n, g) => n + g.items.length, 0);
+
+        return (
+          <section class="reveal">
+            <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-line pb-4">
+              <h2 class="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight text-ink-100">
+                <span aria-hidden="true" class:list={["h-1.5 w-1.5 rounded-full", column.dot]} />
+                {column.group}
+              </h2>
+              <p class="text-sm text-ink-700">{column.note}</p>
+              <p class="ml-auto text-xs text-ink-700">{column.items.length} metrics</p>
+            </div>
+
+            <ul class="mt-5 grid gap-3 sm:grid-cols-2">
+              {column.items.map((item, i) => (
+                <li class="group relative overflow-hidden rounded-xl border border-line bg-surface p-5 transition-colors hover:border-line-strong hover:bg-surface-2">
+                  <span
+                    aria-hidden="true"
+                    class:list={[
+                      "absolute inset-y-0 left-0 w-0.5 origin-top scale-y-0 transition-transform duration-300 group-hover:scale-y-100",
+                      column.dot,
+                    ]}
+                  />
+                  <div class="flex items-baseline gap-3">
+                    <span class="font-mono text-xs text-ink-700">
+                      {String(offset + i + 1).padStart(2, "0")}
+                    </span>
+                    <h3 class="text-[15px] leading-6 font-medium text-ink-100">{item.name}</h3>
+                  </div>
+                  <p class="mt-2 pl-8 text-sm leading-6 text-ink-500">{item.detail}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })
+    }
+  </div>
+
+  <section class="reveal mt-16 border-t border-line-soft pt-14">
+    <h2 class="text-xl font-semibold tracking-tight text-ink-100">
+      Retries are the hard one, and the one worth having
+    </h2>
+    <p class="mt-3 text-[15px] leading-7 text-ink-500">
+      Within a session, the same tool called twice inside 30 seconds with
+      <em class="text-ink-100 not-italic">different</em> arguments is the model rewording and trying
+      again. With the <em class="text-ink-100 not-italic">same</em> arguments it is pagination or polling,
+      and it is not a retry. Get that distinction wrong and every well-behaved paginating tool grades
+      as broken.
+    </p>
+    <p class="mt-4 text-[15px] leading-7 text-ink-500">
+      That is the whole reason arguments are hashed. Not to inspect them — twelve hex characters of
+      a SHA-256 with the keys sorted is not reversible and is not meant to be. It answers exactly
+      one question: were these two calls the same? Sorting the keys matters, or
+      <code class="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-ink-100"
+        >&#123;a:1,b:2&#125;</code
+      > and <code class="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-ink-100"
+        >&#123;b:2,a:1&#125;</code
+      > hash differently and every repeat looks like a rewording.
+    </p>
+    <p class="mt-4 text-[15px] leading-7 text-ink-500">
+      First-call success follows from it: the outcome is <code
+        class="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-ink-100">ok</code
+      >, the result was not empty, and no retry followed within 30 seconds. Miss any one of the
+      three and it does not count.
+    </p>
+  </section>
+
+  <section class="reveal mt-14 border-t border-line-soft pt-14">
+    <h2 class="text-xl font-semibold tracking-tight text-ink-100">
+      A tool name, a number, and a consequence
+    </h2>
+    <p class="mt-3 text-[15px] leading-7 text-ink-500">
+      The metrics are the input. These rules are what the product actually says to you — an insight
+      without a number is not an insight.
+    </p>
+
+    <div class="mt-6 overflow-x-auto">
+      <table class="w-full min-w-[34rem] border-collapse text-left text-sm">
+        <thead>
+          <tr class="text-[11px] tracking-wide text-ink-700 uppercase">
+            <th class="border-b border-line pb-2.5 font-medium">Rule</th>
+            <th class="border-b border-line pb-2.5 font-medium">Fires when</th>
+            <th class="border-b border-line pb-2.5 font-medium">It tells you</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            INSIGHT_RULES.map((rule) => (
+              <tr class="align-top">
+                <td class="border-b border-line-soft py-3 pr-4 font-medium whitespace-nowrap text-ink-100">
+                  {rule.rule}
+                </td>
+                <td class="border-b border-line-soft py-3 pr-4 font-mono text-[12.5px] text-ink-500">
+                  {rule.when}
+                </td>
+                <td class="border-b border-line-soft py-3 text-ink-500">{rule.says}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</Detail>

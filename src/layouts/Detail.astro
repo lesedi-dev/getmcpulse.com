@@ -1,0 +1,71 @@
+---
+import Base from "./Base.astro";
+import { SITE } from "../lib/site";
+
+/**
+ * A detail page behind a menu item.
+ *
+ * The nav used to point at anchors on the home page, which meant every item
+ * scrolled you into the middle of one long document and the address bar had
+ * to be tidied afterwards. These are pages: they have their own URL, their
+ * own title, and they can say more than a landing section has room for.
+ *
+ * Centred, the same way a post is — the reading column sits in the middle of
+ * the screen inside the site's standard container, so the page keeps the
+ * structure while the content stays where the eye already is.
+ */
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  lead: string;
+  description: string;
+}
+
+const { eyebrow, title, lead, description } = Astro.props;
+---
+
+<Base title={title} description={description}>
+  <article>
+    <header class="relative overflow-hidden border-b border-line-soft">
+      <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>
+
+      <div class="mx-auto max-w-6xl px-5 pt-36 pb-14 sm:px-8 sm:pt-44">
+        <div class="reveal mx-auto max-w-3xl">
+          <p class="text-sm font-medium text-cyan">{eyebrow}</p>
+          <h1
+            class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-[2.75rem] sm:leading-[1.1]"
+          >
+            {title}
+          </h1>
+          <p class="mt-5 text-lg leading-8 text-pretty text-ink-500">{lead}</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8">
+      <div class="mx-auto max-w-3xl">
+        <slot />
+      </div>
+    </div>
+  </article>
+
+  <aside class="border-t border-line-soft">
+    <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8">
+      <div class="mx-auto max-w-3xl rounded-2xl border border-line bg-ink-900/40 p-7">
+        <h2 class="text-lg font-semibold tracking-tight text-ink-100">
+          Find out what your tools are actually doing
+        </h2>
+        <p class="mt-2 text-sm leading-6.5 text-ink-500">
+          Create an MCP, paste the key, restart. Two lines inside your own process.
+        </p>
+        <a
+          href={SITE.app}
+          class="mt-5 inline-flex h-10 items-center rounded-xl bg-btn px-4 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover"
+        >
+          Start measuring — free
+        </a>
+      </div>
+    </div>
+  </aside>
+</Base>

@@ -1,0 +1,264 @@
+---
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import PostCover from "../../components/PostCover.astro";
+import { SITE } from "../../lib/site";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog");
+
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props as { post: CollectionEntry<"blog"> };
+const { Content } = await render(post);
+
+/** Two more from the same topic, falling back to the newest if a topic is thin. */
+const all = (await getCollection("blog")).sort(
+  (a, b) => b.data.published.valueOf() - a.data.published.valueOf(),
+);
+const others = all.filter((entry) => entry.id !== post.id);
+const related = [
+  ...others.filter((entry) => entry.data.topic === post.data.topic),
+  ...others.filter((entry) => entry.data.topic !== post.data.topic),
+].slice(0, 2);
+
+const published = post.data.published.toLocaleDateString("en-GB", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+---
+
+<Base
+  title={post.data.title}
+  description={post.data.description}
+  type="article"
+  published={post.data.published}
+>
+  <article>
+    <header class="relative overflow-hidden border-b border-line-soft">
+      <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>
+
+      {/* The same max-w-6xl container every other page uses, with the reading
+          column centred inside it — so the page keeps the site's structure
+          while the article itself sits in the middle of the screen. */}
+      <div class="mx-auto max-w-6xl px-5 pt-36 pb-14 sm:px-8 sm:pt-44">
+        <div class="mx-auto max-w-3xl">
+        <a
+          href="/blog"
+          class="-my-2 inline-block py-2 text-sm text-ink-500 transition-colors hover:text-cyan"
+          >← All posts</a
+        >
+
+        <div class="mt-6 flex flex-wrap items-center gap-3 text-xs text-ink-700">
+          <span class="rounded-full bg-cyan/12 px-2.5 py-1 font-medium text-cyan">
+            {post.data.topic}
+          </span>
+          <time datetime={post.data.published.toISOString()}>{published}</time>
+          <span>·</span>
+          <span>{post.data.minutes} min read</span>
+        </div>
+
+        <h1
+          class="mt-5 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-[2.75rem] sm:leading-[1.1]"
+        >
+          {post.data.title}
+        </h1>
+        <p class="mt-5 text-lg leading-8 text-pretty text-ink-500">{post.data.description}</p>
+
+        <div class="mt-10 overflow-hidden rounded-2xl border border-line bg-ink-900/40">
+          <PostCover topic={post.data.topic} seed={post.id} class="h-44 w-full sm:h-52" />
+        </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8">
+      <div class="prose mx-auto max-w-3xl">
+        <Content />
+      </div>
+    </div>
+  </article>
+
+  <aside class="border-t border-line-soft">
+    <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8">
+      <div class="mx-auto max-w-3xl rounded-2xl border border-line bg-ink-900/40 p-7">
+        <h2 class="text-lg font-semibold tracking-tight text-ink-100">
+          Measure this on your own server
+        </h2>
+        <p class="mt-2 text-sm leading-6.5 text-ink-500">
+          Two lines inside your process. Never your arguments, never your results.
+        </p>
+        <a
+          href={SITE.app}
+          class="mt-5 inline-flex h-10 items-center rounded-xl bg-btn px-4 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover"
+        >
+          Start measuring — free
+        </a>
+      </div>
+
+      {
+        related.length > 0 && (
+          <>
+            <h2 class="mx-auto mt-14 max-w-3xl text-xs font-medium tracking-wide text-ink-500 uppercase">
+              Keep reading
+            </h2>
+            <ul class="mx-auto mt-4 grid max-w-3xl gap-4 sm:grid-cols-2">
+              {related.map((entry) => (
+                <li>
+                  <a
+                    href={`/blog/${entry.id}`}
+                    class="group flex h-full flex-col rounded-2xl border border-line p-5 transition-colors hover:border-cyan/25"
+                  >
+                    <span class="text-xs text-cyan-dim">{entry.data.topic}</span>
+                    <span class="mt-2 text-[15px] leading-6.5 font-medium text-balance text-ink-100 transition-colors group-hover:text-cyan">
+                      {entry.data.title}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </>
+        )
+      }
+    </div>
+  </aside>
+</Base>
+
+<style is:global>
+  /**
+   * Article typography.
+   *
+   * Written by hand rather than pulled from a plugin: the posts use six
+   * elements between them, and a typography dependency to style six elements
+   * is more configuration than CSS.
+   */
+  .prose {
+    font-size: 1.0625rem;
+    line-height: 1.75;
+    color: var(--color-ink-300);
+  }
+
+  .prose > * + * {
+    margin-top: 1.4em;
+  }
+
+  .prose h2 {
+    margin-top: 2.6em;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
+    color: var(--color-ink-100);
+    text-wrap: balance;
+  }
+
+  .prose h3 {
+    margin-top: 2.2em;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-ink-100);
+  }
+
+  .prose strong {
+    font-weight: 600;
+    color: var(--color-ink-100);
+  }
+
+  .prose a {
+    color: var(--color-cyan);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: color-mix(in oklch, var(--color-cyan) 40%, transparent);
+    transition: text-decoration-color 0.2s;
+  }
+
+  .prose a:hover {
+    text-decoration-color: var(--color-cyan);
+  }
+
+  .prose ul,
+  .prose ol {
+    padding-left: 1.3em;
+  }
+
+  .prose ul {
+    list-style: disc;
+  }
+
+  .prose ol {
+    list-style: decimal;
+  }
+
+  .prose li::marker {
+    color: var(--color-ink-700);
+  }
+
+  .prose li + li {
+    margin-top: 0.5em;
+  }
+
+  .prose code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    background-color: color-mix(in oklch, var(--color-ink-800) 55%, transparent);
+    color: var(--color-ink-100);
+  }
+
+  .prose pre {
+    /* Long lines scroll inside the block rather than widening the page. */
+    overflow-x: auto;
+    padding: 1.1rem 1.25rem;
+    border-radius: 0.9rem;
+    border: 1px solid var(--color-line);
+    background-color: color-mix(in oklch, var(--color-ink-900) 60%, transparent);
+    font-size: 0.85rem;
+    line-height: 1.7;
+  }
+
+  .prose pre code {
+    padding: 0;
+    background: none;
+    font-size: inherit;
+    color: var(--color-ink-300);
+  }
+
+  .prose blockquote {
+    padding-left: 1.15em;
+    border-left: 2px solid var(--color-cyan);
+    color: var(--color-ink-500);
+  }
+
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    display: block;
+    overflow-x: auto;
+  }
+
+  .prose th,
+  .prose td {
+    padding: 0.65rem 0.9rem;
+    border-bottom: 1px solid var(--color-line-soft);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .prose th {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-ink-500);
+  }
+
+  .prose hr {
+    margin-block: 2.6em;
+    border: 0;
+    border-top: 1px solid var(--color-line-soft);
+  }
+</style>

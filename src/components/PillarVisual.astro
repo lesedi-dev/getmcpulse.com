@@ -1,0 +1,183 @@
+---
+/**
+ * A small moving diagram above each "How it works" pillar.
+ *
+ * Each one draws the specific claim its paragraph makes — traffic that does
+ * not route through us, arguments that become a hash before they leave, a
+ * wrap that hands the same server back. Three plain paragraphs stated all of
+ * that and none of it was visible.
+ *
+ * Everything animates in CSS off a single loop and stops dead under
+ * `prefers-reduced-motion`, where each figure holds its finished state.
+ */
+
+interface Props {
+  kind: "inside" | "hash" | "wrap";
+}
+
+const { kind } = Astro.props;
+---
+
+<div class="relative h-28 overflow-hidden rounded-xl border border-line bg-surface">
+  {
+    kind === "inside" && (
+      <svg viewBox="0 0 300 112" class="h-full w-full" fill="none" aria-hidden="true">
+        {/* The model talks to your server, and that path is untouched. */}
+        <rect x="14" y="38" width="66" height="36" rx="8" stroke="currentColor" class="text-line-strong" />
+        <text x="47" y="61" text-anchor="middle" font-size="11.5" fill="currentColor" class="fill-ink-500">
+          model
+        </text>
+
+        <path d="M84 56 H116" stroke="currentColor" class="text-line-strong" stroke-width="1.5" />
+        <circle r="3" fill="var(--color-cyan)" class="run-main">
+          <animateMotion dur="2.6s" repeatCount="indefinite" path="M84 56 H116" />
+        </circle>
+
+        <rect x="120" y="26" width="94" height="60" rx="10" stroke="var(--color-cyan)" stroke-opacity="0.5" />
+        <text x="167" y="48" text-anchor="middle" font-size="11.5" fill="currentColor" class="fill-ink-300">
+          your server
+        </text>
+        <rect x="140" y="56" width="54" height="18" rx="6" fill="var(--color-cyan)" fill-opacity="0.12" />
+        <text x="167" y="68" text-anchor="middle" font-size="9.5" fill="var(--color-cyan)">
+          sdk
+        </text>
+
+        {/* Out to the side, dashed, and never in the way. */}
+        <path
+          d="M214 56 H250 a8 8 0 0 1 8 8 V78"
+          stroke="var(--color-cyan)"
+          stroke-opacity="0.4"
+          stroke-width="1.5"
+          stroke-dasharray="3 4"
+        />
+        <rect x="238" y="80" width="42" height="20" rx="6" stroke="var(--color-cyan)" stroke-opacity="0.4" />
+        <text x="259" y="94" text-anchor="middle" font-size="9.5" fill="currentColor" class="fill-ink-500">
+          mcpulse
+        </text>
+      </svg>
+    )
+  }
+
+  {
+    kind === "hash" && (
+      <div class="flex h-full flex-col items-center justify-center gap-1.5 px-3 font-mono text-[10px] sm:flex-row sm:gap-3 sm:px-4 sm:text-[11px]">
+        {/* Stacked on a phone, side by side from sm. Kept in a row, the
+            arguments chip had about 90px to live in and truncated to a stub —
+            which is not a before-and-after, it is one chip and an ellipsis.
+
+            `min-w-0` is what lets truncate actually truncate. A flex item
+            defaults to min-width:auto, so this refused to shrink below its
+            text and pushed the card 9px past the viewport at 375. */}
+        <span class="args min-w-0 max-w-full truncate rounded-lg border border-line px-2.5 py-1.5 text-ink-500">
+          &#123; email: "ada@…" &#125;
+        </span>
+        <span aria-hidden="true" class="shrink-0 rotate-90 text-ink-700 sm:rotate-0">→</span>
+        <span class="digest shrink-0 rounded-lg border border-cyan/30 bg-cyan/10 px-2.5 py-1.5 text-cyan">
+          9c1b4e2f0a11
+        </span>
+      </div>
+    )
+  }
+
+  {
+    kind === "wrap" && (
+      <div class="flex h-full flex-col justify-center gap-1.5 px-4 font-mono text-[10px] leading-5 sm:px-5 sm:text-[11px]">
+        <p class="wrap-line" style="--i:0">
+          <span class="text-cyan-dim">import</span> <span class="text-ink-500">&#123;</span>
+          <span class="text-ink-100">watch</span> <span class="text-ink-500">&#125;</span>
+          <span class="text-cyan-dim">from</span> <span class="text-ok">"@mcpulse/sdk"</span>
+        </p>
+        <p class="wrap-line" style="--i:1">
+          <span class="text-ink-100">watch</span>
+          <span class="text-ink-500">(server, &#123; key &#125;)</span>
+        </p>
+        <p class="wrap-line flex items-center gap-1.5 text-ink-700" style="--i:2">
+          <span class="text-ok">✓</span> same server back
+        </p>
+      </div>
+    )
+  }
+</div>
+
+<style>
+  /* ── Arguments become a digest, over and over ─────────────────────────── */
+  .args {
+    animation: pillar-shed 4s ease-in-out infinite;
+  }
+
+  .digest {
+    animation: pillar-land 4s ease-in-out infinite;
+  }
+
+  @keyframes pillar-shed {
+    0%,
+    35% {
+      opacity: 1;
+      filter: blur(0);
+    }
+    60%,
+    100% {
+      opacity: 0.28;
+      filter: blur(1.5px);
+    }
+  }
+
+  @keyframes pillar-land {
+    0%,
+    35% {
+      opacity: 0.35;
+      transform: scale(0.97);
+    }
+    60%,
+    100% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* ── The two lines, arriving in order ────────────────────────────────── */
+  .wrap-line {
+    opacity: 0;
+    animation: pillar-line-in 4s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 0.45s);
+  }
+
+  @keyframes pillar-line-in {
+    0% {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    18%,
+    82% {
+      opacity: 1;
+      transform: none;
+    }
+    100% {
+      opacity: 0;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .args,
+    .digest,
+    .wrap-line {
+      animation: none;
+      opacity: 1;
+      filter: none;
+      transform: none;
+    }
+
+    /* SMIL is not covered by the CSS media query, so it is stopped by hand. */
+    .run-main {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // `animateMotion` ignores prefers-reduced-motion, so pause SMIL explicitly.
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.querySelectorAll("svg").forEach((svg) => (svg as SVGSVGElement).pauseAnimations());
+  }
+</script>
