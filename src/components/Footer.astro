@@ -25,8 +25,22 @@ const COLUMNS = [
     ],
   },
   {
-    heading: "Package",
+    heading: "Build with it",
     links: [
+      { href: SITE.docs, label: "Documentation" },
+      /**
+       * The connector and the skill are two links, not one, because they are
+       * two different things and the difference is why the skill exists.
+       *
+       * The connector is the plumbing — OAuth, and the tools an agent can call.
+       * The skill is the workflow guide on top: which tool to reach for, how to
+       * ask for a little rather than a lot, which figures are already computed
+       * server-side and must not be re-derived. Listing only the connector
+       * leaves an agent to infer all of that from tool descriptions, which is
+       * the exact gap the skill was written to close.
+       */
+      { href: `${SITE.docs}/mcp/connect`, label: "MCP connector" },
+      { href: `${SITE.docs}/mcp/skills`, label: "Agent skill" },
       { href: SITE.npm, label: "@mcpulse/sdk on npm" },
       { href: SITE.github, label: "GitHub" },
     ],
