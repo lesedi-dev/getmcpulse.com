@@ -63,14 +63,12 @@
   --color-btn-hover: oklch(0.43 0.1 211.6);
   --color-btn-fg: oklch(0.99 0.001 264);
 
-  /* Each of these is *also* the text inside its own 10–15% chip — the "New"
-     pill, a topic tag, a status badge, a delta. That tint is the binding
-     constraint, not the page: it lifts the ground toward the text and costs
-     roughly 1.3:1. So every light-mode tone sits where it clears 4.5:1
-     against its own 15% wash, which leaves ~5.9:1 on the page itself. */
+  /* Each of these is *also* the text inside its own chip — the "New" pill, a
+     topic tag, a status badge, a delta — so each has a `-wash` below to be
+     that chip's ground. */
   --color-cyan: oklch(0.48 0.105 211.6);
   /* Dimmed by chroma rather than lightness. Lightening it is what the name
-     suggests and it is the one move unavailable here: `cyan` is already at
+     suggests and it is the one move unavailable here: `cyan` is already near
      the floor, so anything paler than it is unreadable. Draining the colour
      reads as quieter and keeps the contrast. */
   --color-cyan-dim: oklch(0.5 0.045 211.6);
@@ -78,6 +76,34 @@
   --color-ok: oklch(0.48 0.13 155);
   --color-warn: oklch(0.5 0.12 70);
   --color-bad: oklch(0.51 0.18 27);
+
+  /**
+   * Chip grounds — opaque, and that is the whole point.
+   *
+   * These were `bg-cyan/15` and friends, which failed the audit twice for two
+   * different reasons, both of them the same mistake.
+   *
+   * A translucent wash has no fixed contrast: it composites with whatever it
+   * lands on, so the "New" pill measured 4.78:1 on the page and 4.40:1 inside
+   * the `bg-surface-2` link that actually holds it. Every ground the chip
+   * might sit on is a separate number, and the audit only reports the one it
+   * happens to find.
+   *
+   * It is also self-defeating. Deriving the ground from the ink means
+   * darkening the text darkens the wash under it — the accent chases its own
+   * background and recovers a fraction of each step. That is why the first
+   * pass landed short.
+   *
+   * Mixing toward the page instead fixes both: opaque, so the stack beneath
+   * stops mattering, and anchored to a colour that does not move when the
+   * accent does. 14% is where the old tint sat on the page, so nothing visibly
+   * changes; the ratio is now a constant ~4.9:1 rather than a range. Both
+   * operands are themed, so this one line covers light and dark.
+   */
+  --color-cyan-wash: color-mix(in oklab, var(--color-cyan) 14%, var(--color-ink-950));
+  --color-ok-wash: color-mix(in oklab, var(--color-ok) 14%, var(--color-ink-950));
+  --color-warn-wash: color-mix(in oklab, var(--color-warn) 14%, var(--color-ink-950));
+  --color-bad-wash: color-mix(in oklab, var(--color-bad) 14%, var(--color-ink-950));
 
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 }
