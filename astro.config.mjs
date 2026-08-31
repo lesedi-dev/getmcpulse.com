@@ -33,6 +33,29 @@ const site = process.env.SITE_URL ?? "https://getmcpulse.com";
 
 export default defineConfig({
   site,
+
+  /**
+   * Syntax highlighting in the site's own palette, in both themes.
+   *
+   * Astro's default Shiki theme is `github-dark`, and a Shiki theme is
+   * **inline styles**: every highlighted block carried
+   * `background-color:#24292e` on the `<pre>` and a hex on every token. Inline
+   * styles outrank a stylesheet, so `.prose pre` in the post layout — border,
+   * radius, the themed surface — was overridden on all thirteen posts that
+   * contain a code block, whichever theme the reader had chosen. A light-mode
+   * reader got a slab of GitHub's dark grey in the middle of a white page,
+   * and the plain fenced blocks beside it stayed in the site's palette, so
+   * one post could show two different kinds of code block.
+   *
+   * `css-variables` makes Shiki emit `var(--astro-code-*)` instead of hexes.
+   * Those are defined once per theme in `global.css` next to every other
+   * colour, so code follows light and dark like the rest of the page and the
+   * `<pre>` keeps the surface the layout gives it.
+   */
+  markdown: {
+    shikiConfig: { theme: "css-variables", wrap: false },
+  },
+
   integrations: [sitemap()],
   vite: { plugins: [tailwindcss()] },
   // "auto" inlines only what is small enough to be worth it. Inlining

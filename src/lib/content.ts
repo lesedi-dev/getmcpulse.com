@@ -237,3 +237,121 @@ export const PRICING_NOTES = [
     a: "Polar, as merchant of record. They are the seller, so VAT, GST and sales tax in every country are handled by somebody who does that for a living. Cards, invoices and cancellation all live in their portal — MCPulse never holds a card number.",
   },
 ] as const;
+
+/**
+ * The languages a server can be written in, and whether we ship a package yet.
+ *
+ * A copy of `install_languages.ts` in the dashboard, for the same reason
+ * `PLANS` is a copy of the API's catalogue: this is a static build with no
+ * session, so it cannot fetch anything the product knows. Restated in one
+ * place, with the source named.
+ *
+ * The list is the official MCP SDKs rather than every language that exists,
+ * and it is in their tier order — tier 1 first, because that is where servers
+ * actually get written and so the order somebody scans the grid in. **The tier
+ * is never printed.** It is the MCP project's classification of its own SDKs;
+ * on our page it would read as tiers of *our* support.
+ *
+ * Nine of the ten say "Coming soon", and showing them is the point. The
+ * question a Python author opens this page with is "is there one for me", and
+ * a page listing only TypeScript answers it with "this product is not for you"
+ * rather than "not yet".
+ */
+export type InstallLanguage = {
+  id: string;
+  label: string;
+  /** Two or three letters for the card's tile — no borrowed brand marks. */
+  short: string;
+  /** The official MCP SDK an MCPulse package for this language would wrap. */
+  sdk: string;
+  /** The MCP project's own tier, used for the order and nothing else. */
+  tier: 1 | 2 | 3;
+  available: boolean;
+};
+
+export const INSTALL_LANGUAGES: InstallLanguage[] = (
+  [
+    {
+      id: "typescript",
+      label: "TypeScript",
+      short: "TS",
+      sdk: "modelcontextprotocol/typescript-sdk",
+      tier: 1,
+      available: true,
+    },
+    {
+      id: "python",
+      label: "Python",
+      short: "PY",
+      sdk: "modelcontextprotocol/python-sdk",
+      tier: 1,
+      available: false,
+    },
+    {
+      id: "csharp",
+      label: "C#",
+      short: "C#",
+      sdk: "modelcontextprotocol/csharp-sdk",
+      tier: 1,
+      available: false,
+    },
+    {
+      id: "go",
+      label: "Go",
+      short: "GO",
+      sdk: "modelcontextprotocol/go-sdk",
+      tier: 1,
+      available: false,
+    },
+    {
+      id: "rust",
+      label: "Rust",
+      short: "RS",
+      sdk: "modelcontextprotocol/rust-sdk",
+      tier: 1,
+      available: false,
+    },
+    {
+      id: "java",
+      label: "Java",
+      short: "JV",
+      sdk: "modelcontextprotocol/java-sdk",
+      tier: 2,
+      available: false,
+    },
+    {
+      id: "ruby",
+      label: "Ruby",
+      short: "RB",
+      sdk: "modelcontextprotocol/ruby-sdk",
+      tier: 2,
+      available: false,
+    },
+    {
+      id: "swift",
+      label: "Swift",
+      short: "SW",
+      sdk: "modelcontextprotocol/swift-sdk",
+      tier: 3,
+      available: false,
+    },
+    {
+      id: "php",
+      label: "PHP",
+      short: "PHP",
+      sdk: "modelcontextprotocol/php-sdk",
+      tier: 3,
+      available: false,
+    },
+    {
+      id: "kotlin",
+      label: "Kotlin",
+      short: "KT",
+      sdk: "modelcontextprotocol/kotlin-sdk",
+      tier: 3,
+      available: false,
+    },
+    // Annotated after the literal rather than on it, so a row cannot widen
+    // `tier` to `number` and quietly opt out of the union.
+  ] satisfies InstallLanguage[]
+).sort((a, b) => a.tier - b.tier);

@@ -63,7 +63,20 @@ export const SITE = {
 export const NAV = [
   { href: "/how-it-works", label: "How it works" },
   { href: "/metrics", label: "Metrics" },
-  { href: "/install", label: "Install" },
+  /**
+   * "Installation", not "Install".
+   *
+   * The others are all nouns — a thing to go and read. "Install" is a verb, and
+   * next to four nouns it reads as a button that will do something rather than
+   * a page that will explain something. It is also no longer only the
+   * TypeScript steps: the page opens on ten languages, and the honest name for
+   * a page answering "is there one for me" is the subject, not the command.
+   *
+   * The path stays `/install`. A URL is not copy — it is linked from
+   * `llms.txt`, from the footer and from anywhere a reader has bookmarked it,
+   * and renaming it to match a menu label would break all three to fix nothing.
+   */
+  { href: "/install", label: "Installation" },
   /**
    * Pricing, where Docs used to sit.
    *
@@ -76,11 +89,24 @@ export const NAV = [
    * Pricing is the question they do ask, and it had no answer anywhere on this
    * site — which for a product that now takes money is worse than a bad price.
    *
-   * The order is still the reading order: what it is, what it measures, how to
-   * fit it, what it costs, then why it thinks what it thinks.
+   * The order is the reading order: what it is, what it measures, how to fit
+   * it, then what it costs.
    */
   { href: "/pricing", label: "Pricing" },
-  { href: "/blog", label: "Blog" },
+  /**
+   * Blog is **not** here, and the writing is not gone with it.
+   *
+   * It left for the same reason Docs did, one step further along: the menu is
+   * the four questions somebody asks while deciding whether to bother, and
+   * twenty essays on retry semantics is not one of them. It was also the item
+   * that made the row too wide — five links and a button is where the header
+   * stops fitting a small laptop without wrapping.
+   *
+   * It keeps its own column in the footer, with the two posts worth starting
+   * on and the feed, which is where someone who has finished deciding goes
+   * looking. Every post also links two more at its foot, so the blog is
+   * navigable from inside itself rather than only from the chrome.
+   */
 ] as const;
 
 /** The install steps, matching `install_snippets.ts` in the dashboard exactly. */

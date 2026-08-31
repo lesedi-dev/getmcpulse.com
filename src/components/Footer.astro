@@ -11,12 +11,18 @@ const COLUMNS = [
     links: [
       { href: "/how-it-works", label: "How it works" },
       { href: "/metrics", label: "Metrics" },
-      { href: "/install", label: "Install" },
+      { href: "/install", label: "Installation" },
       { href: "/pricing", label: "Pricing" },
       { href: SITE.app, label: "Sign in" },
     ],
   },
   {
+    /**
+     * The blog's only home in the site chrome, now that it is out of the
+     * header — so this column is the one that has to work. "All posts" is the
+     * way in, the two beneath it are the ones worth starting on, and the feed
+     * is for somebody who wants the rest without coming back.
+     */
     heading: "Writing",
     links: [
       { href: "/blog", label: "All posts" },

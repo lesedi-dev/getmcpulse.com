@@ -185,6 +185,46 @@
   --color-bad: oklch(0.7 0.17 25);
 }
 
+/**
+ * Syntax highlighting, in the site's own colours.
+ *
+ * `shikiConfig.theme: "css-variables"` in `astro.config.mjs` makes Shiki emit
+ * `var(--astro-code-*)` instead of the hardcoded hexes of a packaged theme.
+ * These are the definitions.
+ *
+ * **Written once, not twice.** Every value is a site token rather than a
+ * literal, and those tokens are already redefined under both dark selectors —
+ * so one block covers light and dark, and a palette change reaches code blocks
+ * without anyone remembering they exist.
+ *
+ * The background is deliberately `transparent`: the `<pre>` gets its surface,
+ * border and radius from `.prose pre` in the post layout, and a colour here
+ * would land on top of it as an inline style and undo exactly the override
+ * this change was made to stop.
+ *
+ * Restrained on purpose. This site is near-monochrome with one accent, so a
+ * nine-hue syntax theme would be the loudest thing on a page about reading:
+ * prose weight for identifiers, the accent for keywords, and the ok/warn hues
+ * the product already uses for values.
+ */
+:root {
+  --astro-code-foreground: var(--color-ink-300);
+  --astro-code-background: transparent;
+
+  --astro-code-token-comment: var(--color-ink-500);
+  --astro-code-token-punctuation: var(--color-ink-500);
+
+  --astro-code-token-keyword: var(--color-cyan);
+  --astro-code-token-link: var(--color-cyan);
+  --astro-code-token-function: var(--color-cyan-dim);
+
+  --astro-code-token-string: var(--color-ok);
+  --astro-code-token-string-expression: var(--color-ok);
+
+  --astro-code-token-constant: var(--color-warn);
+  --astro-code-token-parameter: var(--color-ink-300);
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;

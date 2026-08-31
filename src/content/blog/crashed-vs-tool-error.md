@@ -8,7 +8,7 @@ minutes: 5
 
 MCPulse records exactly one outcome per call:
 
-| | |
+| Outcome | What it means |
 |---|---|
 | `ok` | Ran and returned a result. |
 | `bad_args` | Arguments failed schema validation — your handler never ran. |

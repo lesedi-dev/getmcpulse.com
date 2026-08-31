@@ -2,20 +2,45 @@
 /**
  * A drawn cover for every post.
  *
- * Not photography and not stock illustration: one motif per topic, varied by
- * a hash of the slug so no two posts draw the same figure. It is SVG, so it
- * costs about 400 bytes, stays sharp anywhere, and there is no image pipeline
- * to run when a post is added — the file name is enough.
+ * Not photography and not stock illustration: one composed scene per topic,
+ * varied by a hash of the slug so no two posts draw the same figure. It is
+ * SVG, so it costs about a kilobyte, stays sharp at any size, and there is no
+ * image pipeline to run when a post is added — the file name is enough.
+ *
+ * **Why drawn rather than photographed.** Every cover is a picture of the
+ * thing the post is about: a series, a schema, a pipeline, a masked table. A
+ * stock photograph of a laptop would be larger, slower, generic, and would say
+ * nothing — and the argument this product makes is that a picture of your data
+ * beats a mood.
+ *
+ * ── The scene, in four layers ──────────────────────────────────────────────
+ * Every topic draws the same stack, which is what keeps twenty covers looking
+ * like one set rather than four:
+ *
+ *   1. a wash — the accent, bled from one corner and gone by the middle
+ *   2. a grid — the same rule the site's hero uses, faded downward
+ *   3. the motif — the only layer that is about the topic
+ *   4. a floor — one hairline the motif stands on, so nothing floats
+ *
+ * `density` is the one thing a caller chooses. A hero is over a thousand
+ * pixels wide and can hold gridlines and a callout; the same drawing shrunk
+ * into a 380px card turns that detail into lint, so a card draws the same
+ * scene with the small parts left out. Two densities rather than a scale
+ * factor, because *which elements survive* is a decision, not a multiplier.
  */
 
 interface Props {
   topic: "Measurement" | "Tool design" | "Engineering" | "Privacy";
   /** The slug. Same input always draws the same cover. */
   seed: string;
+  /** `hero` draws the gridlines and the callout; `card` leaves them out. */
+  density?: "hero" | "card";
   class?: string;
 }
 
-const { topic, seed, class: klass = "" } = Astro.props;
+const { topic, seed, density = "card", class: klass = "" } = Astro.props;
+
+const detailed = density === "hero";
 
 /** Cheap deterministic hash — enough to vary a drawing, not a security thing. */
 function hash(input: string) {
@@ -28,6 +53,7 @@ function hash(input: string) {
 }
 
 const h = hash(seed);
+
 /**
  * A stream of values in [0,1) drawn from the seed.
  *
@@ -36,6 +62,16 @@ const h = hash(seed);
  * `width="-38.42"` and was rejected outright.
  */
 const rand = (n: number) => ((h >>> (n * 3)) % 1000) / 1000;
+
+/**
+ * Ids have to be unique per *rendering*, not per post.
+ *
+ * A gradient keyed on the slug alone collides the moment one page draws the
+ * same post twice — and the density is exactly the pair that co-occurs, since
+ * a post can appear as a hero and again in someone else's "keep reading".
+ * Whichever `<defs>` came last would then supply both.
+ */
+const uid = `${seed}-${density}`;
 
 const ACCENT = {
   Measurement: "var(--color-cyan)",
@@ -46,40 +82,59 @@ const ACCENT = {
 
 const accent = ACCENT[topic];
 
-const W = 320;
-const H = 130;
+/** 2:1 — wide enough to sit above an article without pushing the text under the fold. */
+const W = 640;
+const H = 320;
+
+const PAD = 48;
+const FLOOR = H - 54;
 
 // ── Measurement — a rising series, the shape the product draws all day ──────
 // The seed has to out-weigh the trend, or every Measurement post draws the
 // same gently rising line and the covers stop distinguishing anything.
-const points = Array.from({ length: 9 }, (_, i) => {
-  const x = 12 + (i / 8) * (W - 24);
-  const drift = (i / 8) * 30;
-  const y = H - 18 - drift - rand(i) * 52;
+const COUNT = 11;
+const points = Array.from({ length: COUNT }, (_, i) => {
+  const x = PAD + (i / (COUNT - 1)) * (W - PAD * 2);
+  const drift = (i / (COUNT - 1)) * 92;
+  const y = FLOOR - 24 - drift - rand(i) * 104;
   return [x, y] as const;
 });
-const line = points.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
-const area = `${line} L${W - 12} ${H - 12} L12 ${H - 12} Z`;
+const line = points
+  .map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`)
+  .join(" ");
+const area = `${line} L${points[COUNT - 1][0].toFixed(1)} ${FLOOR} L${PAD} ${FLOOR} Z`;
+/** The point a callout hangs off — never the first or last, which sit on an edge. */
+const marked = points[3 + Math.floor(rand(6) * 5)];
 
-// ── Tool design — schema fields, some long, some short ─────────────────────
-const fields = Array.from({ length: 4 }, (_, i) => ({
-  y: 26 + i * 24,
-  w: 70 + rand(i + 2) * 130,
-  lit: i === Math.floor(rand(5) * 4),
+// ── Tool design — a schema, with the one field carrying the argument ────────
+const fields = Array.from({ length: 5 }, (_, i) => ({
+  y: 74 + i * 34,
+  key: 44 + rand(i + 2) * 26,
+  value: 120 + rand(i + 7) * 190,
+  lit: i === Math.floor(rand(5) * 5),
 }));
 
-// ── Engineering — a pipeline of stages ─────────────────────────────────────
-const stages = Array.from({ length: 5 }, (_, i) => ({
-  x: 34 + i * ((W - 68) / 4),
-  y: 44 + (rand(i + 1) - 0.5) * 34,
+// ── Engineering — a pipeline, and the stage that answers ────────────────────
+// Six stages over a 150px spread, not five over 86. The first version kept
+// every node inside a shallow band in the middle of the frame, which drew a
+// nearly straight dotted line with a lot of nothing above and below it — the
+// one motif of the four that read as an empty card rather than a drawing.
+const STAGES = 6;
+const stages = Array.from({ length: STAGES }, (_, i) => ({
+  x: PAD + 26 + i * ((W - PAD * 2 - 52) / (STAGES - 1)),
+  y: 148 + (rand(i + 1) - 0.5) * 150,
 }));
-const wire = stages.map((s, i) => `${i === 0 ? "M" : "L"}${s.x.toFixed(1)} ${s.y.toFixed(1)}`).join(" ");
+const wire = stages
+  .map((s, i) => `${i === 0 ? "M" : "L"}${s.x.toFixed(1)} ${s.y.toFixed(1)}`)
+  .join(" ");
 
-// ── Privacy — a field of data, all but one column masked away ──────────────
-const cells = Array.from({ length: 40 }, (_, i) => ({
-  x: 16 + (i % 10) * 29,
-  y: 30 + Math.floor(i / 10) * 22,
-  on: rand(i % 8) > 0.35,
+// ── Privacy — a field of data, all but one column given up ──────────────────
+const COLS = 12;
+const ROWS = 5;
+const cells = Array.from({ length: COLS * ROWS }, (_, i) => ({
+  x: 150 + (i % COLS) * 38,
+  y: 74 + Math.floor(i / COLS) * 34,
+  on: rand(i % 8) > 0.34,
 }));
 ---
 
@@ -92,27 +147,99 @@ const cells = Array.from({ length: 40 }, (_, i) => ({
   aria-label={`${topic} — decorative`}
 >
   <defs>
-    <linearGradient id={`cover-${seed}`} x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color={accent} stop-opacity="0.3"></stop>
+    <linearGradient id={`wash-${uid}`} x1="0" y1="0" x2="0.75" y2="1">
+      <stop offset="0%" stop-color={accent} stop-opacity="0.16"></stop>
+      <stop offset="55%" stop-color={accent} stop-opacity="0.03"></stop>
       <stop offset="100%" stop-color={accent} stop-opacity="0"></stop>
     </linearGradient>
+
+    {/* Steeper than the wash, or the series looks like it is floating over an
+        unrelated tint rather than standing on its own fill. */}
+    <linearGradient id={`fill-${uid}`} x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color={accent} stop-opacity="0.34"></stop>
+      <stop offset="100%" stop-color={accent} stop-opacity="0"></stop>
+    </linearGradient>
+
+    <pattern id={`grid-${uid}`} width="32" height="32" patternUnits="userSpaceOnUse">
+      <path
+        d="M32 0H0V32"
+        fill="none"
+        stroke="currentColor"
+        class="text-ink-800"
+        stroke-width="1"
+        opacity="0.45"></path>
+    </pattern>
+
+    {/* Fades the grid downward, so it reads as a ground the motif stands on
+        rather than as graph paper laid over the whole card. */}
+    <linearGradient id={`gridfade-${uid}`} x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="white" stop-opacity="0.9"></stop>
+      <stop offset="100%" stop-color="white" stop-opacity="0"></stop>
+    </linearGradient>
+    <mask id={`gridmask-${uid}`}>
+      <rect width={W} height={H} fill={`url(#gridfade-${uid})`}></rect>
+    </mask>
   </defs>
 
+  {/* ── 1 and 2. Wash and grid, on every topic ────────────────────────── */}
+  <rect width={W} height={H} fill={`url(#wash-${uid})`}></rect>
+  <rect
+    width={W}
+    height={H}
+    fill={`url(#grid-${uid})`}
+    mask={`url(#gridmask-${uid})`}
+    opacity="0.7"></rect>
+
+  {/* ── 3. The motif ──────────────────────────────────────────────────── */}
   {
     topic === "Measurement" && (
       <>
-        <path d={area} fill={`url(#cover-${seed})`} />
+        {/* Drawn before the series, so the line sits over them. */}
+        {detailed &&
+          [0, 1, 2, 3].map((i) => (
+            <line
+              x1={PAD}
+              x2={W - PAD}
+              y1={FLOOR - 34 - i * 54}
+              y2={FLOOR - 34 - i * 54}
+              stroke="currentColor"
+              class="text-line"
+              stroke-width="1"
+            />
+          ))}
+
+        <path d={area} fill={`url(#fill-${uid})`} />
         <path
           d={line}
           stroke={accent}
-          stroke-width="2"
+          stroke-width="2.5"
           stroke-linecap="round"
           stroke-linejoin="round"
           vector-effect="non-scaling-stroke"
         />
+
         {points.map(([x, y]) => (
-          <circle cx={x} cy={y} r="2.5" fill={accent} opacity="0.55" />
+          <circle cx={x} cy={y} r="3" fill={accent} opacity="0.5" />
         ))}
+
+        {/* A dropped line and a ring: what turns a decorative squiggle into a
+            reading *of* something. First thing a card drops. */}
+        {detailed && (
+          <>
+            <line
+              x1={marked[0]}
+              x2={marked[0]}
+              y1={marked[1] + 10}
+              y2={FLOOR}
+              stroke={accent}
+              stroke-width="1.5"
+              stroke-dasharray="3 4"
+              opacity="0.55"
+            />
+            <circle cx={marked[0]} cy={marked[1]} r="7" fill="currentColor" class="text-ink-950" />
+            <circle cx={marked[0]} cy={marked[1]} r="7" stroke={accent} stroke-width="2.5" />
+          </>
+        )}
       </>
     )
   }
@@ -120,26 +247,52 @@ const cells = Array.from({ length: 40 }, (_, i) => ({
   {
     topic === "Tool design" && (
       <>
-        <path
-          d="M14 18 q-6 0 -6 8 v34 q0 8 -6 8 q6 0 6 8 v34 q0 8 6 8"
-          stroke={accent}
-          stroke-width="1.5"
+        {/* A schema is a bounded thing, so the fields sit in a panel. */}
+        <rect
+          x={PAD}
+          y="52"
+          width={W - PAD * 2}
+          height={FLOOR - 40}
+          rx="14"
+          fill="currentColor"
+          class="text-ink-950"
           opacity="0.5"
-          vector-effect="non-scaling-stroke"
         />
+        <rect
+          x={PAD}
+          y="52"
+          width={W - PAD * 2}
+          height={FLOOR - 40}
+          rx="14"
+          stroke="currentColor"
+          class="text-line"
+          stroke-width="1"
+        />
+
         {fields.map((field) => (
           <>
-            <rect x="30" y={field.y} width="14" height="7" rx="3.5" fill={accent} opacity="0.5" />
             <rect
-              x="52"
+              x={PAD + 26}
               y={field.y}
-              width={field.w}
-              height="7"
-              rx="3.5"
-              fill={field.lit ? accent : "currentColor"}
-              class={field.lit ? "" : "text-line"}
-              opacity={field.lit ? "0.8" : "1"}
+              width={field.key}
+              height="10"
+              rx="5"
+              fill={accent}
+              opacity={field.lit ? "0.85" : "0.4"}
             />
+            <rect
+              x={PAD + 26 + field.key + 16}
+              y={field.y}
+              width={field.value}
+              height="10"
+              rx="5"
+              fill={field.lit ? accent : "currentColor"}
+              class={field.lit ? "" : "text-line-strong"}
+              opacity={field.lit ? "0.55" : "1"}
+            />
+            {detailed && field.lit && (
+              <rect x={PAD + 8} y={field.y - 2} width="3" height="14" rx="1.5" fill={accent} />
+            )}
           </>
         ))}
       </>
@@ -149,30 +302,58 @@ const cells = Array.from({ length: 40 }, (_, i) => ({
   {
     topic === "Engineering" && (
       <>
+        {/* A rail down to the floor under each stage. It is what stops six
+            circles on a dotted line from floating: the nodes now stand on
+            something, and the uneven heights read as stages rather than as
+            scatter. */}
+        {stages.map((stage) => (
+          <line
+            x1={stage.x}
+            x2={stage.x}
+            y1={stage.y}
+            y2={FLOOR}
+            stroke="currentColor"
+            class="text-line"
+            stroke-width="1"
+          />
+        ))}
+
         <path
           d={wire}
           stroke={accent}
-          stroke-width="1.5"
-          stroke-dasharray="4 5"
-          opacity="0.55"
+          stroke-width="2"
+          stroke-dasharray="5 7"
+          opacity="0.6"
           vector-effect="non-scaling-stroke"
         />
-        {stages.map((stage, i) => (
-          <>
-            <circle cx={stage.x} cy={stage.y} r="9" fill="currentColor" class="text-ink-950" />
-            <circle
-              cx={stage.x}
-              cy={stage.y}
-              r="9"
-              stroke={accent}
-              stroke-width="1.5"
-              opacity={i === stages.length - 1 ? "1" : "0.5"}
-              vector-effect="non-scaling-stroke"
-            />
-            {i === stages.length - 1 && <circle cx={stage.x} cy={stage.y} r="3.5" fill={accent} />}
-          </>
-        ))}
-        <rect x="12" y={H - 26} width={W - 24} height="1" fill="currentColor" class="text-line" />
+
+        {stages.map((stage, i) => {
+          const last = i === stages.length - 1;
+
+          return (
+            <>
+              {/* Filled with the page colour before the ring goes on, so the
+                  dashes stop at the node rather than running under it. */}
+              <circle
+                cx={stage.x}
+                cy={stage.y}
+                r={last ? 18 : 14}
+                fill="currentColor"
+                class="text-ink-950"
+              />
+              <circle
+                cx={stage.x}
+                cy={stage.y}
+                r={last ? 18 : 14}
+                stroke={accent}
+                stroke-width="2"
+                opacity={last ? "1" : "0.5"}
+                vector-effect="non-scaling-stroke"
+              />
+              {last && <circle cx={stage.x} cy={stage.y} r="6" fill={accent} />}
+            </>
+          );
+        })}
       </>
     )
   }
@@ -184,22 +365,43 @@ const cells = Array.from({ length: 40 }, (_, i) => ({
           <rect
             x={cell.x}
             y={cell.y}
-            width="20"
-            height="9"
-            rx="2"
+            width="26"
+            height="12"
+            rx="3"
             fill="currentColor"
-            class={cell.on ? "text-line" : "text-line-soft"}
+            class={cell.on ? "text-line-strong" : "text-line-soft"}
           />
         ))}
-        {/* The one column that survives: a hash, standing in for everything
-            the other columns used to hold. */}
-        <rect x="16" y="24" width="49" height="80" rx="6" fill={accent} opacity="0.12" />
+
+        {/* The one column that survives, standing in for everything the rest
+            used to hold — four characters of a real twelve-character
+            `args_hash`, which is as much as an eye takes in at this size. */}
+        <rect
+          x={PAD + 8}
+          y="60"
+          width="84"
+          height={FLOOR - 52}
+          rx="12"
+          fill={accent}
+          opacity="0.14"
+        />
+        <rect
+          x={PAD + 8}
+          y="60"
+          width="84"
+          height={FLOOR - 52}
+          rx="12"
+          stroke={accent}
+          stroke-width="1.5"
+          opacity="0.5"
+        />
         <text
-          x="40"
-          y="70"
+          x={PAD + 50}
+          y={H / 2 + 2}
           text-anchor="middle"
           font-family="var(--font-mono)"
-          font-size="11"
+          font-size="19"
+          font-weight="500"
           fill={accent}
         >
           9c1b
@@ -207,4 +409,14 @@ const cells = Array.from({ length: 40 }, (_, i) => ({
       </>
     )
   }
+
+  {/* ── 4. The floor ──────────────────────────────────────────────────── */}
+  <line
+    x1={PAD}
+    x2={W - PAD}
+    y1={FLOOR}
+    y2={FLOOR}
+    stroke="currentColor"
+    class="text-line"
+    stroke-width="1"></line>
 </svg>

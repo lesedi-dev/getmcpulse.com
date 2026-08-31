@@ -1,5 +1,6 @@
 ---
 import Detail from "../layouts/Detail.astro";
+import LanguagePicker from "../components/LanguagePicker.astro";
 import { WRAP_SNIPPET, SITE } from "../lib/site";
 
 const MANAGERS = [
@@ -33,11 +34,16 @@ const PRE =
 ---
 
 <Detail
-  eyebrow="Install"
+  eyebrow="Installation"
   title="Two lines, and it is measuring"
   lead="The package runs inside your own server. It is not a proxy — your URL does not change, your OAuth does not break, and if MCPulse is down your server keeps serving."
-  description="Install @mcpulse/sdk: add the package, set your key, wrap your server. Four steps, about two minutes."
+  description="Install @mcpulse/sdk: pick your language, add the package, set your key, wrap your server. Four steps, about two minutes."
 >
+  {/* The language grid comes first, and the four steps are its TypeScript
+      panel. So the page answers "is there one for me" before it explains
+      anything — a Python author who scrolls through four TypeScript steps to
+      reach that answer has been told we have nothing for them twice. */}
+  <LanguagePicker>
   <ol class="space-y-12">
     <li class="reveal">
       <p class="font-mono text-xs text-ink-700">01</p>
@@ -109,7 +115,13 @@ const PRE =
             <th class="border-b border-line pb-2.5 font-medium">Option</th>
             <th class="border-b border-line pb-2.5 font-medium">Type</th>
             <th class="border-b border-line pb-2.5 font-medium">Default</th>
-            <th class="border-b border-line pb-2.5 font-medium"></th>
+            {/* Named for a screen reader, blank on screen. An empty header
+                leaves that column's cells announced under nothing, which is
+                what axe fails it for — and printing "What it does" above a
+                column of sentences is a label restating its own contents. */}
+            <th class="border-b border-line pb-2.5 font-medium">
+              <span class="sr-only">What it does</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -141,4 +153,5 @@ const PRE =
       >.
     </p>
   </section>
+  </LanguagePicker>
 </Detail>
