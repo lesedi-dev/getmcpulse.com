@@ -20,17 +20,16 @@ import tailwindcss from "@tailwindcss/vite";
  * version of itself lived on somebody else's property. That is worse than
  * having no canonical at all.
  *
- * There is no custom domain yet, so the honest answer is wherever this is
- * actually deployed. Vercel sets `VERCEL_PROJECT_PRODUCTION_URL` at build time
- * to the production host, which is true on any given build without anyone
- * maintaining it. The day a domain exists, set `SITE_URL` and nothing else
- * changes.
+ * The domain now exists and it is `getmcpulse.com`, so that is the default
+ * rather than a guess at whichever host this build landed on. `SITE_URL` still
+ * overrides it, which is what a preview deployment wants.
+ *
+ * `VERCEL_PROJECT_PRODUCTION_URL` is gone with it. It resolved to
+ * `mcpulse-eta.vercel.app` on a production build, and a deploy host that
+ * out-ranks the real domain in every canonical tag is the same bug this comment
+ * was written about, pointed at a different stranger.
  */
-const site =
-  process.env.SITE_URL ??
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "http://localhost:4321");
+const site = process.env.SITE_URL ?? "https://getmcpulse.com";
 
 export default defineConfig({
   site,

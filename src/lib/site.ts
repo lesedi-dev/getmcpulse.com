@@ -19,7 +19,7 @@ export const SITE = {
    * structured data and the canonical tag cannot disagree.
    */
   url: import.meta.env.SITE,
-  app: "https://mcpulse-eta.vercel.app",
+  app: "https://app.getmcpulse.com",
   npm: "https://www.npmjs.com/package/@mcpulse/sdk",
 
   /**
@@ -35,18 +35,18 @@ export const SITE = {
   github: "https://github.com/getmcpulse",
 
   /**
-   * The documentation, on Mintlify's own domain until a real one exists.
+   * The documentation, on our own domain now that there is one.
    *
-   * Deliberately **not** `docs.mcpulse.com`. That hostname answers 200, which is
-   * what makes it dangerous rather than obviously broken, but what it serves is
-   * HugeDomains' "McPulse.com is for sale" page — `mcpulse.com` is not ours and
-   * neither is anything under it.
+   * Still deliberately **not** `docs.mcpulse.com`, which is where this nearly
+   * went and which the docs repo is unhelpfully still named after. That
+   * hostname answers 200 — what makes it dangerous rather than obviously broken
+   * — and what it serves is HugeDomains' "McPulse.com is for sale" page.
+   * `mcpulse.com` is not ours; `getmcpulse.com` is.
    *
-   * So this points where the docs actually are. One constant, so the day a
-   * domain exists this is a single line rather than a search across the site,
-   * the skills repo and the docs themselves.
+   * Being one constant is what made the move a single line here rather than a
+   * search across the site, the skills repo and the docs themselves.
    */
-  docs: "https://mc-pulse.mintlify.site",
+  docs: "https://docs.getmcpulse.com",
 
   /** The agent skill: a workflow guide to pair with the MCP connector. */
   skills: "https://github.com/getmcpulse/skills",
