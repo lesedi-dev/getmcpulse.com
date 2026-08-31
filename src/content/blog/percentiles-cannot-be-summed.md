@@ -6,9 +6,9 @@ topic: Engineering
 minutes: 4
 ---
 
-A rollup table exists so that a range query does not have to touch millions of raw events. It works because the quantities in it are additive: calls, errors, bytes. Sum the days in the range and the answer is correct.
+A counter table exists so that a range query does not have to touch millions of raw call rows. It works because the quantities in it are additive: calls, errors, bytes. Sum the buckets in the range and the answer is correct.
 
-Latency percentiles are not additive, and storing a daily p95 quietly breaks every range longer than a day.
+Latency percentiles are not additive, and storing a p95 per bucket quietly breaks every range longer than one.
 
 ## Why the average of two p95s is not a p95
 
@@ -23,7 +23,7 @@ The failure is not a rounding error. A range that includes one quiet day with a 
 
 ## Four counters
 
-So `tool_days` stores buckets instead:
+So `tool_hours` stores buckets instead:
 
 ```sql
 ms_under_100   int default 0,
@@ -32,7 +32,7 @@ ms_under_2000  int default 0,
 ms_over_2000   int default 0
 ```
 
-Every call increments exactly one. These are counts, so they add across any number of days, any set of tools, any range — the same way calls and errors do.
+Every call increments exactly one. These are counts, so they add across any number of hours, any set of tools, any client, any range — the same way calls and errors do.
 
 From the summed counters, a p95 is recovered by walking the buckets to find the one the 95th percentile falls in. The result is an approximation bounded by the bucket edges, and that is the trade: exactness for the ability to aggregate correctly.
 
@@ -53,7 +53,7 @@ Even distribution would have been prettier and less useful. The gap between 100m
 
 ## The general rule
 
-When designing a rollup, the question for every column is: *can this be added?*
+When designing a counter table, the question for every column is: *can this be added?*
 
 Counts add. Sums add. Sums of squares add, which is how you get a standard deviation later if you want one. Percentiles, averages, medians, ratios and rates do not — and a ratio stored as a ratio is an average waiting to be taken incorrectly.
 

@@ -55,9 +55,13 @@ export const METRICS = [
       {
         name: "Calls per day",
         detail:
-          "The shape of a range — drawn flat at zero when nothing happened, never left blank.",
+          "The shape of a range — by the hour when you ask for a single day, drawn flat at zero when nothing happened, never left blank.",
       },
-      { name: "Which client", detail: "Claude Desktop, Cursor, or something you did not expect." },
+      {
+        name: "Which client",
+        detail:
+          "Claude Desktop, Cursor, or something you did not expect — with its own outcomes, latency and first-call rate, not just a share of the total.",
+      },
       { name: "Crashes", detail: "Your handler threw. A bug list, sorted by tool." },
       {
         name: "Tool errors",
@@ -149,5 +153,87 @@ export const INSIGHT_RULES = [
     rule: "Slow tool",
     when: "ms_over_2000 / calls > 0.1",
     says: "N% of X calls take over 2 seconds.",
+  },
+] as const;
+
+/**
+ * The plans, mirroring `services/plans.ts` in the API.
+ *
+ * A copy, and knowingly so. The API is the authority — the dashboard renders
+ * the catalogue it sends, and nothing here is ever read by anything that
+ * charges anybody. But this site is a static build with no session and no
+ * account, so it cannot fetch a catalogue that only answers an authenticated
+ * request. Restated rather than fetched, in one file, with the source named.
+ *
+ * `highlights` is the plan card's own list, in the same order the dashboard
+ * shows it, so somebody comparing this page against the one behind the login
+ * reads the same six lines.
+ */
+export const PLANS = [
+  {
+    id: "free",
+    name: "Free",
+    tagline: "See whether your server is working.",
+    price: { month: 0, year: 0 },
+    highlights: [
+      "7 days of history",
+      "10,000 calls a month",
+      "1 MCP",
+      "1 person",
+      "All 16 metrics",
+      "API and MCP access",
+    ],
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    tagline: "For a server people depend on.",
+    price: { month: 49, year: 490 },
+    highlights: [
+      "Every date range",
+      "1M calls a month",
+      "Unlimited MCPs",
+      "Unlimited team",
+      "Alerts and the weekly digest",
+      "90 days of individual calls",
+    ],
+  },
+  {
+    id: "scale",
+    name: "Scale",
+    tagline: "For a lot of traffic and a long memory.",
+    price: { month: 100, year: 1_000 },
+    highlights: [
+      "Everything in Pro",
+      "10M calls a month",
+      "365 days of individual calls",
+      "Priority support",
+    ],
+  },
+] as const;
+
+/**
+ * The questions a price list creates, answered on the same page.
+ *
+ * Each of these is a real decision recorded in the product rather than a
+ * reassurance: what a cap does when you hit it, what a downgrade destroys, and
+ * who the seller actually is.
+ */
+export const PRICING_NOTES = [
+  {
+    q: "What happens at the cap?",
+    a: "Recording stops, and the app says so — a banner on the overview, the meter red on the billing page, the chart flat from the moment it stopped. Your server carries on serving; the SDK treats a refused batch the way it treats a network failure and drops it, so a cap costs you data and never a tool call. A cap that is not a cap is a line nobody can plan around.",
+  },
+  {
+    q: "Does downgrading delete anything?",
+    a: "History is hidden, not deleted. The counters are one row per hour per tool per client and cost almost nothing to keep, so a plan decides how far back the date picker reaches rather than when a clock starts — upgrade later and the months you could not see are already there. The one thing genuinely deleted is the individual call log, which is a row per call: 7 days on Free, 90 on Pro, 365 on Scale.",
+  },
+  {
+    q: "Why is a year ten months?",
+    a: "Because the card fee is the part that punishes a small plan. Our merchant of record charges a percentage plus a flat fifty cents, and a year is one of those rather than twelve. Paying yearly costs us less to collect, so it costs you less to pay.",
+  },
+  {
+    q: "Who takes the payment?",
+    a: "Polar, as merchant of record. They are the seller, so VAT, GST and sales tax in every country are handled by somebody who does that for a living. Cards, invoices and cancellation all live in their portal — MCPulse never holds a card number.",
   },
 ] as const;

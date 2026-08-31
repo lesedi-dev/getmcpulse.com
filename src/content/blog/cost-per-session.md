@@ -26,9 +26,9 @@ A session is one person doing one piece of work. It absorbs retries, chains and 
 
 It is also the unit that catches the failure mode nobody looks for. A tool that is individually cheap but always called four times in a row is expensive, and only a per-session view shows it.
 
-## The rollup trap underneath it
+## The counting trap underneath it
 
-Sessions cannot be counted from a daily table. A conversation that starts at 23:40 and ends at 00:20 belongs to two days, and summing daily counts reports it twice — so the range total runs permanently high, by an amount nobody can see.
+Sessions cannot be counted from a bucketed table. A conversation that starts at 23:40 and ends at 00:20 belongs to two days, and summing daily counts reports it twice — so the range total runs permanently high, by an amount nobody can see.
 
 So sessions have their own table, one row per session ever, carrying `total_bytes` on the row. Counting sessions means counting rows whose start falls in the range, and the division uses bytes from the same rows the count came from. Taking the numerator from one place and the denominator from another is how a ratio ends up wrong in exactly the cases that matter.
 

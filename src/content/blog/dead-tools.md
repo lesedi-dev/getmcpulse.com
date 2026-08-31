@@ -29,7 +29,7 @@ You cannot find a dead tool by looking at your call data, because a tool with no
 So it takes both sides:
 
 - `tools` — every tool your server registered, from the startup payload, with its schema size
-- `tool_days` — one row per tool per day that had at least one call
+- `tool_hours` — one row per tool per client per hour that had at least one call
 
 A dead tool is in the first and absent from the second, over the range you are looking at. That is why the SDK sends a startup payload at all: without it, a tool that has never run is indistinguishable from a tool that does not exist.
 

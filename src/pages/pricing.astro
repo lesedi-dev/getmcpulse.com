@@ -1,0 +1,190 @@
+---
+import Base from "../layouts/Base.astro";
+import { PLANS, PRICING_NOTES } from "../lib/content";
+import { SITE } from "../lib/site";
+
+/**
+ * Pricing, on `Base` rather than `Detail`.
+ *
+ * Every other menu page is a reading column — `Detail` caps it at `max-w-3xl`,
+ * which is right for prose and wrong for three cards side by side: 768px
+ * divided three ways is narrower than the price it has to hold. So the header
+ * matches `Detail`'s exactly and the grid gets the full container underneath
+ * it.
+ *
+ * There is no monthly/yearly toggle. The dashboard has one because it is about
+ * to charge you and the interval is a thing you are choosing; here both prices
+ * fit on the card, and a control whose only job is to hide half the answer is
+ * a click between a reader and the number they came for.
+ */
+
+/**
+ * "Two months free", derived from the two prices rather than written down.
+ *
+ * A discount stated as a constant is a discount that outlives the price change
+ * that ended it. This one cannot: change either number in `content.ts` and the
+ * sentence follows.
+ */
+const monthsFree = (plan: (typeof PLANS)[number]) =>
+  plan.price.month === 0 ? 0 : 12 - Math.round(plan.price.year / plan.price.month);
+
+const money = (amount: number) => `$${amount.toLocaleString("en-US")}`;
+---
+
+<Base
+  title="Pricing"
+  description="Free for one server, $49 a month for a server people depend on. Recording stops at the cap rather than billing past it, and history is hidden by a plan rather than deleted."
+>
+  <article>
+    <header class="relative overflow-hidden border-b border-line-soft">
+      <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>
+
+      <div class="mx-auto max-w-6xl px-5 pt-36 pb-14 sm:px-8 sm:pt-44">
+        <div class="reveal mx-auto max-w-3xl">
+          <p class="text-sm font-medium text-cyan">Pricing</p>
+          <h1
+            class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-[2.75rem] sm:leading-[1.1]"
+          >
+            Free for one server. $49 for a server people depend on.
+          </h1>
+          <p class="mt-5 text-lg leading-8 text-pretty text-ink-500">
+            Every plan records all sixteen metrics and reaches your own data through the API and an
+            MCP connector. What you are buying is how much traffic, how far back, and whether it
+            tells you when something breaks.
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8">
+      <div class="grid gap-4 lg:grid-cols-3">
+        {
+          PLANS.map((plan, i) => {
+            const featured = plan.id === "pro";
+
+            return (
+              <section
+                class:list={[
+                  "reveal relative flex flex-col rounded-2xl border p-7",
+                  featured
+                    ? "border-cyan/40 bg-cyan-wash"
+                    : "border-line bg-surface",
+                ]}
+                style={`--reveal-delay: ${i * 90}ms`}
+              >
+                {featured && (
+                  <span class="absolute -top-2.5 left-7 rounded-full bg-btn px-2.5 py-0.5 text-[11px] font-medium text-btn-fg">
+                    Most servers
+                  </span>
+                )}
+
+                <h2 class="text-[15px] font-semibold tracking-tight text-ink-100">{plan.name}</h2>
+                <p class="mt-1.5 text-sm leading-6 text-ink-500">{plan.tagline}</p>
+
+                <p class="mt-6 flex items-baseline gap-1.5">
+                  <span class="text-4xl font-semibold tracking-tight text-ink-100">
+                    {money(plan.price.month)}
+                  </span>
+                  {/* `ink-500`, not the site's usual muted `ink-700`. These two
+                      lines sit on the featured card's tinted ground, where
+                      `ink-700` measures 4.2:1 against it — under AA, in both
+                      themes. One class for all three cards rather than a
+                      conditional: the price interval and the yearly saving are
+                      the two things a reader is here for. */}
+                  <span class="text-sm text-ink-500">/ month</span>
+                </p>
+
+                {/* The yearly line sits under the monthly one rather than
+                    behind a toggle, and says what it saves in months rather
+                    than in per cent — "two months free" is the offer, and a
+                    percentage is that offer written in a unit nobody buys in.
+
+                    Fixed height, so the three prices sit on one baseline
+                    whether or not a card has a yearly option. */}
+                <p class="mt-1.5 h-5 text-sm text-ink-500">
+                  {plan.price.year > 0
+                    ? `or ${money(plan.price.year)} a year — ${monthsFree(plan)} months free`
+                    : "No card, no trial to expire"}
+                </p>
+
+                <ul class="mt-7 mb-8 space-y-2.5 border-t border-line-soft pt-6 text-sm">
+                  {plan.highlights.map((line) => (
+                    <li class="flex gap-2.5 leading-6 text-ink-300">
+                      <svg
+                        class="mt-1.5 h-3 w-3 shrink-0 text-cyan"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M2 6.5l2.5 2.5L10 3.5" />
+                      </svg>
+                      {line}
+                    </li>
+                  ))}
+                </ul>
+
+                {/* `mt-auto`, because the three feature lists are different
+                    lengths and a grid stretches every card to the tallest. Without
+                    it the buttons sit at three different heights, which reads as
+                    three unrelated cards rather than one choice. */}
+                <a
+                  href={SITE.app}
+                  class:list={[
+                    "mt-auto flex h-11 items-center justify-center rounded-xl pt-0.5 text-sm font-medium transition-colors",
+                    featured
+                      ? "bg-btn text-btn-fg hover:bg-btn-hover"
+                      : "border border-line bg-surface-2 text-ink-100 hover:border-line-strong",
+                  ]}
+                >
+                  {plan.id === "free" ? "Start measuring" : `Start on ${plan.name}`}
+                </a>
+              </section>
+            );
+          })
+        }
+      </div>
+
+      <p class="reveal mt-6 text-center text-sm text-ink-700">
+        Every plan starts free. There is no trial, so there is nothing to expire and no card to
+        take up front.
+      </p>
+
+      <section class="reveal mt-20 border-t border-line-soft pt-14">
+        <h2 class="text-xl font-semibold tracking-tight text-ink-100">
+          The parts of a price list that usually go unsaid
+        </h2>
+
+        <dl class="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2">
+          {
+            PRICING_NOTES.map((note) => (
+              <div>
+                <dt class="text-[15px] font-medium text-ink-100">{note.q}</dt>
+                <dd class="mt-2 text-sm leading-6.5 text-ink-500">{note.a}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </section>
+
+      <section class="reveal mt-14 border-t border-line-soft pt-14">
+        <h2 class="text-xl font-semibold tracking-tight text-ink-100">
+          What a free account can actually do
+        </h2>
+        <p class="mt-3 text-[15px] leading-7 text-ink-500">
+          All sixteen metrics, the insight rules, the live call feed, the whole API, and the MCP
+          connector that reads your own analytics inside Claude. Not a demo of the product with the
+          interesting half removed — a week of it, on one server, for one person.
+        </p>
+        <p class="mt-4 text-[15px] leading-7 text-ink-500">
+          The two things it does not have are the two that only matter once a server is real: a
+          date range longer than a week, and alerts that tell you when a tool's first-call rate
+          falls without you going to look.
+        </p>
+      </section>
+    </div>
+  </article>
+</Base>

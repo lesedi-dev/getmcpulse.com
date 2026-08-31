@@ -65,21 +65,21 @@ export const NAV = [
   { href: "/metrics", label: "Metrics" },
   { href: "/install", label: "Install" },
   /**
-   * Docs sits between Install and Blog, and leaves the site.
+   * Pricing, where Docs used to sit.
    *
-   * The order is the reading order: what it is, what it measures, how to fit
-   * it, then everything else about it. Docs after Install because nobody wants
-   * a reference before they have anything running — and before Blog, because
-   * the blog is why the product thinks what it thinks, which is a different
-   * appetite entirely.
+   * Docs left the menu. It was the one item that took a reader off the site
+   * entirely, and it was answering a question nobody asks before they have
+   * decided: a reference is what you want *after* you have installed something,
+   * which is why it stayed one click away in the footer rather than in the
+   * header beside four pages about whether to bother.
    *
-   * An absolute URL rather than a flag saying so: `Nav.astro` compares `href`
-   * against the current path to mark the active item, and a full URL simply
-   * never matches — which is the correct answer, since you are never "on" the
-   * docs while on this site. Carrying an `external: true` nobody reads would be
-   * one more thing to keep true.
+   * Pricing is the question they do ask, and it had no answer anywhere on this
+   * site — which for a product that now takes money is worse than a bad price.
+   *
+   * The order is still the reading order: what it is, what it measures, how to
+   * fit it, what it costs, then why it thinks what it thinks.
    */
-  { href: SITE.docs, label: "Docs" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/blog", label: "Blog" },
 ] as const;
 

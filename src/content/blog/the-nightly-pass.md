@@ -24,14 +24,14 @@ You could hold each call in memory for 30 seconds and then decide. That means st
 
 At 02:00 UTC, `pg_cron` runs the pass over yesterday, per MCP:
 
-1. Load yesterday's events grouped by session, ordered by `started_at`.
+1. Load yesterday's calls grouped by session, ordered by `started_at`.
 2. Walk each session in order.
 3. For each call, look ahead 30 seconds for the same `tool_name`. Different `args_hash` → a retry. Same hash → pagination or polling, not a retry.
 4. Mark first-call success where the outcome is `ok`, `is_empty` is false, and no retry followed.
-5. Update `tool_days.retries` and `tool_days.first_call_ok`.
+5. Update `tool_hours.retries` and `tool_hours.first_call_ok`.
 6. From consecutive calls in a session, increment `tool_pairs` for each ordered pair.
 
-The results land in the same rollup rows everything else lives in, so a range query does not care which metrics were computed live and which overnight.
+The results land in the same counter rows everything else lives in, keyed by tool *and* client, so a range query does not care which metrics were computed live and which overnight — and a client-filtered first-call rate is those rows summed over tools rather than a second pass.
 
 02:00 UTC is chosen because the day being processed is complete everywhere. Running at local midnight would process a day that is still in progress for half the world.
 
@@ -51,8 +51,8 @@ The exception is exactly here: calls exist, and the nightly pass has not reached
 
 That is the whole rule. Zero when the answer is genuinely zero. A dash only when the number is genuinely unknown.
 
-## Why events survive long enough
+## Why the call log survives long enough
 
-The pass needs raw events for yesterday, in order, with argument hashes. Rollups cannot produce it — they have already aggregated away the sequence.
+The pass needs the raw calls for yesterday, in order, with argument hashes. Counters cannot produce that — they have already aggregated away the sequence.
 
-Which sets the constraint on retention: the cleanup job that deletes old events must run *after* the nightly pass, never before. It is scheduled an hour later for that reason, and it stays disabled until storage is a genuine cost, because the cheapest possible bug is deleting the data your headline metric is computed from.
+Which sets the constraint on retention: the cleanup job that deletes old calls must run *after* the nightly pass, never before. It is scheduled an hour later for that reason, and it stays disabled until storage is a genuine cost, because the cheapest possible bug is deleting the data your headline metric is computed from.

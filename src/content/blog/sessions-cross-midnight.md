@@ -1,12 +1,12 @@
 ---
-title: Sessions cross midnight, and other rollup traps
-description: Daily rollups are how a dashboard stays fast. But some things are not daily, and summing them by day quietly double-counts every one that spans two.
+title: Sessions cross midnight, and other counter traps
+description: Bucketed counters are how a dashboard stays fast. But some things are not buckets, and summing them by day quietly double-counts every one that spans two.
 published: 2026-06-02
 topic: Engineering
 minutes: 4
 ---
 
-The rollup pattern is straightforward. Every event increments a row in a per-day table; the dashboard reads the rollups and never touches raw events. Ranges become a `sum` over a handful of rows instead of a scan over millions.
+The pattern is straightforward. Every call increments a row in a bucketed counter table; the dashboard reads those counters and never touches the raw call log. Ranges become a `sum` over a handful of rows instead of a scan over millions.
 
 It works because most quantities belong to a moment. A call happened at a time, on a day, and it counts once.
 
@@ -46,22 +46,22 @@ One row per session, ever. Counting sessions in a range means counting rows whos
 
 Cost per session is total bytes divided by session count. Both halves have to come from the same place or the ratio is nonsense.
 
-Since the session row already carries `total_bytes`, the division happens over the same set of rows the count came from. Taking bytes from a daily rollup and sessions from the session table would give a ratio whose numerator and denominator disagree about what a day is — and the disagreement would only appear on ranges containing a boundary-crossing session, which is the worst kind of bug to have.
+Since the session row already carries `total_bytes`, the division happens over the same set of rows the count came from. Taking bytes from a bucketed counter and sessions from the session table would give a ratio whose numerator and denominator disagree about what a day is — and the disagreement would only appear on ranges containing a boundary-crossing session, which is the worst kind of bug to have.
 
-## The other trap: things with no daily dimension
+## The other trap: a dimension the table does not have
 
-`server_days.clients` is a JSONB object counting calls per client name. It has no tool column, and it cannot get one — a client connects to your server, not to a tool.
+For a while the client split lived in its own table, counting calls per client with no tool column beside them. So filtering the overview to one tool could not narrow it, and there were two options with only one of them honest: return the unfiltered figure, or return nothing.
 
-So when someone filters the overview to one tool, that number cannot be filtered. There are two options and only one of them is honest: return the unfiltered figure, or return nothing.
+Returning nothing was the right call, and it was also a signal that the table was wrong. The information existed — the same calls were being counted twice, once by tool and once by client, in two rows that could never be re-joined. The fix was not a better blank. It was one table keyed by both, so *which tool, for which client* is a row rather than a join that cannot be written.
 
-MCPulse returns `null`, and the page says why. A server-wide number sitting inside a filtered view reads as though it had been narrowed, and a reader who trusts it draws a conclusion about one tool from data about all of them. A blank with an explanation is understood; a wrong number is acted on.
+**Sessions keep the blank, because for them it is not a missing column.** A session belongs to your server, not to a tool: scoping "sessions" to `search_orders` is not a harder query, it is a meaningless one. So under a tool filter the session figures come back `null` and the page says why.
 
-Sessions have the same limitation for the same reason, and get the same treatment.
+That distinction is worth holding onto. A number that cannot be narrowed *yet* is a schema problem and should be fixed. A number that cannot be narrowed *at all* is a fact about the thing being counted, and the honest answer is a blank with a sentence next to it. A server-wide figure sitting inside a filtered view reads as though it had been narrowed, and a reader who trusts it draws a conclusion about one tool from data about all of them.
 
 ## The rule this all comes down to
 
-Before adding a column to a daily rollup, ask what happens to it at midnight.
+Before adding a column to a bucketed counter, ask what happens to it at the boundary.
 
-If the thing being counted happened at an instant, a daily row is right. If it has a duration, or belongs to something with a duration, it needs its own table keyed by identity — and the count comes from rows, not from sums.
+If the thing being counted happened at an instant, a bucket is right. If it has a duration, or belongs to something with a duration, it needs its own table keyed by identity — and the count comes from rows, not from sums.
 
 Getting this wrong produces numbers that are plausible, stable, and quietly inflated. Those are far more expensive than numbers that are obviously broken, because nobody goes looking for them.
