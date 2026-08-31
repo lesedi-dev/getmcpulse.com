@@ -22,12 +22,16 @@ import { OUTCOMES, PILLARS, METRICS, INSIGHTS } from "../lib/content";
       class="mx-auto max-w-6xl px-5 pt-36 pb-24 sm:px-8 sm:pt-44 sm:pb-32 xl:min-h-[54rem] xl:pb-24"
     >
       <div class="reveal max-w-3xl xl:max-w-[34rem]">
+        {/* Whichever post we are currently leading with. Hardcoded rather
+            than read from the collection, because "newest" is not the same as
+            "worth interrupting a first-time reader for", and this is the only
+            slot above the headline. Changing it should be a deliberate edit. */}
         <a
-          href="/blog/what-mcp-servers-cannot-tell-you"
+          href="/blog/reading-5000-mcp-schemas"
           class="inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 py-1 pr-3 pl-1 text-xs text-ink-300 transition-colors hover:border-cyan/30 hover:text-ink-100"
         >
           <span class="rounded-full bg-cyan-wash px-2 py-0.5 font-medium text-cyan">New</span>
-          What MCP servers cannot tell you →
+          We read the schemas of 4,951 MCP servers →
         </a>
 
         <h1
