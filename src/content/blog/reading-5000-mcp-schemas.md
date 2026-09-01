@@ -178,6 +178,8 @@ Three things, ordered by how common the problem is in the data. None of them cha
 
 3. **If you have more than about thirty tools, audit for collisions specifically.** Above that size, roughly one tool in six has no distinguishing word, rising to one in three past sixty. Splitting a large server, or collapsing near-identical tools into one with a mode parameter, does more than rewording.
 
+All three are measurable on your own server rather than estimated. Paste your `tools/list` response into [the schema checker](/check) and it runs the same tests this post ran, scored against the bucket your server falls into rather than the corpus-wide average. It runs in your browser — the schema is not uploaded, which matters because plenty of the servers worth checking are not public yet.
+
 ## What we are building
 
 We ran this because we are building [MCPulse](https://getmcpulse.com) — an SDK that runs inside your MCP server and reports what actually happens: which tools get retried, which return empty, where argument errors cluster, and how much your schemas cost per session.

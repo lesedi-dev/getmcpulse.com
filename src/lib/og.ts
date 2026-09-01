@@ -341,6 +341,14 @@ const STATIC_PAGES: (OgCard & { path: string })[] = [
     blurb: "Pick your language, add the package, set your key, wrap your server. About two minutes.",
   },
   {
+    path: "/check",
+    id: "check",
+    eyebrow: "Free tool",
+    title: "Score your tool schemas against 4,951 servers",
+    blurb:
+      "Paste your tools/list JSON. Undescribed parameters, description collisions and schema token cost. Runs in your browser.",
+  },
+  {
     path: "/pricing",
     id: "pricing",
     eyebrow: "Pricing",

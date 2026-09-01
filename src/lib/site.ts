@@ -61,6 +61,19 @@ export const SITE = {
  * URL, their own title, and room to say more than a landing section can.
  */
 export const NAV = [
+  /**
+   * The checker, first.
+   *
+   * It is the only item in this row that is a *tool* rather than a page about
+   * us, and the only one somebody gets something from without an account, an
+   * install or a price. First because the row is read left to right and this is
+   * the cheapest thing in it to say yes to.
+   *
+   * It is deliberately not last. After "Pricing" it reads as an afterthought,
+   * and the reader who would most use it — somebody who has just been told a
+   * sixth of public tools cannot be told apart — has already decided by then.
+   */
+  { href: "/check", label: "Schema checker" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/metrics", label: "Metrics" },
   /**
@@ -97,10 +110,14 @@ export const NAV = [
    * Blog is **not** here, and the writing is not gone with it.
    *
    * It left for the same reason Docs did, one step further along: the menu is
-   * the four questions somebody asks while deciding whether to bother, and
-   * twenty essays on retry semantics is not one of them. It was also the item
-   * that made the row too wide — five links and a button is where the header
-   * stops fitting a small laptop without wrapping.
+   * the questions somebody asks while deciding whether to bother, and twenty
+   * essays on retry semantics is not one of them.
+   *
+   * The width argument that used to be here — "five links and a button is
+   * where the header stops fitting a small laptop" — was an estimate, and it
+   * was wrong. Five fit, with 16px to spare at 768px; the measurement is in
+   * `Nav.astro`. Blog stays out on the editorial argument alone, which is the
+   * stronger of the two anyway.
    *
    * It keeps its own column in the footer, with the two posts worth starting
    * on and the feed, which is where someone who has finished deciding goes

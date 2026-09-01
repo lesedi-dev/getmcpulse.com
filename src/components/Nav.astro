@@ -20,15 +20,15 @@ const path = Astro.url.pathname;
         <span class="text-[15px] font-semibold tracking-tight">{SITE.name}</span>
       </a>
 
-      <!-- ── Wide: the links, centred ────────────────────────────────────
-           Four items and a button need about 560px. Below that they used to
-           become a horizontal scroller with no affordance, so the last one
-           sat off the edge of a phone with nothing to say it was there.
+      {/* Below `md` these become a burger: as a row they were a horizontal
+          scroller with no affordance, so the last item sat off the edge of a
+          phone with nothing to say it was there.
 
-           Four is also the ceiling rather than a coincidence: it was five
-           until Blog moved to the footer, and "Installation" is a wider word
-           than the "Install" it replaced. A fifth item puts this row back into
-           the wrap it is built to avoid. -->
+          Five items and the button measure 500px. The tightest case is 768px —
+          the `md` breakpoint itself — where the mark and the button each keep
+          16px of clearance and the row stays one line. That is not much slack:
+          a sixth item, or a longer label, needs re-measuring at 768px rather
+          than eyeballing at laptop width, where there is room to spare. */}
       <ul class="col-start-2 hidden items-center gap-1 text-sm md:flex">
         {
           NAV.map((item) => {

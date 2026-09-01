@@ -1,0 +1,631 @@
+---
+import Base from "../layouts/Base.astro";
+import { SITE } from "../lib/site";
+import { STUDY } from "../lib/study";
+import { webPage } from "../lib/schema";
+
+/**
+ * The schema checker.
+ *
+ * ── Why this page is not `Detail` ──────────────────────────────────────────
+ * `Detail` caps its column at `max-w-3xl`, which is right for prose and wrong
+ * for a results table with a tool name and five numbers on each row. This is
+ * the only page on the site that is a *tool* rather than a document, so it
+ * gets the full container like `/pricing` does.
+ *
+ * ── Why the analysis ships as JavaScript, on a site with none ──────────────
+ * Every other page here renders to HTML and ships nothing, deliberately — the
+ * config comment is blunt about it: "a marketing site that ships a runtime to
+ * render text is the thing this product is arguing against." That argument is
+ * about *text*. This page is a calculator, and a calculator cannot be a static
+ * document.
+ *
+ * It is still the smallest version of itself: `check.ts` is imported by one
+ * module script, there is no framework, and the page renders and reads
+ * perfectly before that script arrives — the form is inert rather than absent.
+ *
+ * ── Why it runs in the browser rather than on a server ─────────────────────
+ * Not a feature we found afterwards. We are asking people to paste the tool
+ * schema of a server that may well be unreleased, and posting that to an
+ * endpoint would make this page the exact thing the product spends four blog
+ * posts promising not to be. Nothing here has a network call to remove, so
+ * there is no configuration in which it starts leaking.
+ */
+
+const title = "MCP schema checker";
+/** 159 characters. Google shows about 160, and this page has to earn the click. */
+const description = `Paste your tools/list JSON. Score your undescribed parameters, description collisions and schema token cost against ${STUDY.servers.toLocaleString("en-US")} public servers. Runs in your browser.`;
+
+const schema = webPage(Astro.site, { path: "/check", title, description });
+
+/** The four things it measures, and the corpus figure each is scored against. */
+const MEASURES = [
+  {
+    name: "Undescribed parameters",
+    corpus: `${(STUDY.undescribed_parameter_rate * 100).toFixed(1)}%`,
+    blurb:
+      "A parameter with no description is a parameter the model guesses at. It has the name and the type, and that is the whole brief.",
+  },
+  {
+    name: "Description collisions",
+    corpus: `${(STUDY.zero_distinctive_rate * 100).toFixed(1)}%`,
+    blurb:
+      "Tools whose description contains no word that its siblings do not also use. Clear English that still cannot tell a model which tool to pick.",
+  },
+  {
+    name: "Schema token cost",
+    corpus: `~${STUDY.median_tokens.toLocaleString("en-US")} tokens`,
+    blurb:
+      "Your whole tool list is sent on every connection, whether or not a single tool gets called.",
+  },
+  {
+    name: "Undeclared closed sets",
+    corpus: `${STUDY.prose_enum_parameters.toLocaleString("en-US")} parameters`,
+    blurb:
+      "A parameter that names its valid values in prose and then leaves the schema an open string.",
+  },
+] as const;
+---
+
+<Base title={title} description={description} schema={schema}>
+  <section class="relative overflow-hidden border-b border-line-soft">
+    <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>
+
+    <div class="mx-auto max-w-6xl px-5 pt-36 pb-14 sm:px-8 sm:pt-44">
+      <div class="reveal mx-auto max-w-3xl">
+        <p class="text-sm font-medium text-cyan">Free tool</p>
+        <h1
+          class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-[2.75rem] sm:leading-[1.1]"
+        >
+          Score your tool schemas against {STUDY.servers.toLocaleString("en-US")} public servers
+        </h1>
+        <p class="mt-5 text-lg leading-8 text-pretty text-ink-500">
+          Paste the <code class="font-mono text-[0.95em] text-ink-300">tools/list</code> JSON your
+          server returns. You get your undescribed-parameter rate, your description collisions and
+          your schema token cost, each next to the same figure measured across {
+            STUDY.servers.toLocaleString("en-US")
+          } servers in <a href={STUDY.post} class="text-cyan hover:underline">our survey</a>.
+        </p>
+        <p class="mt-4 text-sm leading-6 text-ink-700">
+          It runs entirely in this tab. Your schema is never uploaded, and there is no request to
+          remove — <a href="#how" class="text-cyan hover:underline">how it works</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── The tool ───────────────────────────────────────────────────────── -->
+  <section class="mx-auto max-w-6xl px-5 py-14 sm:px-8">
+    <div class="mx-auto max-w-3xl">
+      <label for="schema-input" class="text-[15px] font-semibold tracking-tight text-ink-100">
+        Your <span class="font-mono text-[0.95em]">tools/list</span> response
+      </label>
+      <p class="mt-1.5 text-sm leading-6 text-ink-500">
+        The whole JSON-RPC response, the <code class="font-mono text-[0.95em]">result</code> object,
+        or just the array of tools — any of the three.
+      </p>
+
+      <textarea
+        id="schema-input"
+        rows="12"
+        spellcheck="false"
+        autocapitalize="off"
+        autocomplete="off"
+        placeholder={'{\n  "tools": [\n    {\n      "name": "search_flights",\n      "description": "Find flights between two airports on a date.",\n      "inputSchema": {\n        "type": "object",\n        "properties": {\n          "origin": { "type": "string", "description": "IATA code, e.g. LHR" }\n        }\n      }\n    }\n  ]\n}'}
+        class="mt-4 block w-full resize-y rounded-xl border border-line bg-surface p-4 font-mono text-[13px] leading-6 text-ink-100 transition-colors placeholder:text-ink-700 focus:border-line-strong focus:outline-none"
+      ></textarea>
+
+      <div class="mt-4 flex flex-wrap items-center gap-3">
+        <button
+          id="check-run"
+          type="button"
+          class="inline-flex h-11 items-center rounded-xl bg-btn px-5 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover"
+        >
+          Check my schema
+        </button>
+        <button
+          id="check-example"
+          type="button"
+          class="inline-flex h-11 items-center rounded-xl border border-line bg-surface-2 px-4 text-sm font-medium text-ink-100 transition-colors hover:border-line-strong"
+        >
+          Load an example
+        </button>
+        <button
+          id="check-clear"
+          type="button"
+          class="hidden h-11 items-center px-2 text-sm text-ink-500 transition-colors hover:text-ink-100"
+        >
+          Clear
+        </button>
+      </div>
+
+      {/* Both live in the markup from the start and are toggled with `hidden`,
+          so nothing has to be built by script and the layout cannot jump. */}
+      <p
+        id="check-error"
+        role="alert"
+        class="mt-4 hidden rounded-xl border border-line bg-surface px-4 py-3 text-sm leading-6 text-ink-100"
+      >
+      </p>
+    </div>
+
+    <div id="check-results" class="mx-auto mt-12 hidden max-w-6xl"></div>
+  </section>
+
+  <!-- ── What it measures, before you have pasted anything ──────────────── -->
+  <section id="how" class="border-t border-line-soft">
+    <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8">
+      <div class="mx-auto max-w-3xl">
+        <h2 class="text-xl font-semibold tracking-tight text-ink-100">What it measures</h2>
+        <p class="mt-3 text-[15px] leading-7 text-ink-500">
+          Four things, all of them properties of a schema sitting still. None of them needs a model
+          in the loop, and none of them can tell you how often a model actually gets it wrong —
+          that needs traffic, which is <a href="/how-it-works" class="text-cyan hover:underline"
+            >the other half of this</a
+          >.
+        </p>
+      </div>
+
+      <div class="mt-9 grid gap-4 sm:grid-cols-2">
+        {
+          MEASURES.map((measure) => (
+            <div class="reveal rounded-xl border border-line bg-surface p-6">
+              <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <h3 class="text-[15px] font-semibold tracking-tight text-ink-100">{measure.name}</h3>
+                <p class="font-mono text-sm text-cyan">{measure.corpus}</p>
+              </div>
+              <p class="mt-2.5 text-sm leading-6.5 text-ink-500">{measure.blurb}</p>
+            </div>
+          ))
+        }
+      </div>
+
+      <div class="mx-auto mt-10 max-w-3xl space-y-4 text-sm leading-6.5 text-ink-700">
+        <p>
+          <strong class="font-medium text-ink-300">Parameters are counted at the top level</strong>
+           — <code class="font-mono">inputSchema.properties</code>, not nested object properties.
+          That is what the survey counted, so it is what a comparison can be made against.
+        </p>
+        <p>
+          <strong class="font-medium text-ink-300">Collisions are measured within your paste.</strong
+          > A tool's description is distinctive relative to the other tools you gave it, so pasting
+          half your server will flatter it.
+        </p>
+        <p>
+          <strong class="font-medium text-ink-300">Tokens are bytes ÷ 4</strong>, the same estimate
+          the survey uses. Close enough to compare servers, not exact for a bill. Size is measured
+          re-serialised, so pretty-printing your paste does not change the score.
+        </p>
+        <p>
+          <strong class="font-medium text-ink-300">Nothing here grades correctness.</strong> A
+          zero-distinctive description can be perfectly good writing — three of the four examples in
+          the survey are — and a schema that scores clean can still fail constantly for reasons no
+          schema shows.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Where to go next ───────────────────────────────────────────────── -->
+  <aside class="border-t border-line-soft">
+    <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8">
+      <div class="mx-auto grid max-w-3xl gap-4 sm:grid-cols-2">
+        <div class="rounded-2xl border border-line bg-ink-900/40 p-7">
+          <h2 class="text-lg font-semibold tracking-tight text-ink-100">Where the numbers are from</h2>
+          <p class="mt-2 text-sm leading-6.5 text-ink-500">
+            {STUDY.tools.toLocaleString("en-US")} tools and {
+              STUDY.parameters.toLocaleString("en-US")
+            } parameters across {STUDY.servers.toLocaleString("en-US")} servers, with the method and
+            the caveats written down.
+          </p>
+          <a href={STUDY.post} class="mt-5 inline-block text-sm font-medium text-cyan hover:underline">
+            Read the survey →
+          </a>
+        </div>
+
+        <div class="rounded-2xl border border-line bg-ink-900/40 p-7">
+          <h2 class="text-lg font-semibold tracking-tight text-ink-100">The half a schema cannot show</h2>
+          <p class="mt-2 text-sm leading-6.5 text-ink-500">
+            Which tools get retried, which return empty, and what your schemas actually cost per
+            session. Two lines inside your own server.
+          </p>
+          <a href={SITE.app} class="mt-5 inline-block text-sm font-medium text-cyan hover:underline">
+            Start measuring — free →
+          </a>
+        </div>
+      </div>
+    </div>
+  </aside>
+</Base>
+
+<script>
+  import { parseToolsList, analyse, CheckError, type Report } from "../lib/check";
+  import { STUDY } from "../lib/study";
+
+  const input = document.querySelector<HTMLTextAreaElement>("#schema-input")!;
+  const run = document.querySelector<HTMLButtonElement>("#check-run")!;
+  const example = document.querySelector<HTMLButtonElement>("#check-example")!;
+  const clear = document.querySelector<HTMLButtonElement>("#check-clear")!;
+  const error = document.querySelector<HTMLParagraphElement>("#check-error")!;
+  const results = document.querySelector<HTMLDivElement>("#check-results")!;
+
+  /**
+   * Visibility, through the class and only the class.
+   *
+   * The three panels start with Tailwind's `hidden` in their `class`, and the
+   * first version of this toggled the `hidden` *attribute* instead — which
+   * removes the attribute and leaves `display:none` from the class exactly
+   * where it was. The results never appeared, and nothing threw: the DOM was
+   * built correctly and painted nowhere. Mixing the two is the bug, so this
+   * picks one and every call site uses it.
+   */
+  const show = (node: HTMLElement, visible: boolean) =>
+    node.classList.toggle("hidden", !visible);
+
+  const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
+  const num = (n: number) => n.toLocaleString("en-US");
+  /** "1 tool" / "2 tools". Every count below is user data, so 1 really happens. */
+  const plural = (n: number, one: string, many = `${one}s`) => `${num(n)} ${n === 1 ? one : many}`;
+
+  /**
+   * Everything user-supplied goes in as `textContent`.
+   *
+   * Tool names and descriptions are arbitrary strings from a file the reader
+   * pasted, and this page renders them back. Building rows with `innerHTML`
+   * would make a tool named `<img onerror=…>` executable — a self-XSS that is
+   * only harmless until someone is talked into pasting a "schema" from a
+   * stranger. `el()` takes text, never markup.
+   */
+  function el<K extends keyof HTMLElementTagNameMap>(
+    tag: K,
+    className = "",
+    text?: string,
+  ): HTMLElementTagNameMap[K] {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function showError(message: string) {
+    error.textContent = message;
+    show(error, true);
+    show(results, false);
+  }
+
+  /** One headline number, with the corpus figure beside it and a verdict. */
+  function metricCard(o: {
+    label: string;
+    value: string;
+    detail: string;
+    corpus: string;
+    /** `true` better than corpus, `false` worse, `null` not a comparison. */
+    better: boolean | null;
+  }) {
+    const card = el("div", "rounded-xl border border-line bg-surface p-6");
+    const head = el("div", "flex items-baseline justify-between gap-3");
+    head.append(el("h3", "text-[13px] font-medium tracking-wide text-ink-500 uppercase", o.label));
+
+    if (o.better !== null) {
+      head.append(
+        el(
+          "span",
+          `shrink-0 rounded-md px-2 py-0.5 font-mono text-[11px] ${
+            o.better ? "bg-cyan-wash text-cyan" : "bg-surface-3 text-ink-300"
+          }`,
+          o.better ? "better" : "worse",
+        ),
+      );
+    }
+
+    card.append(head);
+    card.append(el("p", "mt-3 text-3xl font-semibold tracking-tight text-ink-100", o.value));
+    card.append(el("p", "mt-1.5 text-sm leading-6 text-ink-500", o.detail));
+    card.append(
+      el("p", "mt-4 border-t border-line-soft pt-3 font-mono text-xs text-ink-700", o.corpus),
+    );
+    return card;
+  }
+
+  /** A collapsible list of offending names — long lists must not run the page. */
+  function detailList(summary: string, items: string[], render: (item: string) => HTMLElement) {
+    const box = el("details", "group rounded-xl border border-line bg-surface");
+    const head = el(
+      "summary",
+      "cursor-pointer list-none px-5 py-4 text-sm font-medium text-ink-100 marker:content-none",
+    );
+    head.append(el("span", "", summary));
+    head.append(
+      el("span", "float-right font-mono text-xs text-ink-700 group-open:hidden", `show ${items.length}`),
+    );
+    box.append(head);
+
+    const list = el("ul", "space-y-1.5 border-t border-line-soft px-5 py-4");
+    for (const item of items.slice(0, 200)) list.append(render(item));
+    if (items.length > 200) {
+      list.append(el("li", "pt-1 text-xs text-ink-700", `…and ${num(items.length - 200)} more.`));
+    }
+    box.append(list);
+    return box;
+  }
+
+  function render(report: Report) {
+    results.replaceChildren();
+
+    const heading = el("div", "mx-auto max-w-3xl");
+    heading.append(
+      el(
+        "h2",
+        "text-xl font-semibold tracking-tight text-ink-100",
+        `${plural(report.tool_count, "tool")}, ${plural(report.params.total, "parameter")}`,
+      ),
+    );
+    heading.append(
+      el(
+        "p",
+        "mt-2 text-[15px] leading-7 text-ink-500",
+        `That puts you in the ${report.bucket.label} bucket, where ${pct(report.bucket.zero)} of tools across the survey have no distinguishing word and ${pct(report.bucket.undescribed)} of parameters have no description. Those are the two figures below worth comparing against — the corpus-wide averages mix your size with every other.`,
+      ),
+    );
+    results.append(heading);
+
+    /* ── The four headline numbers ──────────────────────────────────────── */
+    const grid = el("div", "mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4");
+
+    grid.append(
+      metricCard({
+        label: "Undescribed parameters",
+        value: report.params.total === 0 ? "—" : pct(report.params.rate),
+        detail:
+          report.params.total === 0
+            ? "No parameters found at the top level of any inputSchema."
+            : `${num(report.params.undescribed)} of ${num(report.params.total)} have no description.`,
+        corpus: `survey: ${pct(STUDY.undescribed_parameter_rate)} · your size: ${pct(report.bucket.undescribed)}`,
+        better: report.params.total === 0 ? null : report.params.rate <= report.bucket.undescribed,
+      }),
+    );
+
+    grid.append(
+      metricCard({
+        label: "Description collisions",
+        value: pct(report.distinctive.zero_rate),
+        detail:
+          report.tool_count === 1
+            ? "One tool has nothing to collide with — paste your whole server for this to mean anything."
+            : report.distinctive.zero.length === 0
+              // "0 of 4 tools have no word their siblings do not also use" is
+              // two negatives and a reader has to unpick both to learn it is
+              // good news. The clean case gets its own sentence.
+              ? `All ${num(report.tool_count)} tools carry at least one word no sibling uses.`
+              : `${num(report.distinctive.zero.length)} of ${num(report.tool_count)} tools carry no word that a sibling does not also use.`,
+        corpus: `survey: ${pct(STUDY.zero_distinctive_rate)} · your size: ${pct(report.bucket.zero)}`,
+        better: report.tool_count === 1 ? null : report.distinctive.zero_rate <= report.bucket.zero,
+      }),
+    );
+
+    grid.append(
+      metricCard({
+        label: "Schema cost per session",
+        value: `~${num(report.cost.tokens)}`,
+        detail: `tokens, from ${num(report.cost.bytes)} bytes — sent on every connection, before anyone asks a question.`,
+        corpus: `survey median: ~${num(STUDY.median_tokens)} · p90: ~${num(STUDY.p90_tokens)}`,
+        better: report.cost.band === "under-median",
+      }),
+    );
+
+    grid.append(
+      metricCard({
+        label: "Median distinctive share",
+        value: pct(report.distinctive.median_share),
+        detail:
+          "Of the words your median tool spends, this share is spent on words no sibling uses.",
+        corpus: `survey median: ${pct(STUDY.median_distinctive_share)}`,
+        better: report.tool_count === 1 ? null : report.distinctive.median_share >= STUDY.median_distinctive_share,
+      }),
+    );
+
+    results.append(grid);
+
+    /* ── What to fix, most common problem first ─────────────────────────── */
+    const findings = el("div", "mx-auto mt-10 max-w-3xl space-y-3");
+    let any = false;
+
+    const missing = report.per_tool.filter((tool) => tool.undescribed_params.length > 0);
+    if (missing.length > 0) {
+      any = true;
+      findings.append(
+        detailList(
+          `${plural(report.params.undescribed, "parameter")} with no description, across ${plural(missing.length, "tool")}`,
+          missing.map((tool) => tool.name),
+          (name) => {
+            const tool = report.per_tool.find((t) => t.name === name)!;
+            const li = el("li", "text-sm leading-6");
+            li.append(el("span", "font-mono text-ink-100", tool.name));
+            li.append(el("span", "text-ink-700", " — "));
+            li.append(el("span", "font-mono text-ink-500", tool.undescribed_params.join(", ")));
+            return li;
+          },
+        ),
+      );
+    }
+
+    if (report.distinctive.zero.length > 0) {
+      any = true;
+      findings.append(
+        detailList(
+          `${plural(report.distinctive.zero.length, "tool")} with no distinguishing word`,
+          report.distinctive.zero,
+          (name) => el("li", "font-mono text-sm leading-6 text-ink-100", name),
+        ),
+      );
+    }
+
+    const thin = report.per_tool
+      .filter((tool) => tool.distinctive_share > 0 && tool.distinctive_share < 0.1)
+      .map((tool) => tool.name);
+    if (thin.length > 0) {
+      any = true;
+      findings.append(
+        detailList(
+          `${plural(thin.length, "tool")} under 10% distinctive`,
+          thin,
+          (name) => {
+            const tool = report.per_tool.find((t) => t.name === name)!;
+            const li = el("li", "text-sm leading-6");
+            li.append(el("span", "font-mono text-ink-100", tool.name));
+            li.append(
+              el("span", "text-ink-700", ` — ${pct(tool.distinctive_share)}: ${tool.distinctive_words.join(", ") || "nothing"}`),
+            );
+            return li;
+          },
+        ),
+      );
+    }
+
+    if (report.prose_enums.length > 0) {
+      any = true;
+      findings.append(
+        detailList(
+          `${plural(report.prose_enums.length, "parameter")} naming values in prose but left an open string`,
+          report.prose_enums.map((p) => `${p.tool}.${p.param}`),
+          (key) => {
+            const found = report.prose_enums.find((p) => `${p.tool}.${p.param}` === key)!;
+            const li = el("li", "text-sm leading-6");
+            li.append(el("span", "font-mono text-ink-100", `${found.tool}.${found.param}`));
+            li.append(el("p", "text-ink-500", found.description.slice(0, 160)));
+            return li;
+          },
+        ),
+      );
+    }
+
+    if (report.tools_undescribed.length > 0) {
+      any = true;
+      findings.append(
+        detailList(
+          `${plural(report.tools_undescribed.length, "tool")} with no description at all`,
+          report.tools_undescribed,
+          (name) => el("li", "font-mono text-sm leading-6 text-ink-100", name),
+        ),
+      );
+    }
+
+    if (report.duplicate_names.length > 0) {
+      any = true;
+      findings.append(
+        detailList(
+          `${plural(report.duplicate_names.length, "duplicate tool name")} — the survey found these on only ${pct(STUDY.duplicate_name_rate)} of servers`,
+          report.duplicate_names,
+          (name) => el("li", "font-mono text-sm leading-6 text-ink-100", name),
+        ),
+      );
+    }
+
+    if (!any) {
+      findings.append(
+        el(
+          "p",
+          "rounded-xl border border-line bg-surface px-5 py-4 text-sm leading-6.5 text-ink-500",
+          "Nothing to flag: every parameter is described, every tool has a word its siblings do not, and no closed set is left as an open string. A schema can look like this and still fail under real traffic — that is the part only calls can tell you.",
+        ),
+      );
+    }
+
+    results.append(findings);
+    show(results, true);
+    show(error, false);
+    show(clear, true);
+    clear.classList.add("inline-flex");
+    results.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  run.addEventListener("click", () => {
+    try {
+      render(analyse(parseToolsList(input.value)));
+    } catch (thrown) {
+      showError(
+        thrown instanceof CheckError
+          ? thrown.message
+          : `Something went wrong reading that: ${thrown instanceof Error ? thrown.message : String(thrown)}`,
+      );
+    }
+  });
+
+  /**
+   * The example is the Gmail case from the survey, shortened.
+   *
+   * A contrived clean schema would demonstrate nothing. This is four real-shaped
+   * tools where every description is correct English and none of them is
+   * distinctive, plus two undescribed parameters and one closed set written in
+   * prose — so pressing the button shows what a finding looks like.
+   */
+  example.addEventListener("click", () => {
+    input.value = JSON.stringify(
+      {
+        tools: [
+          {
+            name: "gmail_delete_draft",
+            description: "Delete a draft email using the Gmail API.",
+            inputSchema: {
+              type: "object",
+              properties: { draft_id: { type: "string" } },
+            },
+          },
+          {
+            name: "gmail_send_draft",
+            description: "Send a draft email using the Gmail API.",
+            inputSchema: {
+              type: "object",
+              properties: { draft_id: { type: "string" } },
+            },
+          },
+          {
+            name: "gmail_list_labels",
+            description: "List the labels in the user's mailbox using the Gmail API.",
+            inputSchema: { type: "object", properties: {} },
+          },
+          {
+            name: "gmail_search_threads",
+            description: "Search the threads in the user's mailbox using the Gmail API.",
+            inputSchema: {
+              type: "object",
+              properties: {
+                query: { type: "string", description: "Gmail search query, e.g. from:me" },
+                scope: {
+                  type: "string",
+                  description: 'Where to search. Valid values: "inbox", "all", "trash".',
+                },
+              },
+            },
+          },
+        ],
+      },
+      null,
+      2,
+    );
+    show(error, false);
+    input.focus();
+    // Show the first tool, not the last line. `focus()` on a textarea puts the
+    // caret at the end, which scrolls a 30-line paste to its tail.
+    input.setSelectionRange(0, 0);
+    input.scrollTop = 0;
+  });
+
+  clear.addEventListener("click", () => {
+    input.value = "";
+    show(results, false);
+    show(error, false);
+    show(clear, false);
+    clear.classList.remove("inline-flex");
+    input.focus();
+  });
+
+  // Cmd/Ctrl-Enter from inside the textarea, which is where the hands already
+  // are. Plain Enter has to keep inserting a newline — this is a JSON field.
+  input.addEventListener("keydown", (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+      event.preventDefault();
+      run.click();
+    }
+  });
+</script>

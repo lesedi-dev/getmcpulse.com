@@ -58,6 +58,11 @@ export const GET: APIRoute = async ({ site }) => {
    */
   const pages = [
     { href: "/", label: "Home", note: SITE.description },
+    {
+      href: "/check",
+      label: "Schema checker",
+      note: "Paste a tools/list response and score it against 4,951 public servers — undescribed parameters, description collisions, schema token cost. Runs client-side; nothing is uploaded.",
+    },
     ...NAV.map((item) => ({ href: item.href, label: item.label, note: "" })),
     { href: "/blog", label: "Blog", note: "Twenty-one essays on measuring MCP servers." },
   ];

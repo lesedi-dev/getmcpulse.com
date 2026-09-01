@@ -9,6 +9,18 @@ const COLUMNS = [
   {
     heading: "Product",
     links: [
+      /**
+       * The checker is first, and it is the only link here with nothing to
+       * lose by being clicked — no signup, no install, no price. Somebody who
+       * arrives from the survey wanting to measure their own server should not
+       * have to read four pages about us to find the thing that does it.
+       *
+       * It is **not** in `NAV`. The header comment in `site.ts` records where
+       * that row stops fitting a small laptop, and a fifth link plus the button
+       * is over it. The footer, the survey's closing section and the home page
+       * carry it instead.
+       */
+      { href: "/check", label: "Schema checker" },
       { href: "/how-it-works", label: "How it works" },
       { href: "/metrics", label: "Metrics" },
       { href: "/install", label: "Installation" },
