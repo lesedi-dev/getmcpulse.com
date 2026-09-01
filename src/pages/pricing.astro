@@ -29,10 +29,56 @@ const monthsFree = (plan: (typeof PLANS)[number]) =>
   plan.price.month === 0 ? 0 : 12 - Math.round(plan.price.year / plan.price.month);
 
 const money = (amount: number) => `$${amount.toLocaleString("en-US")}`;
+
+/**
+ * The three plans, as offers.
+ *
+ * This is the one page on the site where structured data can change what the
+ * result *looks like* rather than only how it is filed: a price stated in an
+ * `Offer` is eligible to appear beside the link, and "Free" showing in the
+ * search result answers the question this page exists for before anyone clicks.
+ *
+ * The prices are read from `PLANS` — the same array the cards render — because
+ * a price in the markup and a different price in the structured data is the
+ * kind of mismatch Google flags and a customer screenshots.
+ */
+const schema = {
+  "@type": "Product",
+  "@id": `${new URL("/pricing", Astro.site).href}#product`,
+  name: SITE.name,
+  description: SITE.description,
+  url: new URL("/pricing", Astro.site).href,
+  category: "DeveloperApplication",
+  brand: { "@id": `${SITE.url}/#organization` },
+  offers: PLANS.map((plan) => ({
+    "@type": "Offer",
+    name: plan.name,
+    description: plan.tagline,
+    price: plan.price.month,
+    priceCurrency: "USD",
+    availability: "https://schema.org/InStock",
+    url: SITE.app,
+    /**
+     * Monthly, stated as a recurrence rather than left implied.
+     *
+     * Without this, `price: 49` reads as a one-off purchase of the product —
+     * and a subscription advertised in search as a single $49 payment is a
+     * promise the checkout will not keep.
+     */
+    priceSpecification: {
+      "@type": "UnitPriceSpecification",
+      price: plan.price.month,
+      priceCurrency: "USD",
+      billingIncrement: 1,
+      unitCode: "MON",
+    },
+  })),
+};
 ---
 
 <Base
   title="Pricing"
+  schema={schema}
   description="Free for one server, $49 a month for a server people depend on. Recording stops at the cap rather than billing past it, and history is hidden by a plan rather than deleted."
 >
   <article>

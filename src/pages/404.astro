@@ -2,7 +2,10 @@
 import Base from "../layouts/Base.astro";
 ---
 
-<Base title="Not found" description="That page does not exist.">
+{/* `noindex` because Astro serves this as a real 200 on a static host: without
+    it, "Nothing here" is an indexable page competing with the pages that do
+    exist. `follow` is kept so the links out of it still pass on. */}
+<Base title="Not found" description="That page does not exist." noindex>
   <section class="relative overflow-hidden">
     <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>
 

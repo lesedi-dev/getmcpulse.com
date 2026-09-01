@@ -1,6 +1,7 @@
 ---
 import Base from "./Base.astro";
 import { SITE } from "../lib/site";
+import { webPage } from "../lib/schema";
 
 /**
  * A detail page behind a menu item.
@@ -23,9 +24,19 @@ interface Props {
 }
 
 const { eyebrow, title, lead, description } = Astro.props;
+
+/**
+ * These three are documents, and now say so.
+ *
+ * `Base` defaults to `SoftwareApplication`, which is right for the home page
+ * and wrong for a page explaining how a nightly pass works — the same product
+ * described three more times, competing with itself. The layout knows its own
+ * pages are prose, so it fills this in and no page has to remember to.
+ */
+const schema = webPage(Astro.site, { path: Astro.url.pathname, title, description });
 ---
 
-<Base title={title} description={description}>
+<Base title={title} description={description} schema={schema}>
   <article>
     <header class="relative overflow-hidden border-b border-line-soft">
       <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>

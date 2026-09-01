@@ -2,6 +2,8 @@
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import PostCover from "../../components/PostCover.astro";
+import { SITE } from "../../lib/site";
+import { breadcrumbs } from "../../lib/schema";
 
 /**
  * The index, in three tiers rather than one grid.
@@ -50,11 +52,45 @@ const FRAME = "relative overflow-hidden border-b border-line bg-ink-950/50";
  * cover ends up 2:1 in one breakpoint and square in the next.
  */
 const IMAGE = "w-full transition-transform duration-700 ease-out-quint group-hover:scale-[1.04]";
+
+/**
+ * The index, described as a blog with its posts listed.
+ *
+ * The `ItemList` is the part that earns its keep: this page is the only URL
+ * that links to all twenty-two posts, and the tiered layout means the last
+ * dozen sit far enough down that a crawler on a budget may not reach them.
+ * Naming them in the graph is a second, cheaper route to the same pages —
+ * belt and braces alongside the sitemap.
+ */
+const schema = [
+  {
+    "@type": "Blog",
+    "@id": new URL("/blog", Astro.site).href,
+    name: `${SITE.name} — writing on MCP server observability`,
+    description:
+      "Retries, empty results, schema cost, and what the four outcomes of a tool call actually tell you.",
+    url: new URL("/blog", Astro.site).href,
+    inLanguage: "en-GB",
+    publisher: { "@id": `${SITE.url}/#organization` },
+    blogPost: posts.map((post) => ({
+      "@type": "BlogPosting",
+      "@id": `${new URL(`/blog/${post.id}`, Astro.site).href}#article`,
+      headline: post.data.title,
+      url: new URL(`/blog/${post.id}`, Astro.site).href,
+      datePublished: post.data.published.toISOString(),
+    })),
+  },
+  breadcrumbs(Astro.site, [
+    { name: SITE.name, path: "/" },
+    { name: "Blog", path: "/blog" },
+  ]),
+];
 ---
 
 <Base
   title="Blog"
   description="Writing about MCP server observability — retries, empty results, schema cost, and what the four outcomes actually tell you."
+  schema={schema}
 >
   <section class="relative overflow-hidden border-b border-line-soft">
     <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>

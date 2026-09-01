@@ -3,6 +3,7 @@ import { getCollection, render, type CollectionEntry } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import PostCover from "../../components/PostCover.astro";
 import { SITE } from "../../lib/site";
+import { article, breadcrumbs } from "../../lib/schema";
 
 export async function getStaticPaths() {
   const posts = await getCollection("blog");
@@ -35,6 +36,31 @@ const published = post.data.published.toLocaleDateString("en-GB", {
   month: "long",
   year: "numeric",
 });
+
+/**
+ * The post, described as a post.
+ *
+ * Every page on this site used to hand Google the same `SoftwareApplication`
+ * block, which on an essay about retry semantics is not a small inaccuracy —
+ * it is the page telling a search engine it is a piece of software. A
+ * `BlogPosting` with a real date is also what makes the post eligible for the
+ * dated, breadcrumbed result rather than a bare blue link.
+ */
+const schema = [
+  article(Astro.site, {
+    path: `/blog/${post.id}`,
+    title: post.data.title,
+    description: post.data.description,
+    published: post.data.published,
+    topic: post.data.topic,
+    minutes: post.data.minutes,
+  }),
+  breadcrumbs(Astro.site, [
+    { name: SITE.name, path: "/" },
+    { name: "Blog", path: "/blog" },
+    { name: post.data.title, path: `/blog/${post.id}` },
+  ]),
+];
 ---
 
 <Base
@@ -42,6 +68,7 @@ const published = post.data.published.toLocaleDateString("en-GB", {
   description={post.data.description}
   type="article"
   published={post.data.published}
+  schema={schema}
 >
   {/* A reading position, drawn by CSS and nothing else.
       `animation-timeline` needs no scroll listener, so this costs no
