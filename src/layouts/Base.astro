@@ -7,6 +7,21 @@ import Footer from "../components/Footer.astro";
 import { SITE } from "../lib/site";
 import { ogImageFor, OG_WIDTH, OG_HEIGHT } from "../lib/og";
 import { website } from "../lib/schema";
+/**
+ * The one font file every page needs, imported so it can be preloaded.
+ *
+ * `?url` asks Vite for the built asset's path rather than its contents, which
+ * is the only way to name a file whose hash this build has not chosen yet —
+ * hardcoding `inter-latin-wght-normal.woff2` would break on the next build
+ * that changed it, and break silently, as a preload for a 404.
+ *
+ * Only the latin subset, and only the upright. `@fontsource-variable/inter`
+ * ships eleven files — greek, cyrillic, vietnamese — and the browser fetches
+ * exactly the ones a page's characters fall into, so preloading the rest would
+ * download 200KB nobody reads. Italic is real but rare: it appears inside prose
+ * and never in the heading that decides the Largest Contentful Paint.
+ */
+import interLatin from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
 
 interface Props {
   title?: string;
@@ -166,6 +181,22 @@ const structured_data = {
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    {/*
+      Inter, fetched in parallel with the stylesheet instead of after it.
+
+      A font inside a `@font-face` rule is invisible to the browser's preload
+      scanner: it is found only once the CSS has downloaded and parsed, so the
+      first paint of every page showed system text and then reflowed into Inter.
+      That reflow is the Largest Contentful Paint on a page whose largest
+      element is a heading — which is every page here — and LCP is one of the
+      few things in this file Google measures directly.
+
+      `crossorigin` is required even though the file is same-origin: fonts are
+      fetched in CORS mode, and a preload without it is a second, unused
+      download rather than a warmed cache.
+    */}
+    <link rel="preload" href={interLatin} as="font" type="font/woff2" crossorigin />
 
     <title>{full_title}</title>
     <meta name="description" content={description} />

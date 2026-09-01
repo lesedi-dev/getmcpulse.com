@@ -1,6 +1,6 @@
 ---
-title: The five questions a security review will ask about your analytics
-description: If your MCP server touches customer data, someone will eventually ask what your monitoring vendor receives. These are the questions, and the answers that end the conversation.
+title: Five questions a security review asks about your analytics
+description: If your MCP server touches customer data, someone will ask what your monitoring vendor receives. These are the five questions, and the answers that end them.
 published: 2026-03-31
 topic: Privacy
 minutes: 4

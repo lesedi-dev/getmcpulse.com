@@ -1,5 +1,5 @@
 ---
-title: Cost per session is the number to quote when someone asks what your server costs
+title: Cost per session is the number to quote
 description: Not the monthly bill — that measures how popular you are. Cost per session measures how expensive you are, which is the part you control.
 published: 2026-04-07
 topic: Measurement

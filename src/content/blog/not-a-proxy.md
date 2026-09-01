@@ -1,6 +1,6 @@
 ---
-title: Why the SDK runs inside your server instead of in front of it
-description: A proxy is the easier product to build and the wrong one to ship. Directory-listed servers cannot change their URL, and OAuth breaks the moment traffic is redirected.
+title: Why the SDK runs inside your server, not in front of it
+description: A proxy is easier to build and the wrong thing to ship. Directory-listed servers cannot change their URL, and OAuth breaks when traffic is redirected.
 published: 2026-06-16
 topic: Engineering
 minutes: 5

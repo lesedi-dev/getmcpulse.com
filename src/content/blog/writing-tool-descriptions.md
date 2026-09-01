@@ -1,5 +1,5 @@
 ---
-title: Writing tool descriptions for a reader who only gets one pass
+title: Writing tool descriptions for a reader who gets one pass
 description: The model reads your description once, alongside forty others, and decides immediately. Everything that makes documentation good makes a tool description worse.
 published: 2026-05-19
 topic: Tool design

@@ -1,6 +1,6 @@
 ---
-title: First-call success is the only number that grades your descriptions
-description: Uptime grades your infrastructure. Error rate grades your code. First-call success is the only metric that grades the thing you actually wrote for the model — the words.
+title: First-call success is what grades your tool descriptions
+description: Uptime grades your infrastructure. Error rate grades your code. First-call success grades the part you wrote yourself — the words.
 published: 2026-08-04
 topic: Measurement
 minutes: 5
