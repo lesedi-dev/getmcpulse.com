@@ -1,0 +1,60 @@
+---
+import { FAQS } from "../lib/content";
+
+/**
+ * The questions, as a disclosure list.
+ *
+ * `details` rather than a scripted accordion, for the same reason the mobile
+ * menu is: it is a real toggle with keyboard and screen-reader behaviour
+ * already attached, it works with scripting off, and Google can read the answer
+ * inside a closed one — which a `display:none` div toggled by JavaScript is far
+ * less reliable about.
+ *
+ * The first one is open. A column of eight identical closed rows gives a reader
+ * nothing to judge, and the question most likely to stop a sale is the one
+ * worth answering before anybody clicks.
+ *
+ * The `FAQPage` structured data lives on the page that renders this, not here,
+ * because a page can only carry one graph — and because Google wants the answer
+ * in the markup to match the answer in the schema exactly, which is only
+ * guaranteed while both read from `FAQS`.
+ */
+
+interface Props {
+  /** How many to show. The home page takes the first few; `/faq` takes all. */
+  limit?: number;
+  class?: string;
+}
+
+const { limit = FAQS.length, class: klass = "" } = Astro.props;
+const shown = FAQS.slice(0, limit);
+---
+
+<div class:list={["divide-y divide-line-soft overflow-hidden rounded-2xl border border-line", klass]}>
+  {
+    shown.map((faq, i) => (
+      <details class="group bg-surface open:bg-surface-2" open={i === 0}>
+        <summary class="flex cursor-pointer list-none items-start gap-4 px-5 py-4 marker:content-none sm:px-7">
+          <span class="flex-1 text-[15px] font-medium text-ink-100">{faq.q}</span>
+
+          {/* One glyph rotated, rather than two swapped. A plus that becomes a
+              minus is the same two strokes with one hidden, and hiding it on
+              `group-open` costs a second element that exists only to be absent. */}
+          <svg
+            class="mt-1 h-4 w-4 shrink-0 text-ink-700 transition-transform duration-200 group-open:rotate-45"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M8 3.5v9M3.5 8h9" />
+          </svg>
+        </summary>
+
+        <p class="px-5 pb-5 text-[15px] leading-7 text-ink-500 sm:px-7 sm:pr-16">{faq.a}</p>
+      </details>
+    ))
+  }
+</div>

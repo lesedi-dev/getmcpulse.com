@@ -355,3 +355,65 @@ export const INSTALL_LANGUAGES: InstallLanguage[] = (
     // `tier` to `number` and quietly opt out of the union.
   ] satisfies InstallLanguage[]
 ).sort((a, b) => a.tier - b.tier);
+
+/**
+ * The questions asked before installing, rather than before paying.
+ *
+ * `PRICING_NOTES` answers the billing questions and stays on `/pricing`. These
+ * are the ones that decide whether somebody installs at all, and every one of
+ * them was already answered somewhere on this site — in a pillar, in a blog
+ * post, in a sentence on the install page. Answered *somewhere* is not the same
+ * as answerable: a reader deciding whether to put our package inside their
+ * server is not going to read twenty-one essays to find out whether we can see
+ * their arguments.
+ *
+ * Ordered by how much the answer can stop a sale. The first three are all
+ * versions of "what does this do to my server", which is the real question
+ * under all of them.
+ *
+ * `short` is the answer's first sentence, used where there is no room for the
+ * whole thing. Written rather than sliced, because a truncated paragraph and a
+ * summary are different pieces of writing.
+ */
+export const FAQS = [
+  {
+    q: "What happens to my server if MCPulse goes down?",
+    short: "Nothing. Your traffic never routes through us.",
+    a: "Nothing. The SDK runs inside your process and sends its own batches outward, so your tool calls never traverse anything of ours. A failed batch is dropped the way a network error is dropped. This is the whole reason it is a package and not a proxy: a proxy that is down is a server that is down.",
+  },
+  {
+    q: "Can you see my tool arguments or my results?",
+    short: "No, and there is no setting that would let us.",
+    a: "No. What leaves your process is one object per call carrying dimensions, durations, sizes and one hash — there is no field that could hold customer data, which is a stronger statement than a promise about how fields are used. Arguments become twelve hex characters of a SHA-256 with keys sorted: enough to tell whether two calls were the same, not enough for anything else. There is no option to turn this off, because a guarantee you can switch off is not one.",
+  },
+  {
+    q: "Will it slow my tools down?",
+    short: "No. Recording is off the request path and never throws.",
+    a: "Recording happens after your handler has returned and batches are sent on their own schedule, so a tool call never waits on us. The SDK has no runtime dependencies, so it drags nothing into your tree. And every path through it is wrapped: if the recording itself fails, it fails silently rather than turning a working tool call into an error. Instrumentation that can break the thing it measures is worse than no instrumentation.",
+  },
+  {
+    q: "Do I have to change my server's URL or its auth?",
+    short: "No. Nothing about how your server is reached changes.",
+    a: "No. You add a package and wrap the server object you already built; `watch()` hands the same server back, so nothing downstream sees a difference. Your URL, your OAuth, your deployment and your dependencies are untouched. Directory-listed servers cannot change their URL and OAuth breaks the moment traffic is redirected — which is exactly why this is not a proxy.",
+  },
+  {
+    q: "Which languages can I use it from?",
+    short: "TypeScript today, with nine more official SDKs on the way.",
+    a: "The TypeScript SDK is available now and is two lines. The installation page lists all ten official MCP SDKs, with the nine that are not ready yet marked as coming soon rather than hidden — if you write Python or Go, the honest answer is not yet rather than a page that pretends you are not the audience.",
+  },
+  {
+    q: "How long before I see anything?",
+    short: "The first payload lands within a minute of a restart.",
+    a: "Create a server in the dashboard, paste the key, restart. The startup payload — your tool list and the byte size of each schema — arrives immediately, so dead tools and schema cost are visible before a single call happens. Per-call numbers appear as traffic does. The three nightly metrics, including first-call success, are labelled as of yesterday because they need a night's worth of calls in order.",
+  },
+  {
+    q: "Can I get at my own data?",
+    short: "Yes — a REST API and an MCP connector, on every plan including Free.",
+    a: "Every plan reaches its own data through the API and through an MCP connector, so your agent can ask about your server the same way you would. There is also a documented agent skill that tells a model which figures are already computed server-side and must not be re-derived. Analytics you can only read inside somebody else's dashboard is a hostage, not a product.",
+  },
+  {
+    q: "Will this pass a security review?",
+    short: "It is built to. There is a written answer to each of the five usual questions.",
+    a: "The five questions a review actually asks — what leaves the process, what is retained, who is the subprocessor, can it be turned off, and what happens if you are breached — each have a written answer rather than a sales response. The short version: sizes and hashes only, no field that could hold customer data, and no dependency for us to be compromised through.",
+  },
+] as const;

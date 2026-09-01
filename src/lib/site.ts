@@ -20,6 +20,11 @@ export const SITE = {
    */
   url: import.meta.env.SITE,
   app: "https://app.getmcpulse.com",
+
+  /** Creates an account. Every "Sign up — free" button on the site. */
+  signup: "https://app.getmcpulse.com/signup",
+  /** For somebody who already has one. Every "Sign in" link. */
+  login: "https://app.getmcpulse.com/login",
   npm: "https://www.npmjs.com/package/@mcpulse/sdk",
 
   /**
@@ -75,7 +80,23 @@ export const NAV = [
    */
   { href: "/check", label: "Schema checker" },
   { href: "/how-it-works", label: "How it works" },
-  { href: "/metrics", label: "Metrics" },
+  /**
+   * Metrics is **not** here, and it used to be.
+   *
+   * Four things decided it. The row had five links and two actions and only fit
+   * from 1024px, so something had to give. The home page now carries the same
+   * material in its own section — sixteen metrics, and the tool table above it.
+   * And of the five, this was the only one answering "what will I see once I
+   * care", which is a question asked after the decision rather than during it:
+   * the same argument that put Docs in the footer.
+   *
+   * The fourth is the one that made it safe. `/metrics` had no link anywhere
+   * except this row and the footer — not even from the home page's own metrics
+   * section. Dropping it from the nav without fixing that would have left a
+   * 1,083-word page reachable only from the footer, so the home section now
+   * links to it directly, which is a better entry point than a nav slot: the
+   * reader arrives already interested rather than browsing.
+   */
   /**
    * "Installation", not "Install".
    *
@@ -125,6 +146,39 @@ export const NAV = [
    * navigable from inside itself rather than only from the chrome.
    */
 ] as const;
+
+/**
+ * What the buttons say. One label, in one place.
+ *
+ * ── Why this is a constant ────────────────────────────────────────────────
+ * There were five labels for the same action: "Sign up — free" in the header,
+ * "Start measuring — free" in twenty-five body CTAs, "Start measuring" on the
+ * free plan card, and "Start measuring — free →" on the checker. All four went
+ * to the same URL and did the same thing. On the home page a visitor met three
+ * of them, which reads as three different offers rather than one.
+ *
+ * ── Why this wording ─────────────────────────────────────────────────────
+ * "Sign up — free", chosen deliberately over "Start measuring — free".
+ *
+ * "Start measuring" was the incumbent on twenty-five of thirty pages and is the
+ * better *copy* — it names what happens next rather than the form in the way of
+ * it. It loses anyway, because next to "Sign in" the pair has a job that copy
+ * does not: a visitor scanning a header is looking for the two words they have
+ * looked for on every other site, and making them read a sentence to find out
+ * which one creates an account is a cost paid by every first-time visitor to
+ * save a cliché.
+ *
+ * "— free" carries the part that actually persuades, and it is true: there is a
+ * free tier rather than a trial, so nothing expires.
+ *
+ * **To change it, change it here.** One edit moves every button on the site.
+ */
+export const CTA = {
+  /** Creates an account. Every button that does this says exactly this. */
+  primary: "Sign up — free",
+  /** For somebody who already has one. */
+  signin: "Sign in",
+} as const;
 
 /** The install steps, matching `install_snippets.ts` in the dashboard exactly. */
 export const INSTALL_COMMAND = "npm install @mcpulse/sdk";

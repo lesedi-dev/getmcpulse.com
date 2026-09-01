@@ -1,0 +1,216 @@
+---
+/**
+ * The tool table, drawn — the view you actually live in.
+ *
+ * `HeroPanel` draws the overview: four totals and a chart, which answers "is
+ * anything wrong". This answers the next question, which is "wrong *where*",
+ * and it is the screen a server author has open while they fix something. It
+ * appeared nowhere on this site, so a visitor could read every page and still
+ * not know what they get after installing.
+ *
+ * Drawn rather than screenshotted for the same three reasons `HeroPanel` gives:
+ * it stays sharp at any width, it weighs about a kilobyte, and it cannot go
+ * stale the next time the dashboard moves. The tool names are the ones used
+ * everywhere else on the site, so the story stays the same story.
+ *
+ * ── Why the numbers are what they are ─────────────────────────────────────
+ * They are not random and they are not flattering. Each row is one of the
+ * findings the product exists to surface, so the table reads as a diagnosis
+ * rather than a demo: `search_orders` retries, `get_invoice` returns empty,
+ * `list_customers` is expensive, `export_report` is dead. Those are the same
+ * four cases the Insights section names in prose, which is deliberate — a
+ * reader who scrolls past both should feel they saw one product twice, not two
+ * unrelated screenshots.
+ */
+
+interface Props {
+  /** `full` draws every column; `compact` drops the three a phone cannot hold. */
+  density?: "full" | "compact";
+  class?: string;
+}
+
+const { density = "full", class: klass = "" } = Astro.props;
+const full = density === "full";
+
+/**
+ * `tone` is the judgement, not the value.
+ *
+ * A dashboard that colours every number leaves the reader deciding which of
+ * twelve amber cells matters. Only a figure that is actually bad for that
+ * column is toned — 68% first-call success is bad, 340ms is not — so the eye
+ * lands on the four rows worth opening.
+ */
+const ROWS = [
+  {
+    tool: "search_orders",
+    calls: "4,120",
+    success: { v: "68%", tone: "bad" },
+    empty: { v: "2%", tone: null },
+    retry: { v: "2.4×", tone: "bad" },
+    p95: "340ms",
+    size: "1.2 kB",
+  },
+  {
+    tool: "list_customers",
+    calls: "3,008",
+    success: { v: "94%", tone: null },
+    empty: { v: "1%", tone: null },
+    retry: { v: "1.1×", tone: null },
+    p95: "180ms",
+    size: { v: "14 kB", tone: "warn" },
+  },
+  {
+    tool: "get_invoice",
+    calls: "2,551",
+    success: { v: "88%", tone: null },
+    empty: { v: "12%", tone: "warn" },
+    retry: { v: "1.2×", tone: null },
+    p95: "95ms",
+    size: "0.8 kB",
+  },
+  {
+    tool: "create_order",
+    calls: "1,904",
+    success: { v: "97%", tone: null },
+    empty: { v: "0%", tone: null },
+    retry: { v: "1.0×", tone: null },
+    p95: "210ms",
+    size: "0.4 kB",
+  },
+  {
+    tool: "update_customer",
+    calls: "898",
+    success: { v: "91%", tone: null },
+    empty: { v: "3%", tone: null },
+    retry: { v: "1.3×", tone: null },
+    p95: "160ms",
+    size: "0.5 kB",
+  },
+  {
+    tool: "export_report",
+    calls: { v: "0", tone: "bad" },
+    success: { v: "—", tone: null },
+    empty: { v: "—", tone: null },
+    retry: { v: "—", tone: null },
+    p95: "—",
+    size: { v: "480 tok", tone: "warn" },
+  },
+] as const;
+
+type Cell = string | { readonly v: string; readonly tone: string | null };
+const value = (cell: Cell) => (typeof cell === "string" ? cell : cell.v);
+const tone = (cell: Cell) =>
+  typeof cell === "string" || !cell.tone
+    ? "text-ink-300"
+    : cell.tone === "bad"
+      ? "text-bad"
+      : "text-warn";
+---
+
+<div
+  class:list={[
+    "overflow-hidden rounded-2xl border border-line bg-ink-950 shadow-2xl shadow-shade",
+    klass,
+  ]}
+  aria-hidden="true"
+>
+  {/* The window chrome. Two rows of it, matching the dashboard: the scope you
+      are looking at, then the filter you are looking through. */}
+  <div class="flex items-center justify-between gap-4 border-b border-line-soft px-4 py-3 sm:px-5">
+    <div class="flex items-center gap-2.5">
+      <span class="h-1.5 w-1.5 rounded-full bg-ok"></span>
+      <p class="text-[13px] font-medium text-ink-100">Tool health</p>
+    </div>
+    <p class="font-mono text-[11px] text-ink-700">last 7 days · 12,481 calls</p>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-2 border-b border-line-soft px-4 py-2.5 sm:px-5">
+    {
+      ["All tools", "claude-desktop", "cursor"].map((chip, i) => (
+        <span
+          class:list={[
+            "rounded-md px-2 py-0.5 font-mono text-[11px]",
+            i === 0 ? "bg-cyan-wash text-cyan" : "bg-surface-2 text-ink-700",
+          ]}
+        >
+          {chip}
+        </span>
+      ))
+    }
+    <span class="ml-auto font-mono text-[11px] text-ink-700">sorted by calls ↓</span>
+  </div>
+
+  {/* A real table, so the columns line up and a screen reader would find it
+      navigable if this were ever un-hidden. `tabular-nums` matters more than it
+      looks: proportional digits make a column of percentages ragged, and a
+      ragged column of numbers is the thing that makes a drawn UI look drawn. */}
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-full border-collapse text-left">
+      <thead>
+        <tr class="border-b border-line-soft">
+          {
+            [
+              ["Tool", true],
+              ["Calls", true],
+              ["First-call", true],
+              ["Empty", full],
+              ["Retries", true],
+              ["p95", full],
+              ["Response", full],
+            ]
+              .filter(([, show]) => show)
+              .map(([label]) => (
+                <th
+                  class:list={[
+                    "px-4 py-2.5 text-[11px] font-medium tracking-wide text-ink-700 uppercase sm:px-5",
+                    label !== "Tool" && "text-right",
+                  ]}
+                >
+                  {label}
+                </th>
+              ))
+          }
+        </tr>
+      </thead>
+
+      <tbody class="font-mono text-[12.5px] tabular-nums">
+        {
+          ROWS.map((row) => (
+            <tr class="border-b border-line-soft last:border-b-0">
+              <td class="px-4 py-2.5 whitespace-nowrap text-ink-100 sm:px-5">{row.tool}</td>
+              <td class:list={["px-4 py-2.5 text-right sm:px-5", tone(row.calls)]}>
+                {value(row.calls)}
+              </td>
+              <td class:list={["px-4 py-2.5 text-right sm:px-5", tone(row.success)]}>
+                {value(row.success)}
+              </td>
+              {full && (
+                <td class:list={["px-4 py-2.5 text-right sm:px-5", tone(row.empty)]}>
+                  {value(row.empty)}
+                </td>
+              )}
+              <td class:list={["px-4 py-2.5 text-right sm:px-5", tone(row.retry)]}>
+                {value(row.retry)}
+              </td>
+              {full && <td class="px-4 py-2.5 text-right text-ink-500 sm:px-5">{row.p95}</td>}
+              {full && (
+                <td class:list={["px-4 py-2.5 text-right sm:px-5", tone(row.size)]}>
+                  {value(row.size)}
+                </td>
+              )}
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  {/* The footer is the insight, which is the actual product: the table shows
+      you a red cell, this tells you what it costs. */}
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line bg-surface px-4 py-3 sm:px-5">
+    <span class="font-mono text-[11px] text-bad">2 tools need attention</span>
+    <span class="text-[11px] text-ink-700">
+      export_report has never been called and costs 480 tokens of schema every session
+    </span>
+  </div>
+</div>

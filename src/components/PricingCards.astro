@@ -1,0 +1,130 @@
+---
+import { PLANS } from "../lib/content";
+import { SITE, CTA } from "../lib/site";
+
+/**
+ * The three plans, in one place.
+ *
+ * This markup used to live inside `pricing.astro`, which was fine while that
+ * was the only page with a price on it. Putting the same block on the home page
+ * by copy-paste would have created the failure this product's own blog posts
+ * keep describing: two copies of one fact, and nothing that renders differently
+ * when they disagree. A reader who sees $49 on the home page and $59 on the
+ * pricing page has learned something about the company, not about the price.
+ *
+ * `headings` exists because the same cards sit under an `<h1>` on `/pricing`
+ * and under an `<h2>` on the home page. A card that hardcoded `<h2>` would put
+ * three of them above the home page's own section heading, which is a heading
+ * order a screen reader reads as three subsections of nothing.
+ */
+
+interface Props {
+  /** Heading level for each plan name, so the page's outline stays legal. */
+  level?: "h2" | "h3";
+  class?: string;
+}
+
+const { level: Heading = "h2", class: klass = "" } = Astro.props;
+
+/**
+ * Months free, derived rather than written down.
+ *
+ * `$490 a year` against `$49 a month` is two months free, and stating that in
+ * the data as well as in the arithmetic is one more pair of numbers that can
+ * drift. If a price changes, this sentence changes with it.
+ */
+const monthsFree = (plan: (typeof PLANS)[number]) =>
+  plan.price.month === 0 ? 0 : 12 - Math.round(plan.price.year / plan.price.month);
+
+const money = (amount: number) => `$${amount.toLocaleString("en-US")}`;
+---
+
+<div class:list={["grid gap-4 lg:grid-cols-3", klass]}>
+  {
+    PLANS.map((plan, i) => {
+      const featured = plan.id === "pro";
+
+      return (
+        <section
+          class:list={[
+            "reveal relative flex flex-col rounded-2xl border p-7",
+            featured ? "border-cyan/40 bg-cyan-wash" : "border-line bg-surface",
+          ]}
+          style={`--reveal-delay: ${i * 90}ms`}
+        >
+          {featured && (
+            <span class="absolute -top-2.5 left-7 rounded-full bg-btn px-2.5 py-0.5 text-[11px] font-medium text-btn-fg">
+              Most servers
+            </span>
+          )}
+
+          <Heading class="text-[15px] font-semibold tracking-tight text-ink-100">
+            {plan.name}
+          </Heading>
+          <p class="mt-1.5 text-sm leading-6 text-ink-500">{plan.tagline}</p>
+
+          <p class="mt-6 flex items-baseline gap-1.5">
+            <span class="text-4xl font-semibold tracking-tight text-ink-100">
+              {money(plan.price.month)}
+            </span>
+            {/* `ink-500`, not the site's usual muted `ink-700`. These two lines
+                sit on the featured card's tinted ground, where `ink-700`
+                measures 4.2:1 against it — under AA, in both themes. One class
+                for all three cards rather than a conditional: the price
+                interval and the yearly saving are what a reader is here for. */}
+            <span class="text-sm text-ink-500">/ month</span>
+          </p>
+
+          {/* The yearly line sits under the monthly one rather than behind a
+              toggle, and says what it saves in months rather than in per cent —
+              "two months free" is the offer, and a percentage is that offer
+              written in a unit nobody buys in.
+
+              Fixed height, so the three prices sit on one baseline whether or
+              not a card has a yearly option. */}
+          <p class="mt-1.5 h-5 text-sm text-ink-500">
+            {plan.price.year > 0
+              ? `or ${money(plan.price.year)} a year — ${monthsFree(plan)} months free`
+              : "No card, no trial to expire"}
+          </p>
+
+          <ul class="mt-7 mb-8 space-y-2.5 border-t border-line-soft pt-6 text-sm">
+            {plan.highlights.map((line) => (
+              <li class="flex gap-2.5 leading-6 text-ink-300">
+                <svg
+                  class="mt-1.5 h-3 w-3 shrink-0 text-cyan"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M2 6.5l2.5 2.5L10 3.5" />
+                </svg>
+                {line}
+              </li>
+            ))}
+          </ul>
+
+          {/* `mt-auto`, because the three feature lists are different lengths
+              and a grid stretches every card to the tallest. Without it the
+              buttons sit at three different heights, which reads as three
+              unrelated cards rather than one choice. */}
+          <a
+            href={SITE.signup}
+            class:list={[
+              "mt-auto flex h-11 items-center justify-center rounded-xl pt-0.5 text-sm font-medium transition-colors",
+              featured
+                ? "bg-btn text-btn-fg hover:bg-btn-hover"
+                : "border border-line bg-surface-2 text-ink-100 hover:border-line-strong",
+            ]}
+          >
+            {plan.id === "free" ? CTA.primary : `Start on ${plan.name}`}
+          </a>
+        </section>
+      );
+    })
+  }
+</div>

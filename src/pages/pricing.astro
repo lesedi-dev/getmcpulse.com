@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import PricingCards from "../components/PricingCards.astro";
 import { PLANS, PRICING_NOTES } from "../lib/content";
 import { SITE } from "../lib/site";
 
@@ -25,10 +26,6 @@ import { SITE } from "../lib/site";
  * that ended it. This one cannot: change either number in `content.ts` and the
  * sentence follows.
  */
-const monthsFree = (plan: (typeof PLANS)[number]) =>
-  plan.price.month === 0 ? 0 : 12 - Math.round(plan.price.year / plan.price.month);
-
-const money = (amount: number) => `$${amount.toLocaleString("en-US")}`;
 
 /**
  * The three plans, as offers.
@@ -57,7 +54,7 @@ const schema = {
     price: plan.price.month,
     priceCurrency: "USD",
     availability: "https://schema.org/InStock",
-    url: SITE.app,
+    url: SITE.signup,
     /**
      * Monthly, stated as a recurrence rather than left implied.
      *
@@ -103,96 +100,7 @@ const schema = {
     </header>
 
     <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8">
-      <div class="grid gap-4 lg:grid-cols-3">
-        {
-          PLANS.map((plan, i) => {
-            const featured = plan.id === "pro";
-
-            return (
-              <section
-                class:list={[
-                  "reveal relative flex flex-col rounded-2xl border p-7",
-                  featured
-                    ? "border-cyan/40 bg-cyan-wash"
-                    : "border-line bg-surface",
-                ]}
-                style={`--reveal-delay: ${i * 90}ms`}
-              >
-                {featured && (
-                  <span class="absolute -top-2.5 left-7 rounded-full bg-btn px-2.5 py-0.5 text-[11px] font-medium text-btn-fg">
-                    Most servers
-                  </span>
-                )}
-
-                <h2 class="text-[15px] font-semibold tracking-tight text-ink-100">{plan.name}</h2>
-                <p class="mt-1.5 text-sm leading-6 text-ink-500">{plan.tagline}</p>
-
-                <p class="mt-6 flex items-baseline gap-1.5">
-                  <span class="text-4xl font-semibold tracking-tight text-ink-100">
-                    {money(plan.price.month)}
-                  </span>
-                  {/* `ink-500`, not the site's usual muted `ink-700`. These two
-                      lines sit on the featured card's tinted ground, where
-                      `ink-700` measures 4.2:1 against it — under AA, in both
-                      themes. One class for all three cards rather than a
-                      conditional: the price interval and the yearly saving are
-                      the two things a reader is here for. */}
-                  <span class="text-sm text-ink-500">/ month</span>
-                </p>
-
-                {/* The yearly line sits under the monthly one rather than
-                    behind a toggle, and says what it saves in months rather
-                    than in per cent — "two months free" is the offer, and a
-                    percentage is that offer written in a unit nobody buys in.
-
-                    Fixed height, so the three prices sit on one baseline
-                    whether or not a card has a yearly option. */}
-                <p class="mt-1.5 h-5 text-sm text-ink-500">
-                  {plan.price.year > 0
-                    ? `or ${money(plan.price.year)} a year — ${monthsFree(plan)} months free`
-                    : "No card, no trial to expire"}
-                </p>
-
-                <ul class="mt-7 mb-8 space-y-2.5 border-t border-line-soft pt-6 text-sm">
-                  {plan.highlights.map((line) => (
-                    <li class="flex gap-2.5 leading-6 text-ink-300">
-                      <svg
-                        class="mt-1.5 h-3 w-3 shrink-0 text-cyan"
-                        viewBox="0 0 12 12"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="M2 6.5l2.5 2.5L10 3.5" />
-                      </svg>
-                      {line}
-                    </li>
-                  ))}
-                </ul>
-
-                {/* `mt-auto`, because the three feature lists are different
-                    lengths and a grid stretches every card to the tallest. Without
-                    it the buttons sit at three different heights, which reads as
-                    three unrelated cards rather than one choice. */}
-                <a
-                  href={SITE.app}
-                  class:list={[
-                    "mt-auto flex h-11 items-center justify-center rounded-xl pt-0.5 text-sm font-medium transition-colors",
-                    featured
-                      ? "bg-btn text-btn-fg hover:bg-btn-hover"
-                      : "border border-line bg-surface-2 text-ink-100 hover:border-line-strong",
-                  ]}
-                >
-                  {plan.id === "free" ? "Start measuring" : `Start on ${plan.name}`}
-                </a>
-              </section>
-            );
-          })
-        }
-      </div>
+      <PricingCards />
 
       <p class="reveal mt-6 text-center text-sm text-ink-700">
         Every plan starts free. There is no trial, so there is nothing to expire and no card to
@@ -201,7 +109,7 @@ const schema = {
 
       <section class="reveal mt-20 border-t border-line-soft pt-14">
         <h2 class="text-xl font-semibold tracking-tight text-ink-100">
-          The parts of a price list that usually go unsaid
+          Caps, downgrades, and who takes the payment
         </h2>
 
         <dl class="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2">

@@ -1,0 +1,98 @@
+---
+import { SITE } from "../lib/site";
+import { STUDY } from "../lib/study";
+
+/**
+ * Why to believe any of this, stated with things that can be checked.
+ *
+ * ── What this section is not ──────────────────────────────────────────────
+ * It is not logos, testimonials or a user count, and it will not be until those
+ * are real. A marketing page that invents "trusted by 500 teams" is making a
+ * factual claim it cannot support, on a site whose entire argument is that
+ * unverifiable numbers are the problem. The moment there are customers happy to
+ * be named, this is the section they go in.
+ *
+ * ── What it is instead ────────────────────────────────────────────────────
+ * Four things a sceptic can go and verify in about five minutes, which is a
+ * different and better kind of proof than a stranger's quote:
+ *
+ *   - the survey, with its corpus, its method and its own caveats published;
+ *   - the analysis code and raw data, so the headline number can be recomputed;
+ *   - the package on npm, with zero runtime dependencies, which is checkable;
+ *   - the checker, which runs the survey's method on the reader's own server.
+ *
+ * The last one is the strongest item here. Every other line asks a reader to
+ * trust a claim about somebody else's servers; that one lets them test the
+ * claim against theirs, in their own browser, before giving us anything.
+ */
+
+const ITEMS = [
+  {
+    stat: STUDY.servers.toLocaleString("en-US"),
+    label: "public servers read",
+    body: "The schema survey behind this product, with the corpus, the method and the things it cannot tell you all written down.",
+    href: STUDY.post,
+    cta: "Read the survey",
+  },
+  {
+    stat: "Open",
+    label: "data and analysis",
+    body: "Every figure in the survey is in analysis.json, with the servers and tools behind it in examples.json. The collector rebuilds the corpus from a public API in about twenty minutes.",
+    href: STUDY.repo,
+    cta: "Check the numbers",
+  },
+  {
+    stat: "0",
+    label: "runtime dependencies",
+    body: "The SDK pulls nothing into your tree, and nothing of ours sits in your request path. Two lines, and it hands the same server object back.",
+    href: SITE.npm,
+    cta: "See the package",
+  },
+  {
+    stat: "Free",
+    label: "to test on your own server",
+    body: "Score your own tool schemas against the corpus before you install anything. It runs in your browser and nothing is uploaded.",
+    href: "/check",
+    cta: "Open the checker",
+  },
+] as const;
+---
+
+<section class="border-t border-line-soft">
+  <div class="mx-auto max-w-6xl px-5 py-20 sm:px-8">
+    <div class="reveal max-w-2xl">
+      <p class="text-sm font-medium text-cyan">Why believe it</p>
+      <h2 class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-4xl">
+        Check every claim on this page yourself
+      </h2>
+      <p class="mt-4 text-lg leading-7 text-pretty text-ink-500">
+        We are not going to show you a wall of logos. The claims this product makes are about
+        schemas and traffic, so the evidence is data you can recompute and a tool you can point at
+        your own server.
+      </p>
+    </div>
+
+    <div class="mt-12 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+      {
+        ITEMS.map((item, i) => (
+          <div
+            class="reveal flex min-w-0 flex-col bg-ink-950 p-6"
+            style={`--reveal-delay: ${i * 80}ms`}
+          >
+            <p class="text-3xl font-semibold tracking-tight text-ink-100">{item.stat}</p>
+            <p class="mt-1 text-[13px] font-medium tracking-wide text-cyan uppercase">
+              {item.label}
+            </p>
+            <p class="mt-3 flex-1 text-sm leading-6.5 text-ink-500">{item.body}</p>
+            <a
+              href={item.href}
+              class="mt-5 text-sm font-medium text-ink-300 transition-colors hover:text-cyan"
+            >
+              {item.cta} →
+            </a>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,113 @@
+---
+/**
+ * The whole path a call takes, in one figure.
+ *
+ * ── Why this diagram earns its place ──────────────────────────────────────
+ * "An SDK inside your server, not a proxy in front of it" is the single most
+ * important sentence on this site and the hardest one to take on trust, because
+ * the reader is being asked to believe something about topology from a
+ * paragraph. `PillarVisual` draws three small versions of this next to three
+ * paragraphs, which works as decoration beside prose and does not work as the
+ * page's answer to "where does my traffic go".
+ *
+ * The claim is spatial, so the argument should be too. What the figure has to
+ * make unmissable is that the model→server path and the SDK→MCPulse path never
+ * touch: one is horizontal and unbroken, the other leaves downward and dashed.
+ * If we disappear, the horizontal line is unaffected — which is the argument,
+ * drawn rather than asserted.
+ *
+ * Static SVG. The three moving figures on this page already carry the motion,
+ * and a fourth animation next to them would be noise.
+ */
+
+interface Props {
+  class?: string;
+}
+
+const { class: klass = "" } = Astro.props;
+---
+
+<figure class:list={["overflow-hidden rounded-2xl border border-line bg-surface", klass]}>
+  <div class="overflow-x-auto">
+    <svg
+      viewBox="0 0 900 300"
+      class="h-auto w-full min-w-[640px]"
+      fill="none"
+      role="img"
+      aria-label="A model calls your server directly. Inside your server, the MCPulse SDK records each call and sends batches out to MCPulse separately. Your traffic never passes through MCPulse."
+    >
+      <defs>
+        <marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0 0L10 5L0 10z" fill="var(--color-cyan)" />
+        </marker>
+        <marker id="flow-arrow-dim" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0 0L10 5L0 10z" fill="var(--color-ink-700)" />
+        </marker>
+      </defs>
+
+      {/* ── The request path: unbroken, horizontal, and ours is not on it ── */}
+      <g>
+        <rect x="16" y="86" width="150" height="64" rx="10" fill="var(--color-surface-2)" stroke="var(--color-line)" />
+        <text x="91" y="112" text-anchor="middle" class="fill-ink-100 text-[13px] font-medium">The model</text>
+        <text x="91" y="130" text-anchor="middle" class="fill-ink-700 font-mono text-[11px]">claude, cursor…</text>
+
+        <line x1="176" y1="118" x2="252" y2="118" stroke="var(--color-cyan)" stroke-width="2" marker-end="url(#flow-arrow)" />
+        <text x="214" y="106" text-anchor="middle" class="fill-cyan font-mono text-[10px]">tools/call</text>
+
+        {/* Your process. Everything inside this box is yours — including ours. */}
+        <rect x="262" y="40" width="380" height="220" rx="14" fill="var(--color-ink-950)" stroke="var(--color-line-strong)" stroke-dasharray="0" />
+        <text x="278" y="64" class="fill-ink-500 font-mono text-[11px]">your server process</text>
+
+        <rect x="286" y="86" width="150" height="64" rx="10" fill="var(--color-surface-2)" stroke="var(--color-line)" />
+        <text x="361" y="112" text-anchor="middle" class="fill-ink-100 text-[13px] font-medium">Your handler</text>
+        <text x="361" y="130" text-anchor="middle" class="fill-ink-700 font-mono text-[11px]">unchanged</text>
+
+        <line x1="446" y1="118" x2="522" y2="118" stroke="var(--color-cyan)" stroke-width="2" marker-end="url(#flow-arrow)" />
+
+        <rect x="532" y="86" width="92" height="64" rx="10" fill="var(--color-cyan-wash)" stroke="var(--color-cyan)" stroke-opacity="0.4" />
+        <text x="578" y="112" text-anchor="middle" class="fill-cyan font-mono text-[11px]">watch()</text>
+        <text x="578" y="130" text-anchor="middle" class="fill-ink-700 font-mono text-[10px]">2 lines</text>
+
+        <line x1="652" y1="118" x2="732" y2="118" stroke="var(--color-cyan)" stroke-width="2" marker-end="url(#flow-arrow)" />
+        <text x="694" y="106" text-anchor="middle" class="fill-cyan font-mono text-[10px]">result</text>
+        <text x="800" y="115" text-anchor="middle" class="fill-ink-300 text-[13px]">back to the model,</text>
+        <text x="800" y="133" text-anchor="middle" class="fill-ink-300 text-[13px]">same as before</text>
+      </g>
+
+      {/* ── The recording path: dashed, downward, and off to one side ──────
+           Geometry note, because the first version got it wrong twice. The
+           process box runs x=262→642, and the batch box has to sit *inside* it —
+           the whole claim is that batching happens in your process. A 252-wide
+           box centred on `watch()` at x=578 ran to x=704 and hung 62px outside
+           the boundary it was meant to be within, which drew the opposite of
+           the argument.
+
+           The connector is bent rather than straight for the same reason the box
+           moved: it leaves `watch()` at x=578, steps across to the box's centre
+           at x=451, and drops in. A straight line from 578 would enter
+           off-centre, and the earlier horizontal exit ran straight through the
+           label. */}
+      <g stroke="var(--color-ink-700)" stroke-width="1.5" stroke-dasharray="4 4">
+        <polyline points="578,160 578,186 451,186 451,204" fill="none" marker-end="url(#flow-arrow-dim)" />
+        {/* Exits the process box on its way out, which is the point. */}
+        <line x1="620" y1="229" x2="792" y2="229" marker-end="url(#flow-arrow-dim)" />
+      </g>
+
+      <rect x="286" y="212" width="330" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-line)" stroke-dasharray="0" />
+      <text x="451" y="234" text-anchor="middle" class="fill-ink-500 font-mono text-[11px]">
+        batched · sent after your response
+      </text>
+
+      <rect x="800" y="206" width="84" height="46" rx="9" fill="var(--color-surface-2)" stroke="var(--color-line)" />
+      <text x="842" y="226" text-anchor="middle" class="fill-ink-300 text-[12px] font-medium">MCPulse</text>
+      <text x="842" y="242" text-anchor="middle" class="fill-ink-700 font-mono text-[10px]">sizes, hashes</text>
+    </svg>
+  </div>
+
+  <figcaption class="border-t border-line-soft px-5 py-4 text-sm leading-6.5 text-ink-500 sm:px-7">
+    The solid line is your traffic and nothing of ours is on it. The dashed line is the recording,
+    which leaves afterwards and separately —
+    <span class="text-ink-300">if MCPulse is unreachable, that batch is dropped and your tool call
+    has already returned.</span>
+  </figcaption>
+</figure>

@@ -2,7 +2,7 @@
 import { getCollection, render, type CollectionEntry } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import PostCover from "../../components/PostCover.astro";
-import { SITE } from "../../lib/site";
+import { SITE, CTA } from "../../lib/site";
 import { article, breadcrumbs } from "../../lib/schema";
 
 export async function getStaticPaths() {
@@ -144,10 +144,10 @@ const schema = [
           Two lines inside your process. Never your arguments, never your results.
         </p>
         <a
-          href={SITE.app}
+          href={SITE.signup}
           class="mt-5 inline-flex h-10 items-center rounded-xl bg-btn px-4 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover"
         >
-          Start measuring — free
+          {CTA.primary}
         </a>
       </div>
 

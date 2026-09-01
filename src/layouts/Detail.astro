@@ -1,6 +1,6 @@
 ---
 import Base from "./Base.astro";
-import { SITE } from "../lib/site";
+import { SITE, CTA } from "../lib/site";
 import { webPage } from "../lib/schema";
 
 /**
@@ -21,9 +21,41 @@ interface Props {
   title: string;
   lead: string;
   description: string;
+  /**
+   * `prose` caps the body at a reading column; `full` hands the page the whole
+   * container and lets it choose its own widths per section.
+   *
+   * The cap is right for prose and wrong for a product view. `/metrics` needs to
+   * show the table those sixteen numbers actually live in, and a seven-column
+   * table squeezed into 768px is a horizontal scroller — which is how a page
+   * meant to build confidence ends up looking like it is hiding something. Pages
+   * that are only prose keep the cap and do not have to think about it.
+   */
+  width?: "prose" | "full";
+  /**
+   * An "on this page" row under the lead, one chip per `id` on the page.
+   *
+   * These pages are long now. A reader arriving from search with one question
+   * should not have to scroll a thousand words to find out whether it is
+   * answered here — the chip row is the answer, and it doubles as a contents
+   * list that says how much page there is.
+   *
+   * Real anchors, so they work with scripting off; `Base` already tidies the
+   * hash out of the address bar afterwards.
+   */
+  sections?: readonly { id: string; label: string }[];
 }
 
-const { eyebrow, title, lead, description } = Astro.props;
+const {
+  eyebrow,
+  title,
+  lead,
+  description,
+  width = "prose",
+  sections = [],
+} = Astro.props;
+
+const prose = width === "prose";
 
 /**
  * These three are documents, and now say so.
@@ -50,14 +82,27 @@ const schema = webPage(Astro.site, { path: Astro.url.pathname, title, descriptio
             {title}
           </h1>
           <p class="mt-5 text-lg leading-8 text-pretty text-ink-500">{lead}</p>
+
+          {
+            sections.length > 0 && (
+              <nav aria-label="On this page" class="mt-8 flex flex-wrap gap-2">
+                {sections.map((section) => (
+                  <a
+                    href={`#${section.id}`}
+                    class="rounded-lg border border-line bg-surface px-3 py-1.5 text-[13px] text-ink-300 transition-colors hover:border-line-strong hover:text-ink-100"
+                  >
+                    {section.label}
+                  </a>
+                ))}
+              </nav>
+            )
+          }
         </div>
       </div>
     </header>
 
     <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8">
-      <div class="mx-auto max-w-3xl">
-        <slot />
-      </div>
+      {prose ? <div class="mx-auto max-w-3xl"><slot /></div> : <slot />}
     </div>
   </article>
 
@@ -71,10 +116,10 @@ const schema = webPage(Astro.site, { path: Astro.url.pathname, title, descriptio
           Create an MCP, paste the key, restart. Two lines inside your own process.
         </p>
         <a
-          href={SITE.app}
+          href={SITE.signup}
           class="mt-5 inline-flex h-10 items-center rounded-xl bg-btn px-4 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover"
         >
-          Start measuring — free
+          {CTA.primary}
         </a>
       </div>
     </div>

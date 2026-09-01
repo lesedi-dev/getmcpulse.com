@@ -1,6 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
-import { SITE } from "../lib/site";
+import { SITE, CTA } from "../lib/site";
 import { STUDY } from "../lib/study";
 import { webPage } from "../lib/schema";
 
@@ -211,7 +211,7 @@ const MEASURES = [
     <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8">
       <div class="mx-auto grid max-w-3xl gap-4 sm:grid-cols-2">
         <div class="rounded-2xl border border-line bg-ink-900/40 p-7">
-          <h2 class="text-lg font-semibold tracking-tight text-ink-100">Where the numbers are from</h2>
+          <h2 class="text-lg font-semibold tracking-tight text-ink-100">Where these benchmarks come from</h2>
           <p class="mt-2 text-sm leading-6.5 text-ink-500">
             {STUDY.tools.toLocaleString("en-US")} tools and {
               STUDY.parameters.toLocaleString("en-US")
@@ -224,13 +224,13 @@ const MEASURES = [
         </div>
 
         <div class="rounded-2xl border border-line bg-ink-900/40 p-7">
-          <h2 class="text-lg font-semibold tracking-tight text-ink-100">The half a schema cannot show</h2>
+          <h2 class="text-lg font-semibold tracking-tight text-ink-100">What a schema cannot tell you</h2>
           <p class="mt-2 text-sm leading-6.5 text-ink-500">
             Which tools get retried, which return empty, and what your schemas actually cost per
             session. Two lines inside your own server.
           </p>
-          <a href={SITE.app} class="mt-5 inline-block text-sm font-medium text-cyan hover:underline">
-            Start measuring — free →
+          <a href={SITE.signup} class="mt-5 inline-block text-sm font-medium text-cyan hover:underline">
+            {CTA.primary} →
           </a>
         </div>
       </div>

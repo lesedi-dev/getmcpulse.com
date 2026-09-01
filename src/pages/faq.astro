@@ -1,0 +1,122 @@
+---
+import Base from "../layouts/Base.astro";
+import Faq from "../components/Faq.astro";
+import { SITE } from "../lib/site";
+import { FAQS, PRICING_NOTES } from "../lib/content";
+import { webPage } from "../lib/schema";
+
+/**
+ * Every question, in one place.
+ *
+ * ── Why a page and not just the home-page section ─────────────────────────
+ * Two reasons, and the second is the commercial one.
+ *
+ * The home page carries the four questions that stop an install. The other four
+ * — languages, getting at your own data, time to first data, security review —
+ * are asked by somebody already leaning in, and burying them in a fifth
+ * accordion on a page that is already long serves neither reader.
+ *
+ * And a question is a search query. "does mcp analytics see my tool arguments"
+ * is a thing somebody types, and a page that answers it in its own `<h2>` can
+ * rank for it where a section three-quarters down the home page cannot.
+ *
+ * The billing questions are here too, pulled from `PRICING_NOTES` rather than
+ * rewritten, because a visitor looking for "what happens at the cap" looks
+ * under questions before they look under pricing.
+ */
+
+const title = "Questions";
+const description =
+  "What MCPulse does to your server, what leaves your process, which languages work today, and what happens at the plan cap.";
+
+/**
+ * One `FAQPage` covering both lists.
+ *
+ * Google wants the answer in the schema to be the answer on the page, so both
+ * come from the same two arrays. Splitting them into two `FAQPage` nodes would
+ * describe one page as two documents.
+ */
+const schema = [
+  webPage(Astro.site, { path: "/faq", title, description }),
+  {
+    "@type": "FAQPage",
+    mainEntity: [...FAQS, ...PRICING_NOTES].map((faq) => ({
+      "@type": "Question",
+      name: faq.q,
+      acceptedAnswer: { "@type": "Answer", text: faq.a },
+    })),
+  },
+];
+---
+
+<Base title={title} description={description} schema={schema}>
+  <section class="relative overflow-hidden border-b border-line-soft">
+    <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>
+
+    <div class="mx-auto max-w-6xl px-5 pt-36 pb-14 sm:px-8 sm:pt-44">
+      <div class="reveal mx-auto max-w-3xl">
+        <p class="text-sm font-medium text-cyan">Questions</p>
+        <h1
+          class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-[2.75rem] sm:leading-[1.1]"
+        >
+          Common questions about MCPulse
+        </h1>
+        <p class="mt-5 text-lg leading-8 text-pretty text-ink-500">
+          Answered plainly, including the ones where the honest answer is "not yet".
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8">
+    <div class="mx-auto max-w-3xl space-y-14">
+      <section>
+        <h2 class="reveal text-xl font-semibold tracking-tight text-ink-100">
+          Installing and running it
+        </h2>
+        <Faq class="reveal mt-6" />
+      </section>
+
+      <section>
+        <h2 class="reveal text-xl font-semibold tracking-tight text-ink-100">Billing</h2>
+        <p class="reveal mt-3 text-[15px] leading-7 text-ink-500">
+          Caps, downgrades, and who takes the payment. The
+          <a href="/pricing" class="text-cyan hover:underline">pricing page</a> has the plans themselves.
+        </p>
+
+        <dl class="reveal mt-7 divide-y divide-line-soft overflow-hidden rounded-2xl border border-line">
+          {
+            PRICING_NOTES.map((note) => (
+              <div class="bg-surface p-5 sm:p-7">
+                <dt class="text-[15px] font-medium text-ink-100">{note.q}</dt>
+                <dd class="mt-2 text-[15px] leading-7 text-ink-500">{note.a}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </section>
+
+      <section class="reveal rounded-2xl border border-line bg-ink-900/40 p-7">
+        <h2 class="text-lg font-semibold tracking-tight text-ink-100">Still not answered?</h2>
+        <p class="mt-2 text-sm leading-6.5 text-ink-500">
+          The documentation goes further on every one of these, and the SDK is on GitHub if the
+          answer you want is in the code.
+        </p>
+        <div class="mt-5 flex flex-wrap gap-3">
+          <a
+            href={SITE.docs}
+            class="inline-flex h-10 items-center rounded-xl bg-btn px-4 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover"
+          >
+            Read the docs
+          </a>
+          <a
+            href={SITE.github}
+            class="inline-flex h-10 items-center rounded-xl border border-line px-4 text-sm font-medium text-ink-300 transition-colors hover:border-line-strong hover:text-ink-100"
+          >
+            GitHub
+          </a>
+        </div>
+      </section>
+    </div>
+  </div>
+</Base>

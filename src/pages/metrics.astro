@@ -1,119 +1,219 @@
 ---
 import Detail from "../layouts/Detail.astro";
-import { METRICS, INSIGHT_RULES } from "../lib/content";
+import ToolTable from "../components/ToolTable.astro";
+import { METRICS, INSIGHT_RULES, INSIGHTS } from "../lib/content";
+import { SITE } from "../lib/site";
+
+/**
+ * The sixteen metrics, and the screen they live in.
+ *
+ * This page was 388 words: a heading, a lead, and sixteen names in a grid. The
+ * names were the whole page, which meant a reader could finish it and still not
+ * know what looking at their own data would feel like — the one thing a page
+ * called Metrics is for.
+ *
+ * Three things were added, in order of how much they change that:
+ *
+ *   1. the product view, at the top. Sixteen metric names are abstract; a table
+ *      with two red cells in it is the same sixteen metrics doing their job.
+ *   2. an explanation of *why* three of them are computed overnight, which is
+ *      the page's most credible passage and was previously one clause in a lead.
+ *   3. what turns a number into an insight, with the real rules, so "it tells
+ *      you what to do" is demonstrated rather than claimed.
+ */
+
+/** Worded to match the headings they jump to — see the note in how-it-works. */
+const SECTIONS = [
+  { id: "view", label: "Where you see them" },
+  { id: "sixteen", label: "All sixteen metrics" },
+  { id: "nightly", label: "Why three run overnight" },
+  { id: "insights", label: "How a number becomes a fix" },
+] as const;
 ---
 
 <Detail
   eyebrow="Metrics"
-  title="Sixteen numbers, and where each one comes from"
+  title="The sixteen metrics MCPulse records"
   lead="Most are counted as your calls arrive, into one table keyed by the hour, the tool and the client — so a single day is drawn by the hour, and every figure narrows to one model as easily as to one tool. Three need a night's worth of calls in order and are labelled as of yesterday, because pretending otherwise would be the first lie the product told you."
   description="The sixteen metrics MCPulse records, what each one tells you, and which are counted live versus computed overnight."
+  width="full"
+  sections={SECTIONS}
 >
-  <div class="space-y-12">
-    {
-      METRICS.map((column, groupIndex) => {
-        const offset = METRICS.slice(0, groupIndex).reduce((n, g) => n + g.items.length, 0);
+  <div class="space-y-24">
+    <!-- ── The view ───────────────────────────────────────────────────── -->
+    <section id="view" class="scroll-mt-24">
+      <div class="mx-auto max-w-3xl">
+        <h2 class="reveal text-2xl font-semibold tracking-tight text-ink-100">
+          Where you see these numbers
+        </h2>
+        <p class="reveal mt-4 text-[15px] leading-7 text-ink-500">
+          One row per tool, and every column below is one of the sixteen. The figures worth acting on
+          are coloured and the rest are left alone — a dashboard that tones every cell leaves you
+          deciding which of twelve amber numbers matters.
+        </p>
+      </div>
 
-        return (
-          <section class="reveal">
-            <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-line pb-4">
-              <h2 class="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight text-ink-100">
-                <span aria-hidden="true" class:list={["h-1.5 w-1.5 rounded-full", column.dot]} />
-                {column.group}
-              </h2>
-              <p class="text-sm text-ink-700">{column.note}</p>
-              <p class="ml-auto text-xs text-ink-700">{column.items.length} metrics</p>
-            </div>
+      <ToolTable class="reveal mt-10 hidden lg:block" />
+      <ToolTable class="reveal mt-10 lg:hidden" density="compact" />
 
-            <ul class="mt-5 grid gap-3 sm:grid-cols-2">
-              {column.items.map((item, i) => (
-                <li class="group relative overflow-hidden rounded-xl border border-line bg-surface p-5 transition-colors hover:border-line-strong hover:bg-surface-2">
-                  <span
-                    aria-hidden="true"
-                    class:list={[
-                      "absolute inset-y-0 left-0 w-0.5 origin-top scale-y-0 transition-transform duration-300 group-hover:scale-y-100",
-                      column.dot,
-                    ]}
-                  />
-                  <div class="flex items-baseline gap-3">
-                    <span class="font-mono text-xs text-ink-700">
-                      {String(offset + i + 1).padStart(2, "0")}
-                    </span>
-                    <h3 class="text-[15px] leading-6 font-medium text-ink-100">{item.name}</h3>
-                  </div>
-                  <p class="mt-2 pl-8 text-sm leading-6 text-ink-500">{item.detail}</p>
-                </li>
-              ))}
-            </ul>
-          </section>
-        );
-      })
-    }
-  </div>
+      <p class="reveal mx-auto mt-6 max-w-3xl text-sm leading-6.5 text-ink-700">
+        Every figure narrows the same way: to one tool, to one client, to one hour of one day. The
+        counters are one row per hour per tool per client, which is what makes that possible without
+        keeping a row per call.
+      </p>
+    </section>
 
-  <section class="reveal mt-16 border-t border-line-soft pt-14">
-    <h2 class="text-xl font-semibold tracking-tight text-ink-100">
-      Retries are the hard one, and the one worth having
-    </h2>
-    <p class="mt-3 text-[15px] leading-7 text-ink-500">
-      Within a session, the same tool called twice inside 30 seconds with
-      <em class="text-ink-100 not-italic">different</em> arguments is the model rewording and trying
-      again. With the <em class="text-ink-100 not-italic">same</em> arguments it is pagination or polling,
-      and it is not a retry. Get that distinction wrong and every well-behaved paginating tool grades
-      as broken.
-    </p>
-    <p class="mt-4 text-[15px] leading-7 text-ink-500">
-      That is the whole reason arguments are hashed. Not to inspect them — twelve hex characters of
-      a SHA-256 with the keys sorted is not reversible and is not meant to be. It answers exactly
-      one question: were these two calls the same? Sorting the keys matters, or
-      <code class="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-ink-100"
-        >&#123;a:1,b:2&#125;</code
-      > and <code class="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-ink-100"
-        >&#123;b:2,a:1&#125;</code
-      > hash differently and every repeat looks like a rewording.
-    </p>
-    <p class="mt-4 text-[15px] leading-7 text-ink-500">
-      First-call success follows from it: the outcome is <code
-        class="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-ink-100">ok</code
-      >, the result was not empty, and no retry followed within 30 seconds. Miss any one of the
-      three and it does not count.
-    </p>
-  </section>
+    <!-- ── The sixteen ────────────────────────────────────────────────── -->
+    <section id="sixteen" class="scroll-mt-24">
+      <div class="mx-auto max-w-3xl">
+        <h2 class="reveal text-2xl font-semibold tracking-tight text-ink-100">
+          All sixteen metrics, grouped by when they update
+        </h2>
+        <p class="reveal mt-4 text-[15px] leading-7 text-ink-500">
+          Grouped by where they come from rather than by what they measure, because when a number
+          becomes true is the thing you need to know before you act on it.
+        </p>
+      </div>
 
-  <section class="reveal mt-14 border-t border-line-soft pt-14">
-    <h2 class="text-xl font-semibold tracking-tight text-ink-100">
-      A tool name, a number, and a consequence
-    </h2>
-    <p class="mt-3 text-[15px] leading-7 text-ink-500">
-      The metrics are the input. These rules are what the product actually says to you — an insight
-      without a number is not an insight.
-    </p>
+      <div class="mt-12 space-y-12">
+        {
+          METRICS.map((column, groupIndex) => {
+            const offset = METRICS.slice(0, groupIndex).reduce((n, g) => n + g.items.length, 0);
 
-    <div class="mt-6 overflow-x-auto">
-      <table class="w-full min-w-[34rem] border-collapse text-left text-sm">
-        <thead>
-          <tr class="text-[11px] tracking-wide text-ink-700 uppercase">
-            <th class="border-b border-line pb-2.5 font-medium">Rule</th>
-            <th class="border-b border-line pb-2.5 font-medium">Fires when</th>
-            <th class="border-b border-line pb-2.5 font-medium">It tells you</th>
-          </tr>
-        </thead>
-        <tbody>
+            return (
+              <section class="reveal">
+                <div class="mx-auto flex max-w-3xl flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-line pb-4">
+                  <h3 class="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight text-ink-100">
+                    <span aria-hidden="true" class:list={["h-1.5 w-1.5 rounded-full", column.dot]} />
+                    {column.group}
+                  </h3>
+                  <p class="text-sm text-ink-700">{column.note}</p>
+                  <p class="ml-auto font-mono text-xs text-ink-700">{column.items.length} metrics</p>
+                </div>
+
+                <ul class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {column.items.map((item, i) => (
+                    <li class="group relative overflow-hidden rounded-xl border border-line bg-surface p-5 transition-colors hover:border-line-strong hover:bg-surface-2">
+                      <span class="font-mono text-[11px] text-ink-700">
+                        {String(offset + i + 1).padStart(2, "0")}
+                      </span>
+                      <p class="mt-2 text-sm font-medium text-ink-100">{item.name}</p>
+                      <p class="mt-1.5 text-sm leading-6.5 text-ink-500">{item.detail}</p>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })
+        }
+      </div>
+    </section>
+
+    <!-- ── The nightly pass ───────────────────────────────────────────── -->
+    <section id="nightly" class="scroll-mt-24">
+      <div class="mx-auto max-w-3xl">
+        <h2 class="reveal text-2xl font-semibold tracking-tight text-ink-100">
+          Why three metrics are computed overnight
+        </h2>
+        <p class="reveal mt-4 text-[15px] leading-7 text-ink-500">
+          Retries, first-call success and tool pairs are not counters. Each one is a statement about
+          a <em class="text-ink-300 not-italic">sequence</em> of calls, and a sequence is not
+          finished while calls are still arriving.
+        </p>
+
+        <div class="reveal mt-8 space-y-4">
           {
-            INSIGHT_RULES.map((rule) => (
-              <tr class="align-top">
-                <td class="border-b border-line-soft py-3 pr-4 font-medium whitespace-nowrap text-ink-100">
-                  {rule.rule}
-                </td>
-                <td class="border-b border-line-soft py-3 pr-4 font-mono text-[12.5px] text-ink-500">
-                  {rule.when}
-                </td>
-                <td class="border-b border-line-soft py-3 text-ink-500">{rule.says}</td>
-              </tr>
+            [
+              [
+                "A retry is only a retry in hindsight",
+                "The same tool, called again inside thirty seconds, with different arguments. At the moment the first call lands, nothing about it is a retry — that is decided by whatever happens next, and if we counted it live we would be counting the second call and guessing about the first.",
+              ],
+              [
+                "First-call success needs the calls that followed",
+                "Asked once, got something usable, moved on. You cannot know somebody moved on until they have had the chance not to. Counted live, this number would be optimistic every time and would settle downward all day.",
+              ],
+              [
+                "A session can cross midnight",
+                "So the pass cannot simply take yesterday's rows: a conversation that started at 23:50 belongs to one session, not two days. The pass reads a window that overlaps the boundary, which is the whole reason it is a pass and not a query.",
+              ],
+            ].map(([t, d]) => (
+              <div class="rounded-xl border border-line bg-surface p-6">
+                <p class="text-[15px] font-medium text-ink-100">{t}</p>
+                <p class="mt-2 text-[15px] leading-7 text-ink-500">{d}</p>
+              </div>
             ))
           }
-        </tbody>
-      </table>
-    </div>
-  </section>
+        </div>
+
+        <div class="reveal mt-6 rounded-xl border border-cyan/25 bg-cyan-wash p-6">
+          <p class="text-[15px] font-medium text-ink-100">So they are labelled as of yesterday</p>
+          <p class="mt-2 text-[15px] leading-7 text-ink-500">
+            Not hidden behind a spinner, not quietly stale, and not shown as though they were live.
+            Thirteen numbers move as your traffic moves; three carry a date. A dashboard that blurred
+            that line would be easier to sell and would have told you its first lie on the first
+            screen.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Insights ───────────────────────────────────────────────────── -->
+    <section id="insights" class="scroll-mt-24">
+      <div class="mx-auto max-w-3xl">
+        <h2 class="reveal text-2xl font-semibold tracking-tight text-ink-100">
+          How a number becomes something to fix
+        </h2>
+        <p class="reveal mt-4 text-[15px] leading-7 text-ink-500">
+          A dashboard that makes you work out what to do with it has done half the job. These are the
+          actual thresholds — a number crosses one, and the overview says so in a sentence that names
+          the tool and the consequence.
+        </p>
+      </div>
+
+      <div class="reveal mt-10 overflow-hidden rounded-2xl border border-line">
+        <table class="w-full border-collapse text-left">
+          <thead>
+            <tr class="border-b border-line-soft bg-surface-2">
+              <th class="px-5 py-3 text-[11px] font-medium tracking-wide text-ink-700 uppercase">Rule</th>
+              <th class="px-5 py-3 text-[11px] font-medium tracking-wide text-ink-700 uppercase">What it says</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              INSIGHT_RULES.map((rule) => (
+                <tr class="border-b border-line-soft last:border-b-0">
+                  <td class="px-5 py-4 align-top font-mono text-[12.5px] leading-6 whitespace-nowrap text-cyan">
+                    {rule.rule}
+                  </td>
+                  <td class="px-5 py-4 align-top text-sm leading-6.5 text-ink-500">{rule.says}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="reveal mt-8 grid gap-4 lg:grid-cols-2">
+        {
+          INSIGHTS.map((insight) => (
+            <article
+              class:list={[
+                "rounded-2xl border p-5",
+                insight.tone === "bad" ? "border-bad/20 bg-bad/[0.04]" : "border-warn/20 bg-warn/[0.04]",
+              ]}
+            >
+              <p class="font-mono text-sm text-ink-100">{insight.tool}</p>
+              <p class="mt-2 text-[15px] leading-7 text-ink-300">{insight.text}</p>
+            </article>
+          ))
+        }
+      </div>
+
+      <p class="reveal mx-auto mt-8 max-w-3xl text-sm leading-6.5 text-ink-700">
+        The same figures are reachable through the API and an MCP connector on every plan, so your
+        agent can ask these questions the way you would — see
+        <a href={SITE.docs} class="font-medium text-cyan hover:underline">the documentation</a>.
+      </p>
+    </section>
+  </div>
 </Detail>

@@ -56,15 +56,71 @@ export const GET: APIRoute = async ({ site }) => {
    * a header and wrong here: a reader skimming a menu can be steered, and a
    * model asking "what is on this site" should be told everything.
    */
-  const pages = [
+  /**
+   * Every page, described once.
+   *
+   * ── The order, and why it is not just `NAV` ───────────────────────────────
+   * `NAV` is an editorial selection: four questions somebody asks while
+   * deciding, chosen to fit a header. That is right for a menu and wrong here —
+   * a model asking "what is on this site" should be told everything, including
+   * the pages the header leaves out.
+   *
+   * ── Why it is deduplicated ────────────────────────────────────────────────
+   * Because it silently was not, and the file shipped with "Schema checker"
+   * listed twice: once written out with a note, once again from `NAV`, which
+   * still contains it. Spreading a curated list into a generated one is exactly
+   * the shape that produces that, and the failure is invisible — nothing throws,
+   * the file is still valid, it just repeats itself to every model that reads it.
+   *
+   * A described entry always wins over a bare one, whichever came first, so
+   * moving a page in or out of `NAV` cannot change what this file says about it.
+   */
+  const described = [
     { href: "/", label: "Home", note: SITE.description },
     {
       href: "/check",
       label: "Schema checker",
       note: "Paste a tools/list response and score it against 4,951 public servers — undescribed parameters, description collisions, schema token cost. Runs client-side; nothing is uploaded.",
     },
-    ...NAV.map((item) => ({ href: item.href, label: item.label, note: "" })),
+    {
+      href: "/how-it-works",
+      label: "How it works",
+      note: "An npm package inside your own server rather than a proxy in front of it. What leaves the process, the four outcomes of a call, and what MCPulse cannot see.",
+    },
+    {
+      href: "/metrics",
+      label: "Metrics",
+      note: "All sixteen metrics, what each one tells you, and which are counted live versus computed on the nightly pass.",
+    },
+    {
+      href: "/install",
+      label: "Installation",
+      note: "Two lines for TypeScript. All ten official MCP SDKs listed, with the nine not ready yet marked coming soon rather than hidden.",
+    },
+    {
+      href: "/pricing",
+      label: "Pricing",
+      note: "Free for one server, $49 a month for a server people depend on. Recording stops at the cap rather than billing past it.",
+    },
+    {
+      href: "/faq",
+      label: "Questions",
+      note: "What leaves your process, whether it can slow your tools down, which languages are supported today, and what happens at the plan cap.",
+    },
     { href: "/blog", label: "Blog", note: "Twenty-one essays on measuring MCP servers." },
+  ];
+
+  const seen = new Set(described.map((page) => page.href));
+
+  const pages = [
+    ...described,
+    // Anything in the header this file has not described yet — so a page added
+    // to `NAV` appears here without anyone remembering, rather than silently not.
+    ...NAV.filter((item) => !seen.has(item.href)).map((item) => ({
+      href: item.href,
+      label: item.label,
+      note: "",
+    })),
   ];
 
   const body = `# ${SITE.name}

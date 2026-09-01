@@ -321,7 +321,7 @@ const STATIC_PAGES: (OgCard & { path: string })[] = [
     path: "/how-it-works",
     id: "how-it-works",
     eyebrow: "How it works",
-    title: "Three decisions, and they are all the same decision",
+    title: "How MCPulse sees your server without touching its traffic",
     blurb:
       "An npm package inside your own server. Sizes and hashes only, never arguments or results.",
   },
@@ -329,7 +329,7 @@ const STATIC_PAGES: (OgCard & { path: string })[] = [
     path: "/metrics",
     id: "metrics",
     eyebrow: "Metrics",
-    title: "Sixteen numbers, and where each one comes from",
+    title: "The sixteen metrics MCPulse records",
     blurb:
       "What each metric tells you, and which are counted live versus computed on the nightly pass.",
   },
@@ -337,7 +337,7 @@ const STATIC_PAGES: (OgCard & { path: string })[] = [
     path: "/install",
     id: "install",
     eyebrow: "Installation",
-    title: "Two lines, and it is measuring",
+    title: "Install MCPulse in two lines",
     blurb: "Pick your language, add the package, set your key, wrap your server. About two minutes.",
   },
   {
@@ -355,6 +355,14 @@ const STATIC_PAGES: (OgCard & { path: string })[] = [
     title: "Free for one server, $49 for one people depend on",
     blurb:
       "Recording stops at the cap rather than billing past it, and history is hidden by a plan rather than deleted.",
+  },
+  {
+    path: "/faq",
+    id: "faq",
+    eyebrow: "Questions",
+    title: "What this does to your server",
+    blurb:
+      "What leaves your process, whether it can slow your tools down, which languages work today, and what happens at the cap.",
   },
   {
     path: "/blog",

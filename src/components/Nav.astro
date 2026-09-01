@@ -1,6 +1,6 @@
 ---
 import Logo from "./Logo.astro";
-import { NAV, SITE } from "../lib/site";
+import { NAV, SITE, CTA } from "../lib/site";
 
 const path = Astro.url.pathname;
 ---
@@ -20,16 +20,28 @@ const path = Astro.url.pathname;
         <span class="text-[15px] font-semibold tracking-tight">{SITE.name}</span>
       </a>
 
-      {/* Below `md` these become a burger: as a row they were a horizontal
+      {/* Below `lg` these become a burger: as a row they were a horizontal
           scroller with no affordance, so the last item sat off the edge of a
           phone with nothing to say it was there.
 
-          Five items and the button measure 500px. The tightest case is 768px —
-          the `md` breakpoint itself — where the mark and the button each keep
-          16px of clearance and the row stays one line. That is not much slack:
-          a sixth item, or a longer label, needs re-measuring at 768px rather
-          than eyeballing at laptop width, where there is room to spare. */}
-      <ul class="col-start-2 hidden items-center gap-1 text-sm md:flex">
+          ── Why `lg` and not `md` ──────────────────────────────────────────
+          It was `md`, where five links and one button fitted with 16px to spare.
+          A second auth action spent that and more, so at 768px the row
+          overlapped the mark.
+
+          Metrics was then dropped from `NAV`, on its own merits, and the
+          question of whether four links could go back to `md` was measured
+          rather than assumed. They cannot, and the links were never the
+          problem: the row needs 1000px, and what it needs it for is the actions
+          block, which is 200px of "Sign in" plus "Sign up — free" against a side
+          track of 126px at 768px. Removing another link would not help — the
+          centre column is not what overflows.
+
+          So `lg` stays, and it is the right call rather than a leftover: the row
+          fits from 1000px and 1024 is the nearest breakpoint above that. Getting
+          it to `md` would mean shortening the two actions to about 140px
+          together, which is not worth what it would cost them to read. */}
+      <ul class="col-start-2 hidden items-center gap-1 text-sm lg:flex">
         {
           NAV.map((item) => {
             const current = path === item.href || path.startsWith(`${item.href}/`);
@@ -49,18 +61,40 @@ const path = Astro.url.pathname;
         }
       </ul>
 
-      <a
-        href={SITE.app}
-        class="col-start-3 hidden w-fit shrink-0 justify-self-end rounded-lg bg-btn px-3.5 py-1.5 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover md:block"
-      >
-        Sign in
-      </a>
+      {/*
+        Two actions, and only one of them is a button.
+
+        A returning user is *looking* for "Sign in" and will find it as a plain
+        link; a first-time visitor is not looking for anything, which is why the
+        primary is the filled one. Giving both the same weight makes the header
+        ask a question — which of these am I? — of the visitor least equipped to
+        answer it.
+
+        Ordered sign-in first, sign-up second. The filled button belongs at the
+        end of the row: it is the last thing the eye reaches travelling left to
+        right, and putting the quieter link before it means the two never read
+        as a pair of equal choices.
+      */}
+      <div class="col-start-3 hidden w-fit shrink-0 items-center gap-1 justify-self-end lg:flex">
+        <a
+          href={SITE.login}
+          class="rounded-lg px-3 py-1.5 text-sm font-medium whitespace-nowrap text-ink-500 transition-colors hover:bg-surface-2 hover:text-ink-100"
+        >
+          {CTA.signin}
+        </a>
+        <a
+          href={SITE.signup}
+          class="rounded-lg bg-btn px-3.5 py-1.5 text-sm font-medium whitespace-nowrap text-btn-fg transition-colors hover:bg-btn-hover"
+        >
+          {CTA.primary}
+        </a>
+      </div>
 
       <!-- ── Narrow: a disclosure ────────────────────────────────────────
            `details` rather than a scripted menu — it is a real toggle with
            keyboard and screen-reader behaviour already attached, so the menu
            works before any JavaScript runs. -->
-      <details class="group relative col-start-3 justify-self-end md:hidden" data-menu>
+      <details class="group relative col-start-3 justify-self-end lg:hidden" data-menu>
         <summary
           class="flex h-11 w-11 cursor-pointer items-center justify-center rounded-lg text-ink-300 transition-colors hover:text-ink-100 [&::-webkit-details-marker]:hidden"
           aria-label="Menu"
@@ -107,12 +141,20 @@ const path = Astro.url.pathname;
             }
           </ul>
 
-          <a
-            href={SITE.app}
-            class="mt-5 flex h-11 items-center justify-center rounded-xl bg-btn text-sm font-medium text-btn-fg"
-          >
-            Sign in
-          </a>
+          <div class="mt-5 flex flex-col gap-2.5">
+            <a
+              href={SITE.signup}
+              class="flex h-11 items-center justify-center rounded-xl bg-btn text-sm font-medium text-btn-fg"
+            >
+              {CTA.primary}
+            </a>
+            <a
+              href={SITE.login}
+              class="flex h-11 items-center justify-center rounded-xl border border-line text-sm font-medium text-ink-300"
+            >
+              {CTA.signin}
+            </a>
+          </div>
         </div>
       </details>
     </div>

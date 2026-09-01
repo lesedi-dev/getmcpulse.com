@@ -3,12 +3,60 @@ import Base from "../layouts/Base.astro";
 import InstallSequence from "../components/InstallSequence.astro";
 import HeroPanel from "../components/HeroPanel.astro";
 import PillarVisual from "../components/PillarVisual.astro";
-import { SITE, INSTALL_COMMAND } from "../lib/site";
-import { OUTCOMES, PILLARS, METRICS, INSIGHTS } from "../lib/content";
+import ToolTable from "../components/ToolTable.astro";
+import PricingCards from "../components/PricingCards.astro";
+import Proof from "../components/Proof.astro";
+import Faq from "../components/Faq.astro";
+import { SITE, INSTALL_COMMAND, CTA } from "../lib/site";
+import { OUTCOMES, PILLARS, METRICS, INSIGHTS, FAQS, PLANS } from "../lib/content";
 
+
+/**
+ * The FAQ, as structured data as well as as markup.
+ *
+ * `FAQPage` is the one schema type on this site that can change what a result
+ * *looks like* rather than only how it is filed — the questions can appear
+ * expandable under the link. Google requires the answer in the schema to match
+ * the answer on the page, which is why both read from `FAQS` rather than one
+ * being a rewrite of the other.
+ *
+ * `Base` would otherwise supply `SoftwareApplication` for this page; passing an
+ * array keeps it and adds these two, because the home page is still primarily a
+ * page about a piece of software.
+ */
+/** One button style for the four "read the detail page" links below. */
+const BUTTON =
+  "inline-flex h-10 items-center rounded-xl border border-line bg-surface px-4 text-sm font-medium text-ink-100 transition-colors hover:border-line-strong hover:bg-surface-2";
+
+const schema = [
+  {
+    "@type": "SoftwareApplication",
+    name: SITE.name,
+    description: SITE.description,
+    applicationCategory: "DeveloperApplication",
+    operatingSystem: "Any",
+    url: new URL("/", Astro.site).href,
+    publisher: { "@id": `${SITE.url}/#organization` },
+    offers: PLANS.map((plan) => ({
+      "@type": "Offer",
+      name: plan.name,
+      price: plan.price.month,
+      priceCurrency: "USD",
+      url: SITE.signup,
+    })),
+  },
+  {
+    "@type": "FAQPage",
+    mainEntity: FAQS.map((faq) => ({
+      "@type": "Question",
+      name: faq.q,
+      acceptedAnswer: { "@type": "Answer", text: faq.a },
+    })),
+  },
+];
 ---
 
-<Base>
+<Base schema={schema}>
   <!-- ── Hero ──────────────────────────────────────────────────────────── -->
   <section class="relative overflow-hidden">
     <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>
@@ -22,54 +70,187 @@ import { OUTCOMES, PILLARS, METRICS, INSIGHTS } from "../lib/content";
       class="mx-auto max-w-6xl px-5 pt-36 pb-24 sm:px-8 sm:pt-44 sm:pb-32 xl:min-h-[54rem] xl:pb-24"
     >
       <div class="reveal max-w-3xl xl:max-w-[34rem]">
-        {/* Whichever post we are currently leading with. Hardcoded rather
-            than read from the collection, because "newest" is not the same as
-            "worth interrupting a first-time reader for", and this is the only
-            slot above the headline. Changing it should be a deliberate edit. */}
-        <a
-          href="/blog/reading-5000-mcp-schemas"
-          class="inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 py-1 pr-3 pl-1 text-xs text-ink-300 transition-colors hover:border-cyan/30 hover:text-ink-100"
-        >
-          <span class="rounded-full bg-cyan-wash px-2 py-0.5 font-medium text-cyan">New</span>
-          We read the schemas of 4,951 MCP servers →
-        </a>
+        {/*
+          What this is, and who it is for, before anything clever.
 
-        <h1
-          class="mt-6 text-4xl font-semibold tracking-tight text-balance text-ink-100 sm:text-6xl sm:leading-[1.05] xl:text-5xl xl:leading-[1.08]"
-        >
-          Your MCP server works.
-          {/* Its own line from xl, where the panel narrows the column enough
-              that the second sentence would otherwise start mid-line. */}
-          <span class="text-ink-700 xl:block">Does it work for the model?</span>
-        </h1>
+          This slot used to hold the blog promo, which meant the first words a
+          cold visitor read were "We read the schemas of 4,951 MCP servers".
+          That is a good hook and it is not an introduction: it never says what
+          is being sold, and the headline underneath it is a question rather than
+          a category. Somebody arriving from a search or a link could read the
+          whole hero and still not know this is an analytics product.
 
-        <p class="mt-6 max-w-2xl text-lg leading-8 text-pretty text-ink-500 sm:text-xl">
-          You publish a server and see nothing — not which tools get called, not whether the model
-          understands your descriptions, not what your server costs the people running it. MCPulse
-          answers that, from two lines inside your own process.
+          One line fixes it. It is the same sentence `site.ts` has always used to
+          describe the product to search engines and to the OG card — the site
+          just never said it to a human. The headline keeps doing its job, which
+          is to make the category matter.
+
+          "for the people who build them" is the audience half, and it is here
+          because "MCP servers" alone does not distinguish an author from someone
+          installing one. The product is for authors; the page should say so in
+          the first line rather than let a reader work it out from the pricing.
+        */}
+        <p class="text-sm font-medium tracking-wide text-cyan">
+          Analytics for MCP servers — for the people who build them
         </p>
 
+        {/*
+          A statement, not a question.
+
+          This was "Your MCP server works. Does it work for the model?" — good
+          writing and the wrong job. Three faults, in order of how much they cost:
+          it asserts nothing, so the reader does the work; "work for the model"
+          never says *how*, so the tension it builds has nothing behind it; and it
+          takes two sentences to arrive at a setup rather than a promise.
+
+          It is also the same fault every `h2` on this site was just rewritten to
+          remove. Clever-over-clear was a tic, and the headline was not exempt
+          from the fix for being the headline.
+
+          What replaced it opens on the verb, names what you get, and lets
+          "actually" carry the whole tension the old pair spent two sentences
+          building — the gap between a server that runs and a server a model can
+          use. The muted second half keeps the two-tone shape the layout was built
+          around, so nothing below it had to move.
+        */}
+        <h1
+          class="mt-4 text-4xl font-semibold tracking-tight text-balance text-ink-100 sm:text-6xl sm:leading-[1.05] xl:text-5xl xl:leading-[1.08]"
+        >
+          See what models
+          <span class="text-ink-700">actually</span> do with your MCP server
+        </h1>
+
+        {/*
+          What you get, in the first clause.
+
+          This was forty-three words that opened on the problem — "you publish a
+          server and see nothing" — followed by three more things you cannot see,
+          and only reached the product in the last nine words. Every sentence in
+          it was true and it was the wrong shape for the position: a reader four
+          seconds into a page they did not plan to be on will not spend three
+          clauses on a problem before finding out what is being sold.
+
+          So the four things you get lead, and the problem statement moves into
+          the sections below, which is where a reader who is still here has the
+          patience for it. Same claims, twenty-eight words, and the first six say
+          what the product does.
+        */}
+        <p class="mt-6 max-w-2xl text-lg leading-8 text-pretty text-ink-500 sm:text-xl">
+          Which tools they call, which they retry, which come back empty, and what your schemas cost
+          every session — from two lines inside your own server.
+        </p>
+
+        {/*
+          Two actions, and the second one asks for nothing.
+
+          This slot has now held three things, and the reasoning is worth keeping
+          because each version was better than the last for the same reason.
+
+          It began as `npm install @mcpulse/sdk`, which assumes the reader has
+          already decided to install — so a visitor who had not decided had
+          exactly one thing to click and it was the sign-up.
+
+          Then it was "See pricing", which is at least a way to keep reading. But
+          pricing answers "what will this cost me", and a reader four seconds in
+          has an earlier question: is this thing any good, and does it apply to
+          me. Sending them to a price list to find out is asking them to evaluate
+          an offer before they have evaluated the product.
+
+          The checker answers that question instead, and it is the only thing on
+          this site that gives somebody something before they give us anything:
+          paste a schema, get scored against 4,951 servers, in their own browser,
+          no account. For a visitor who is not ready to sign up that is a better
+          offer than a number — and the ones it sends away leave having seen the
+          product's argument demonstrated on their own server.
+
+          Pricing loses nothing by moving: it is in the header, and the block
+          further down this page.
+        */}
         <div class="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
           <a
-            href={SITE.app}
+            href={SITE.signup}
             class="inline-flex h-11 items-center justify-center rounded-xl bg-btn px-5 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover"
           >
-            Start measuring — free
+            {CTA.primary}
           </a>
 
+          <a
+            href="/check"
+            class="inline-flex h-11 items-center justify-center rounded-xl border border-line px-5 text-sm font-medium text-ink-300 transition-colors hover:border-line-strong hover:text-ink-100"
+          >
+            Try the schema checker
+          </a>
+        </div>
+
+        {/*
+          The reassurance, and then the requirements — in that order.
+
+          This line was "Node 20.12+ · zero runtime dependencies · works with any
+          MCP transport", which is a specification. A specification answers a
+          question the reader has not asked yet; what they are weighing at this
+          point is what saying yes costs them. Free for one server, no card and
+          no trial is the answer, and unlike most versions of that sentence it is
+          literally true — there is no trial to expire because the free tier is
+          not one.
+
+          The requirements keep their line underneath, because for this audience
+          "zero runtime dependencies" is genuinely persuasive — just not before
+          the price.
+        */}
+        <p class="mt-5 text-sm text-ink-300">
+          Free for one server. No card, and no trial to expire.
+        </p>
+
+        <div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
           <button
             type="button"
             data-copy={INSTALL_COMMAND}
-            class="group inline-flex h-11 items-center justify-between gap-4 rounded-xl border border-line bg-surface px-4 font-mono text-sm text-ink-300 transition-colors hover:border-line-strong hover:text-ink-100"
+            class="group inline-flex h-10 items-center justify-between gap-4 rounded-xl border border-line bg-surface px-4 font-mono text-[13px] text-ink-300 transition-colors hover:border-line-strong hover:text-ink-100"
           >
             <span><span class="text-cyan-dim">$</span> {INSTALL_COMMAND}</span>
             <span data-copy-label class="text-xs text-ink-700 group-hover:text-ink-500">copy</span>
           </button>
+          {/*
+            The languages, because the command implied an answer we did not mean.
+
+            This line was "Node 20.12+ · zero runtime dependencies · any MCP
+            transport". Read next to `npm install`, the only thing a Python or Go
+            author took from the hero was that this is a Node product and they
+            are not the audience — and nine of the ten official MCP SDKs are not
+            TypeScript.
+
+            The honest version cannot say "works with Python", because it does not
+            yet. It can say which one ships and that the rest are coming, which is
+            a different message from silence: "not yet" keeps a reader, "no"
+            loses them, and an `npm install` with no context reads as "no".
+
+            It links to `/install`, where all ten are listed with the nine marked
+            coming soon rather than hidden — the page that exists to answer
+            exactly the question this line used to raise.
+          */}
+          <p class="text-xs text-ink-700">
+            <a href="/install" class="text-ink-500 underline decoration-line-strong underline-offset-2 transition-colors hover:text-cyan hover:decoration-cyan">
+              TypeScript today — Python, Go, C# and six more coming
+            </a>
+             · zero runtime dependencies · any MCP transport
+          </p>
         </div>
 
-        <p class="mt-5 text-sm text-ink-700">
-          Node 20.12+ · zero runtime dependencies · works with any MCP transport
-        </p>
+        {/*
+          The blog promo, demoted from above the headline to below the fold-line.
+
+          It was the first thing on the page. It is still the strongest thing we
+          have to offer somebody who is not ready to sign up — but "here is our
+          research" is a second-paragraph move, not an opening line, and it was
+          standing where the category belonged.
+        */}
+        <a
+          href="/blog/reading-5000-mcp-schemas"
+          class="mt-8 inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 py-1 pr-3 pl-1 text-xs text-ink-300 transition-colors hover:border-cyan/30 hover:text-ink-100"
+        >
+          <span class="rounded-full bg-cyan-wash px-2 py-0.5 font-medium text-cyan">New</span>
+          We read the schemas of 4,951 MCP servers →
+        </a>
       </div>
     </div>
 
@@ -110,6 +291,102 @@ import { OUTCOMES, PILLARS, METRICS, INSIGHTS } from "../lib/content";
           ))
         }
       </ul>
+
+      {/* Telling `crashed` from `tool_error` is the hardest thing the SDK does
+          and this strip only names the result. The section that explains it is
+          two clicks away otherwise. */}
+      <p class="reveal mt-5 text-sm text-ink-700">
+        <a href="/how-it-works#outcomes" class="font-medium text-cyan hover:underline">
+          How a crash is told from an error return
+        </a>
+         — and the fifth state that rides alongside these four.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── What you actually get ─────────────────────────────────────────── -->
+  {/*
+    The screen you live in, before the page explains anything.
+
+    The hero draws the overview — four totals and a chart, which answers "is
+    anything wrong". This answers the next question, "wrong where", and it is
+    the one a reader is really asking: what do I look at after I install this.
+
+    It sits this early because everything below is an argument, and an argument
+    lands better once the reader can picture the thing being argued about. It
+    also carries the four cases the Insights section names further down in
+    prose, so the two read as one product seen twice rather than two demos.
+  */}
+  <section class="border-t border-line-soft">
+    <div class="mx-auto max-w-6xl px-5 py-24 sm:px-8">
+      <div class="reveal max-w-2xl">
+        <p class="text-sm font-medium text-cyan">What you get</p>
+        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-4xl">
+          See every tool, and where models get stuck
+        </h2>
+        <p class="mt-4 text-lg leading-7 text-pretty text-ink-500">
+          One row per tool. How often it is reached, how often the model got what it needed on the
+          first try, how often it came back empty, and what it costs to answer. The two rows worth
+          opening are coloured; the rest are left alone.
+        </p>
+      </div>
+
+      <ToolTable class="reveal mt-12 hidden lg:block" />
+      <ToolTable class="reveal mt-12 lg:hidden" density="compact" />
+
+      {/*
+        Three red cells, each linked to the post that explains it.
+
+        This section had no way out of it, and a generic "read more" button would
+        have been the wrong fix: the reader's question here is not "tell me more
+        about the product", it is "why does a tool return empty and why is that
+        my problem". There is an essay answering each of those exactly, and the
+        cards are already named after them.
+
+        So each card becomes the link. It also earns its keep for search: these
+        three posts previously had no route in except the blog index and the
+        related-post row at the foot of another post.
+      */}
+      <div class="reveal mt-8 grid gap-4 sm:grid-cols-3">
+        {
+          [
+            {
+              t: "search_orders retries 2.4×",
+              d: "The model asked, got something it could not use, and asked again with different arguments. Twice, on average, before moving on.",
+              href: "/blog/first-call-success",
+            },
+            {
+              t: "get_invoice returns empty 12% of the time",
+              d: "An empty array is a 200. No error was recorded anywhere, and the model got nothing it could use.",
+              href: "/blog/empty-results-are-failures",
+            },
+            {
+              t: "export_report has never been called",
+              d: "Registered, described, and dead — while costing 480 tokens of schema on every single session.",
+              href: "/blog/dead-tools",
+            },
+          ].map((item, i) => (
+            <a
+              href={item.href}
+              class="group flex flex-col rounded-xl border border-line bg-surface p-5 transition-colors hover:border-line-strong hover:bg-surface-2"
+              style={`--reveal-delay: ${i * 80}ms`}
+            >
+              <p class="text-sm font-medium text-ink-100">{item.t}</p>
+              <p class="mt-2 flex-1 text-sm leading-6.5 text-ink-500">{item.d}</p>
+              {/* Always visible, not revealed on hover.
+
+                  `opacity-0 group-hover:opacity-100` was the first version, and
+                  it hides the only thing marking these cards as links from every
+                  reader on a touchscreen — where there is no hover state and the
+                  label simply never appears. Muted and always present does the
+                  same job for a mouse and does not fail for a thumb. */}
+              <p class="mt-4 text-sm font-medium text-ink-500 transition-colors group-hover:text-cyan">
+                Why this happens →
+              </p>
+            </a>
+          ))
+        }
+      </div>
     </div>
   </section>
 
@@ -119,7 +396,7 @@ import { OUTCOMES, PILLARS, METRICS, INSIGHTS } from "../lib/content";
       <div class="reveal max-w-2xl">
         <p class="text-sm font-medium text-cyan">How it works</p>
         <h2 class="mt-3 text-3xl font-semibold tracking-tight text-ink-100 sm:text-4xl">
-          Three decisions, and they are all the same decision
+          It runs inside your server, not in front of it
         </h2>
         <p class="mt-4 text-lg leading-7 text-ink-500">
           Nothing about your server should have to change so that you can see it.
@@ -147,12 +424,33 @@ import { OUTCOMES, PILLARS, METRICS, INSIGHTS } from "../lib/content";
           ))
         }
       </div>
+
+      {/*
+        The way through to the page that argues this properly.
+
+        Each of these three cards is a claim compressed into forty words. The
+        reader who does not believe one of them — and "we cannot see your
+        arguments" is the one they should not simply believe — needs somewhere to
+        go, and until now the only route was the header.
+      */}
+      <a href="/how-it-works" class:list={["reveal mt-8", BUTTON]}>
+        Where your traffic goes, and what leaves your process →
+      </a>
     </div>
   </section>
 
   <!-- ── Install ───────────────────────────────────────────────────────── -->
   <div class="border-t border-line-soft">
     <InstallSequence />
+
+    {/* The language question, answered where it is asked. The sequence above is
+        TypeScript, and a reader who writes something else needs the page that
+        lists all ten rather than a header link they have already scrolled past. */}
+    <div class="mx-auto -mt-10 max-w-6xl px-5 pb-24 sm:px-8">
+      <a href="/install" class:list={["reveal", BUTTON]}>
+        All ten SDKs, and every option →
+      </a>
+    </div>
   </div>
 
   <!-- ── Insights ──────────────────────────────────────────────────────── -->
@@ -161,7 +459,7 @@ import { OUTCOMES, PILLARS, METRICS, INSIGHTS } from "../lib/content";
       <div class="reveal max-w-2xl">
         <p class="text-sm font-medium text-cyan">Insights</p>
         <h2 class="mt-3 text-3xl font-semibold tracking-tight text-ink-100 sm:text-4xl">
-          A tool name, a number, and a consequence
+          It tells you what to fix, not just what happened
         </h2>
         <p class="mt-4 text-lg leading-7 text-ink-500">
           A dashboard that makes you work out what to do with it has done half the job. Every
@@ -187,6 +485,12 @@ import { OUTCOMES, PILLARS, METRICS, INSIGHTS } from "../lib/content";
           ))
         }
       </div>
+
+      {/* Four examples invite the obvious question — what makes one appear —
+          and the thresholds are written down on the metrics page. */}
+      <a href="/metrics#insights" class:list={["reveal mt-8", BUTTON]}>
+        The rules that trigger these →
+      </a>
     </div>
   </section>
 
@@ -196,13 +500,26 @@ import { OUTCOMES, PILLARS, METRICS, INSIGHTS } from "../lib/content";
       <div class="reveal max-w-2xl">
         <p class="text-sm font-medium text-cyan">Metrics</p>
         <h2 class="mt-3 text-3xl font-semibold tracking-tight text-ink-100 sm:text-4xl">
-          Sixteen numbers, and where each one comes from
+          Sixteen metrics, from schema cost to first-call success
         </h2>
         <p class="mt-4 text-lg leading-7 text-ink-500">
           Most are counted as your calls arrive. Three need a night's worth of calls in order and
           are labelled as of yesterday, because pretending otherwise would be the first lie the
           product told you.
         </p>
+
+        {/*
+          The way through to `/metrics`, which is now this page's job.
+
+          Metrics left the header, and before that change this section did not
+          link to it at all — the page was reachable from the footer and nowhere
+          else. A reader who has just read a section about sixteen metrics is the
+          single most likely person to want the page that lists them, so the link
+          belongs here rather than in a row of five.
+        */}
+        <a href="/metrics" class:list={["mt-6", BUTTON]}>
+          All sixteen, and when each one updates →
+        </a>
       </div>
 
       {/* Numbered straight through 01–16 across the three groups, so the
@@ -273,6 +590,46 @@ import { OUTCOMES, PILLARS, METRICS, INSIGHTS } from "../lib/content";
     </div>
   </section>
 
+  <!-- ── Pricing ───────────────────────────────────────────────────────── -->
+  {/*
+    On the home page, not only on `/pricing`.
+
+    "What does it cost" is the question every visitor has and the one this page
+    used to answer by sending them somewhere else. A price behind a click reads
+    as a price with something to hide, and for a product whose free tier is a
+    genuine offer that is the opposite of the truth.
+
+    The cards are the component `/pricing` renders, so the two pages cannot
+    disagree. What stays on `/pricing` is the part that needs room: caps,
+    downgrades, who takes the payment.
+  */}
+  <section id="pricing" class="scroll-mt-24 border-t border-line-soft">
+    <div class="mx-auto max-w-6xl px-5 py-24 sm:px-8">
+      <div class="reveal mx-auto max-w-2xl text-center">
+        <p class="text-sm font-medium text-cyan">Pricing</p>
+        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-4xl">
+          Free for one server. $49 for a server people depend on.
+        </h2>
+        <p class="mt-4 text-lg leading-7 text-pretty text-ink-500">
+          Every plan records all sixteen metrics and reaches its own data through the API and an MCP
+          connector. What you are buying is how much traffic, how far back, and whether it tells you
+          when something breaks.
+        </p>
+      </div>
+
+      <PricingCards class="mt-14" />
+
+      <div class="reveal mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm">
+        <span class="text-ink-700">
+          Every plan starts free. No trial to expire, no card up front.
+        </span>
+        <a href="/pricing" class="font-medium text-cyan hover:underline">
+          Caps, downgrades and who takes the payment →
+        </a>
+      </div>
+    </div>
+  </section>
+
   <!-- ── The checker ───────────────────────────────────────────────────── -->
   {/*
     Above the sign-up CTA on purpose.
@@ -319,6 +676,43 @@ import { OUTCOMES, PILLARS, METRICS, INSIGHTS } from "../lib/content";
     </div>
   </section>
 
+  <Proof />
+
+  <!-- ── Questions ─────────────────────────────────────────────────────── -->
+  {/*
+    The objections, before the last ask rather than after it.
+
+    Every one of these was already answered somewhere on the site — in a pillar,
+    in a blog post, in a sentence on the install page. Answered somewhere is not
+    answerable: nobody deciding whether to put our package inside their server is
+    going to read twenty-one essays to find out whether we can see their
+    arguments. The three that can actually stop a sale are here, and the rest are
+    one click away.
+  */}
+  <section class="border-t border-line-soft">
+    <div class="mx-auto max-w-6xl px-5 py-24 sm:px-8">
+      <div class="mx-auto max-w-3xl">
+        <div class="reveal">
+          <p class="text-sm font-medium text-cyan">Questions</p>
+          <h2 class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-4xl">
+            What this does to your server
+          </h2>
+          <p class="mt-4 text-lg leading-7 text-pretty text-ink-500">
+            Three versions of the same question, which is the one worth asking before installing
+            anything.
+          </p>
+        </div>
+
+        <Faq class="reveal mt-10" limit={4} />
+
+        <p class="reveal mt-6 text-sm text-ink-700">
+          <a href="/faq" class="font-medium text-cyan hover:underline">All {FAQS.length} questions</a>
+           — languages, getting at your own data, and what a security review will ask.
+        </p>
+      </div>
+    </div>
+  </section>
+
   <!-- ── CTA ───────────────────────────────────────────────────────────── -->
   <section class="border-t border-line-soft">
     <div class="mx-auto max-w-6xl px-5 py-24 sm:px-8">
@@ -341,10 +735,10 @@ import { OUTCOMES, PILLARS, METRICS, INSIGHTS } from "../lib/content";
 
         <div class="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
           <a
-            href={SITE.app}
+            href={SITE.signup}
             class="inline-flex h-11 items-center justify-center rounded-xl bg-btn px-5 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover"
           >
-            Start measuring — free
+            {CTA.primary}
           </a>
           <a
             href={SITE.npm}
