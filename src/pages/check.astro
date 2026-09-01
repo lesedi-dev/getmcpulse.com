@@ -239,7 +239,14 @@ const MEASURES = [
 </Base>
 
 <script>
-  import { parseToolsList, analyse, CheckError, type Report } from "../lib/check";
+  import {
+    parseToolsList,
+    analyse,
+    highlightSegments,
+    CheckError,
+    type Report,
+    type ToolReport,
+  } from "../lib/check";
   import { STUDY } from "../lib/study";
 
   const input = document.querySelector<HTMLTextAreaElement>("#schema-input")!;
@@ -266,6 +273,16 @@ const MEASURES = [
   const num = (n: number) => n.toLocaleString("en-US");
   /** "1 tool" / "2 tools". Every count below is user data, so 1 really happens. */
   const plural = (n: number, one: string, many = `${one}s`) => `${num(n)} ${n === 1 ? one : many}`;
+  /**
+   * Whole per cent, for the figures on a row rather than in a card.
+   *
+   * A headline compared against a corpus figure earns its decimal: 78.6% next
+   * to 21.9% is a real difference and rounding both to 79 and 22 would throw
+   * away the precision the comparison rests on. A row saying "0.0%" and "80.0%
+   * of its words" has no such comparison to support — the decimal is always
+   * zero and it reads as spurious accuracy on a rough similarity measure.
+   */
+  const pct0 = (n: number) => `${Math.round(n * 100)}%`;
 
   /**
    * Everything user-supplied goes in as `textContent`.
@@ -293,6 +310,85 @@ const MEASURES = [
     show(results, false);
   }
 
+  /**
+   * Where a value sits, against the corpus median as a tick.
+   *
+   * A number beside another number makes a reader do the comparison. The bar
+   * does it for them: the fill is theirs, the tick is the corpus, and which
+   * side of the tick the fill ends on is the whole answer.
+   *
+   * `cap` is the value at the right-hand edge and it is chosen per metric
+   * rather than computed, because an axis that rescales to the reader's own
+   * worst number would put every server's bar in the same place and show
+   * nothing. It is stated on the axis so the scale is never implied.
+   *
+   * `lower_is_better` flips only the colour. The geometry stays literal — the
+   * fill always grows rightward with the value — because a bar that shrinks as
+   * a number rises is a puzzle rather than a chart.
+   */
+  function bar(o: { value: number; median: number; cap: number; lower_is_better: boolean }) {
+    const width = Math.min(100, (o.value / o.cap) * 100);
+    const tick = Math.min(100, (o.median / o.cap) * 100);
+    const good = o.lower_is_better ? o.value <= o.median : o.value >= o.median;
+
+    const wrap = el("div", "mt-4");
+    const track = el("div", "relative h-1.5 rounded-full bg-surface-3");
+
+    const fill = el("div", `absolute inset-y-0 left-0 rounded-full ${good ? "bg-ok" : "bg-bad"}`);
+    fill.style.width = `${width.toFixed(1)}%`;
+    track.append(fill);
+
+    // The tick sits above the fill and is 1px wider than the track is tall, so
+    // it stays visible when the fill happens to end exactly on it.
+    const marker = el("div", "absolute -top-1 h-3.5 w-0.5 rounded-full bg-ink-300");
+    marker.style.left = `${tick.toFixed(1)}%`;
+    marker.title = "corpus median";
+    track.append(marker);
+
+    wrap.append(track);
+    return wrap;
+  }
+
+  /**
+   * The description, with every word a sibling also uses marked.
+   *
+   * This is the part that makes the collision finding legible. A reader told
+   * "0% distinctive" has to take it on trust; a reader shown their own sentence
+   * with all but two words highlighted can see it, and can see which two words
+   * are doing the work.
+   *
+   * Built out of text nodes. `highlightSegments` returns data precisely so that
+   * this can be assembled without ever putting a pasted string near `innerHTML`
+   * — a tool described as `<img onerror=…>` has to render as those characters.
+   */
+  function described(tool: ToolReport) {
+    const line = el("p", "mt-1.5 font-mono text-[12.5px] leading-6 text-ink-300");
+
+    if (!tool.description) {
+      line.append(el("span", "text-bad", "no description at all"));
+      return line;
+    }
+
+    for (const segment of highlightSegments(tool.description, tool.distinctive_words)) {
+      if (segment.shared) {
+        line.append(el("span", "rounded-sm bg-warn-wash px-0.5 text-warn", segment.text));
+      } else {
+        line.append(document.createTextNode(segment.text));
+      }
+    }
+
+    return line;
+  }
+
+  /** "80% of its words also appear in gmail_send_draft". */
+  function siblingNote(tool: ToolReport) {
+    if (!tool.nearest) return null;
+    const note = el("p", "mt-1 text-xs leading-5 text-ink-700");
+    note.append(document.createTextNode(`${pct0(tool.nearest.overlap)} of its words also appear in `));
+    note.append(el("span", "font-mono text-ink-500", tool.nearest.name));
+    return note;
+  }
+
   /** One headline number, with the corpus figure beside it and a verdict. */
   function metricCard(o: {
     label: string;
@@ -301,8 +397,9 @@ const MEASURES = [
     corpus: string;
     /** `true` better than corpus, `false` worse, `null` not a comparison. */
     better: boolean | null;
+    chart?: { value: number; median: number; cap: number; lower_is_better: boolean };
   }) {
-    const card = el("div", "rounded-xl border border-line bg-surface p-6");
+    const card = el("div", "flex flex-col rounded-xl border border-line bg-surface p-6");
     const head = el("div", "flex items-baseline justify-between gap-3");
     head.append(el("h3", "text-[13px] font-medium tracking-wide text-ink-500 uppercase", o.label));
 
@@ -311,7 +408,7 @@ const MEASURES = [
         el(
           "span",
           `shrink-0 rounded-md px-2 py-0.5 font-mono text-[11px] ${
-            o.better ? "bg-cyan-wash text-cyan" : "bg-surface-3 text-ink-300"
+            o.better ? "bg-ok-wash text-ok" : "bg-bad-wash text-bad"
           }`,
           o.better ? "better" : "worse",
         ),
@@ -321,14 +418,32 @@ const MEASURES = [
     card.append(head);
     card.append(el("p", "mt-3 text-3xl font-semibold tracking-tight text-ink-100", o.value));
     card.append(el("p", "mt-1.5 text-sm leading-6 text-ink-500", o.detail));
+    if (o.chart) card.append(bar(o.chart));
     card.append(
-      el("p", "mt-4 border-t border-line-soft pt-3 font-mono text-xs text-ink-700", o.corpus),
+      el(
+        "p",
+        "mt-auto border-t border-line-soft pt-3 font-mono text-xs text-ink-700",
+        o.corpus,
+      ),
     );
     return card;
   }
 
-  /** A collapsible list of offending names — long lists must not run the page. */
-  function detailList(summary: string, items: string[], render: (item: string) => HTMLElement) {
+  /**
+   * A collapsible list of findings — long lists must not run away with the page.
+   *
+   * Capped at 200 rows. A 2,530-tool server with every description generated
+   * would otherwise put 2,530 highlighted paragraphs in one `<details>`, and
+   * past the first screenful the list has stopped being evidence and started
+   * being a denial of service on the reader. The count in the summary is always
+   * the true one, so the cap can never be mistaken for the finding.
+   */
+  function detailList<T>(
+    summary: string,
+    items: T[],
+    render: (item: T) => HTMLElement,
+    intro?: HTMLElement,
+  ) {
     const box = el("details", "group rounded-xl border border-line bg-surface");
     const head = el(
       "summary",
@@ -340,12 +455,16 @@ const MEASURES = [
     );
     box.append(head);
 
-    const list = el("ul", "space-y-1.5 border-t border-line-soft px-5 py-4");
+    const body = el("div", "border-t border-line-soft px-5 py-4");
+    if (intro) body.append(intro);
+
+    const list = el("ul", "space-y-3");
     for (const item of items.slice(0, 200)) list.append(render(item));
     if (items.length > 200) {
       list.append(el("li", "pt-1 text-xs text-ink-700", `…and ${num(items.length - 200)} more.`));
     }
-    box.append(list);
+    body.append(list);
+    box.append(body);
     return box;
   }
 
@@ -379,9 +498,21 @@ const MEASURES = [
         detail:
           report.params.total === 0
             ? "No parameters found at the top level of any inputSchema."
-            : `${num(report.params.undescribed)} of ${num(report.params.total)} have no description.`,
+            : `${num(report.params.undescribed)} of ${num(report.params.total)} top-level parameters have no description.`,
         corpus: `survey: ${pct(STUDY.undescribed_parameter_rate)} · your size: ${pct(report.bucket.undescribed)}`,
         better: report.params.total === 0 ? null : report.params.rate <= report.bucket.undescribed,
+        // Capped at 60%: the corpus worst bucket is 24.8%, so 60% puts the
+        // median tick a third of the way along and leaves room for a genuinely
+        // bad server to look bad rather than pinning at the edge.
+        chart:
+          report.params.total === 0
+            ? undefined
+            : {
+                value: report.params.rate,
+                median: report.bucket.undescribed,
+                cap: 0.6,
+                lower_is_better: true,
+              },
       }),
     );
 
@@ -400,6 +531,15 @@ const MEASURES = [
               : `${num(report.distinctive.zero.length)} of ${num(report.tool_count)} tools carry no word that a sibling does not also use.`,
         corpus: `survey: ${pct(STUDY.zero_distinctive_rate)} · your size: ${pct(report.bucket.zero)}`,
         better: report.tool_count === 1 ? null : report.distinctive.zero_rate <= report.bucket.zero,
+        chart:
+          report.tool_count === 1
+            ? undefined
+            : {
+                value: report.distinctive.zero_rate,
+                median: report.bucket.zero,
+                cap: 1,
+                lower_is_better: true,
+              },
       }),
     );
 
@@ -410,6 +550,16 @@ const MEASURES = [
         detail: `tokens, from ${num(report.cost.bytes)} bytes — sent on every connection, before anyone asks a question.`,
         corpus: `survey median: ~${num(STUDY.median_tokens)} · p90: ~${num(STUDY.p90_tokens)}`,
         better: report.cost.band === "under-median",
+        // The axis runs to the corpus p90 rather than to the reader's own
+        // figure, so "past the tick" and "off the end" mean the same two things
+        // for everybody. The corpus maximum is 280,000 tokens; scaling to that
+        // would flatten every ordinary server to an invisible sliver.
+        chart: {
+          value: Math.min(report.cost.tokens, STUDY.p90_tokens),
+          median: STUDY.median_tokens,
+          cap: STUDY.p90_tokens,
+          lower_is_better: true,
+        },
       }),
     );
 
@@ -420,7 +570,19 @@ const MEASURES = [
         detail:
           "Of the words your median tool spends, this share is spent on words no sibling uses.",
         corpus: `survey median: ${pct(STUDY.median_distinctive_share)}`,
-        better: report.tool_count === 1 ? null : report.distinctive.median_share >= STUDY.median_distinctive_share,
+        better:
+          report.tool_count === 1
+            ? null
+            : report.distinctive.median_share >= STUDY.median_distinctive_share,
+        chart:
+          report.tool_count === 1
+            ? undefined
+            : {
+                value: report.distinctive.median_share,
+                median: STUDY.median_distinctive_share,
+                cap: 1,
+                lower_is_better: false,
+              },
       }),
     );
 
@@ -430,55 +592,110 @@ const MEASURES = [
     const findings = el("div", "mx-auto mt-10 max-w-3xl space-y-3");
     let any = false;
 
-    const missing = report.per_tool.filter((tool) => tool.undescribed_params.length > 0);
+    /**
+     * The fix list counts every depth; the card above scores only the top.
+     *
+     * A field three levels inside an object is exactly as invisible to a model
+     * as one at the top, so leaving nested parameters out of the list would be
+     * hiding real work. They stay out of the *percentage* because the corpus
+     * rate was measured over top-level parameters only — dividing a deeper
+     * count by that rate would score a nested schema worse for being nested.
+     * Two questions, two numbers, said separately.
+     */
+    const missing = report.per_tool.filter((tool) => tool.undescribed_deep.length > 0);
     if (missing.length > 0) {
       any = true;
-      findings.append(
-        detailList(
-          `${plural(report.params.undescribed, "parameter")} with no description, across ${plural(missing.length, "tool")}`,
-          missing.map((tool) => tool.name),
-          (name) => {
-            const tool = report.per_tool.find((t) => t.name === name)!;
-            const li = el("li", "text-sm leading-6");
-            li.append(el("span", "font-mono text-ink-100", tool.name));
-            li.append(el("span", "text-ink-700", " — "));
-            li.append(el("span", "font-mono text-ink-500", tool.undescribed_params.join(", ")));
-            return li;
-          },
-        ),
-      );
-    }
 
-    if (report.distinctive.zero.length > 0) {
-      any = true;
-      findings.append(
-        detailList(
-          `${plural(report.distinctive.zero.length, "tool")} with no distinguishing word`,
-          report.distinctive.zero,
-          (name) => el("li", "font-mono text-sm leading-6 text-ink-100", name),
-        ),
-      );
-    }
+      const nested_only = report.params.deep_undescribed - report.params.undescribed;
+      const intro = el("p", "mb-4 text-xs leading-5 text-ink-700");
+      intro.textContent =
+        nested_only > 0
+          ? `${plural(report.params.deep_undescribed, "parameter")} at every depth, of which ${num(nested_only)} ${nested_only === 1 ? "is" : "are"} nested inside another. The card above scores only the ${num(report.params.undescribed)} at the top level, because that is the depth the survey measured and the only one its ${pct(STUDY.undescribed_parameter_rate)} can be compared against.`
+          : `All of these are at the top level of an inputSchema, which is the depth the survey measured.`;
 
-    const thin = report.per_tool
-      .filter((tool) => tool.distinctive_share > 0 && tool.distinctive_share < 0.1)
-      .map((tool) => tool.name);
-    if (thin.length > 0) {
-      any = true;
       findings.append(
         detailList(
-          `${plural(thin.length, "tool")} under 10% distinctive`,
-          thin,
-          (name) => {
-            const tool = report.per_tool.find((t) => t.name === name)!;
+          `${plural(report.params.deep_undescribed, "parameter")} with no description, across ${plural(missing.length, "tool")}`,
+          missing,
+          (tool) => {
             const li = el("li", "text-sm leading-6");
             li.append(el("span", "font-mono text-ink-100", tool.name));
             li.append(
-              el("span", "text-ink-700", ` — ${pct(tool.distinctive_share)}: ${tool.distinctive_words.join(", ") || "nothing"}`),
+              el(
+                "p",
+                "mt-0.5 font-mono text-[12.5px] leading-6 break-words text-ink-500",
+                tool.undescribed_deep.join(", "),
+              ),
             );
             return li;
           },
+          intro,
         ),
+      );
+    }
+
+    /**
+     * A collision, shown rather than scored.
+     *
+     * The name, then the description with every shared word marked, then the
+     * sibling it is hardest to tell apart from. That is the whole fix in one
+     * block: the reader can see which words are load-bearing, which are not,
+     * and which other tool they are competing with.
+     */
+    const collisionRow = (tool: ToolReport) => {
+      const li = el("li", "border-b border-line-soft pb-3 last:border-b-0 last:pb-0");
+
+      const head = el("div", "flex items-baseline justify-between gap-3");
+      head.append(el("span", "font-mono text-sm text-ink-100", tool.name));
+      head.append(
+        el(
+          "span",
+          "shrink-0 font-mono text-xs text-ink-700",
+          tool.word_count === 0 ? "—" : pct0(tool.distinctive_share),
+        ),
+      );
+      li.append(head);
+      li.append(described(tool));
+
+      const note = siblingNote(tool);
+      if (note) li.append(note);
+
+      return li;
+    };
+
+    /** One legend for both lists below, so the marking is never unexplained. */
+    const legend = () => {
+      const key = el("p", "mb-4 text-xs leading-5 text-ink-700");
+      key.append(document.createTextNode("Marked like "));
+      key.append(el("span", "rounded-sm bg-warn-wash px-1 text-warn", "this"));
+      key.append(
+        document.createTextNode(
+          " means another tool on your server uses the word too. What is left unmarked is all a model has to tell this tool apart.",
+        ),
+      );
+      return key;
+    };
+
+    const zero = report.per_tool.filter((tool) => report.distinctive.zero.includes(tool.name));
+    if (zero.length > 0) {
+      any = true;
+      findings.append(
+        detailList(
+          `${plural(zero.length, "tool")} with no distinguishing word`,
+          zero,
+          collisionRow,
+          legend(),
+        ),
+      );
+    }
+
+    const thin = report.per_tool.filter(
+      (tool) => tool.distinctive_share > 0 && tool.distinctive_share < 0.1,
+    );
+    if (thin.length > 0) {
+      any = true;
+      findings.append(
+        detailList(`${plural(thin.length, "tool")} under 10% distinctive`, thin, collisionRow, legend()),
       );
     }
 
@@ -487,12 +704,13 @@ const MEASURES = [
       findings.append(
         detailList(
           `${plural(report.prose_enums.length, "parameter")} naming values in prose but left an open string`,
-          report.prose_enums.map((p) => `${p.tool}.${p.param}`),
-          (key) => {
-            const found = report.prose_enums.find((p) => `${p.tool}.${p.param}` === key)!;
+          report.prose_enums,
+          (found) => {
             const li = el("li", "text-sm leading-6");
             li.append(el("span", "font-mono text-ink-100", `${found.tool}.${found.param}`));
-            li.append(el("p", "text-ink-500", found.description.slice(0, 160)));
+            li.append(
+              el("p", "mt-0.5 text-[13px] leading-6 text-ink-500", found.description.slice(0, 180)),
+            );
             return li;
           },
         ),
@@ -552,61 +770,257 @@ const MEASURES = [
   });
 
   /**
-   * The example is the Gmail case from the survey, shortened.
+   * The example: a Gmail-shaped server that fails the way real ones do.
    *
-   * A contrived clean schema would demonstrate nothing. This is four real-shaped
-   * tools where every description is correct English and none of them is
-   * distinctive, plus two undescribed parameters and one closed set written in
-   * prose — so pressing the button shows what a finding looks like.
+   * ── Why not a clean schema ────────────────────────────────────────────────
+   * A demo that scores well demonstrates nothing. Somebody pressing this button
+   * has not yet decided whether the page is worth their own JSON, and a screen
+   * of green tells them neither what a finding looks like nor why they should
+   * care. This one has eight zero-distinctive tools out of twelve against 4.3%
+   * for its size bucket, so the collision list, the word highlighting and the
+   * sibling attribution all have something to show.
+   *
+   * ── Why it is not entirely bad ────────────────────────────────────────────
+   * Its token cost comes in under the corpus median, so one card reads "better".
+   * A checker whose demo turns every light red looks like a checker that always
+   * turns every light red.
+   *
+   * ── Why these twelve tools ────────────────────────────────────────────────
+   * The shape is the study's own Gmail finding, and the collisions are real
+   * rather than contrived: `get`/`send`/`delete` each appear on both a draft and
+   * a message, and `list` on four different nouns, so every content word in
+   * eight of the descriptions turns up somewhere else on the same server. Every
+   * sentence is correct English. That is the point the study makes — the writing
+   * is fine and the tool list is still unusable.
+   *
+   * It also carries an undescribed `user_id` on all twelve tools (the corpus's
+   * most common fault by a distance), one closed set written in prose and left
+   * an open string, and one nested object, so the top-level and every-depth
+   * parameter counts differ and the page has to explain which is which.
    */
-  example.addEventListener("click", () => {
-    input.value = JSON.stringify(
-      {
-        tools: [
-          {
-            name: "gmail_delete_draft",
-            description: "Delete a draft email using the Gmail API.",
-            inputSchema: {
-              type: "object",
-              properties: { draft_id: { type: "string" } },
-            },
+  const EXAMPLE = `{
+  "tools": [
+    {
+      "name": "gmail_get_draft",
+      "description": "Get a draft email using the Gmail API.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "draft_id": {
+            "type": "string",
+            "description": "The ID of the draft to retrieve."
           },
-          {
-            name: "gmail_send_draft",
-            description: "Send a draft email using the Gmail API.",
-            inputSchema: {
-              type: "object",
-              properties: { draft_id: { type: "string" } },
-            },
+          "user_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "gmail_send_draft",
+      "description": "Send a draft email using the Gmail API.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "draft_id": {
+            "type": "string"
           },
-          {
-            name: "gmail_list_labels",
-            description: "List the labels in the user's mailbox using the Gmail API.",
-            inputSchema: { type: "object", properties: {} },
+          "user_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "gmail_delete_draft",
+      "description": "Delete a draft email using the Gmail API.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "draft_id": {
+            "type": "string",
+            "description": "The ID of the draft to delete."
           },
-          {
-            name: "gmail_search_threads",
-            description: "Search the threads in the user's mailbox using the Gmail API.",
-            inputSchema: {
-              type: "object",
-              properties: {
-                query: { type: "string", description: "Gmail search query, e.g. from:me" },
-                scope: {
-                  type: "string",
-                  description: 'Where to search. Valid values: "inbox", "all", "trash".',
-                },
+          "user_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "gmail_get_message",
+      "description": "Get a message using the Gmail API.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "message_id": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "gmail_send_message",
+      "description": "Send a message using the Gmail API.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "string",
+            "description": "Recipient address."
+          },
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "gmail_delete_message",
+      "description": "Delete a message using the Gmail API.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "message_id": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "gmail_list_drafts",
+      "description": "List all the drafts in the user's mailbox.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "max_results": {
+            "type": "integer"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "gmail_list_messages",
+      "description": "List all the messages in the user's mailbox.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "max_results": {
+            "type": "integer"
+          },
+          "page_token": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "gmail_list_threads",
+      "description": "List all the threads in the user's mailbox.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "max_results": {
+            "type": "integer"
+          },
+          "user_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "gmail_list_labels",
+      "description": "List all the labels in the user's mailbox.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "gmail_search_threads",
+      "description": "Search the threads in the user's mailbox.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Gmail search query, for example from:me."
+          },
+          "scope": {
+            "type": "string",
+            "description": "Which folder to search. Valid values: \\"inbox\\", \\"sent\\", \\"all\\"."
+          },
+          "user_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "name": "gmail_modify_labels",
+      "description": "Modify the labels on a message in the user's mailbox.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "message_id": {
+            "type": "string"
+          },
+          "changes": {
+            "type": "object",
+            "description": "Labels to add and remove.",
+            "properties": {
+              "add": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               },
-            },
+              "remove": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
           },
-        ],
-      },
-      null,
-      2,
-    );
+          "user_id": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
+}`;
+
+  example.addEventListener("click", () => {
+    input.value = EXAMPLE;
     show(error, false);
     input.focus();
     // Show the first tool, not the last line. `focus()` on a textarea puts the
-    // caret at the end, which scrolls a 30-line paste to its tail.
+    // caret at the end, which scrolls a long paste to its tail.
     input.setSelectionRange(0, 0);
     input.scrollTop = 0;
   });
