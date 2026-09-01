@@ -7,9 +7,8 @@ import ToolTable from "../components/ToolTable.astro";
 import PricingCards from "../components/PricingCards.astro";
 import Proof from "../components/Proof.astro";
 import Faq from "../components/Faq.astro";
-import { SITE, INSTALL_COMMAND, CTA } from "../lib/site";
+import { SITE, CTA } from "../lib/site";
 import { OUTCOMES, PILLARS, METRICS, INSIGHTS, FAQS, PLANS } from "../lib/content";
-
 
 /**
  * The FAQ, as structured data as well as as markup.
@@ -198,43 +197,8 @@ const schema = [
           the price.
         */}
         <p class="mt-5 text-sm text-ink-300">
-          Free for one server. No card, and no trial to expire.
+          Free forever. No card, and no trial to expire.
         </p>
-
-        <div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
-          <button
-            type="button"
-            data-copy={INSTALL_COMMAND}
-            class="group inline-flex h-10 items-center justify-between gap-4 rounded-xl border border-line bg-surface px-4 font-mono text-[13px] text-ink-300 transition-colors hover:border-line-strong hover:text-ink-100"
-          >
-            <span><span class="text-cyan-dim">$</span> {INSTALL_COMMAND}</span>
-            <span data-copy-label class="text-xs text-ink-700 group-hover:text-ink-500">copy</span>
-          </button>
-          {/*
-            The languages, because the command implied an answer we did not mean.
-
-            This line was "Node 20.12+ · zero runtime dependencies · any MCP
-            transport". Read next to `npm install`, the only thing a Python or Go
-            author took from the hero was that this is a Node product and they
-            are not the audience — and nine of the ten official MCP SDKs are not
-            TypeScript.
-
-            The honest version cannot say "works with Python", because it does not
-            yet. It can say which one ships and that the rest are coming, which is
-            a different message from silence: "not yet" keeps a reader, "no"
-            loses them, and an `npm install` with no context reads as "no".
-
-            It links to `/install`, where all ten are listed with the nine marked
-            coming soon rather than hidden — the page that exists to answer
-            exactly the question this line used to raise.
-          */}
-          <p class="text-xs text-ink-700">
-            <a href="/install" class="text-ink-500 underline decoration-line-strong underline-offset-2 transition-colors hover:text-cyan hover:decoration-cyan">
-              TypeScript today — Python, Go, C# and six more coming
-            </a>
-             · zero runtime dependencies · any MCP transport
-          </p>
-        </div>
 
         {/*
           The blog promo, demoted from above the headline to below the fold-line.
@@ -752,28 +716,3 @@ const schema = [
   </section>
 </Base>
 
-<script>
-  /**
-   * Copy the install command.
-   *
-   * The label reverts after a moment: a button stuck on "copied" leaves you
-   * unsure whether the second click did anything.
-   */
-  const button = document.querySelector<HTMLButtonElement>("[data-copy]");
-  const label = button?.querySelector<HTMLElement>("[data-copy-label]");
-
-  button?.addEventListener("click", async () => {
-    if (!label) return;
-
-    try {
-      await navigator.clipboard.writeText(button.dataset.copy ?? "");
-      label.textContent = "copied";
-    } catch {
-      // Clipboard access can be refused outright — say so rather than
-      // claiming a copy that did not happen.
-      label.textContent = "press ⌘C";
-    }
-
-    window.setTimeout(() => (label.textContent = "copy"), 2000);
-  });
-</script>

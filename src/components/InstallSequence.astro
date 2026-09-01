@@ -17,6 +17,7 @@ const STEPS = [
   { n: 3, title: "Wrap your server", note: "One import, one call." },
   { n: 4, title: "Watch it arrive", note: "Batched every 5s." },
 ] as const;
+import { INSTALL_COMMAND } from "../lib/site";
 ---
 
 <section
@@ -96,7 +97,7 @@ const STEPS = [
         <!-- Step 1 — the install -->
         <div data-panel="0" class="panel">
           <p class="line" style="--i:0">
-            <span class="text-cyan-dim">$</span> <span class="text-ink-100">npm install @mcpulse/sdk</span>
+            <span class="text-cyan-dim">$</span> <span class="text-ink-100">{INSTALL_COMMAND}</span>
           </p>
           <p class="line mt-4 text-ink-700" style="--i:1">added 1 package in 1.2s</p>
           <p class="line mt-4 text-ink-500" style="--i:2">
