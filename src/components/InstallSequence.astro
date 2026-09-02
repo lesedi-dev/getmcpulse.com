@@ -82,94 +82,103 @@ import { INSTALL_COMMAND } from "../lib/site";
       }
     </ol>
 
-    <!-- ── The window ───────────────────────────────────────────────────── -->
+    <!-- ── The terminal ─────────────────────────────────────────────────
+         A terminal is dark. That is not a style choice, it is the thing being
+         depicted, so this card carries its own palette in `.term` rather than
+         reading the page's ink-* tokens: those invert with the theme toggle,
+         which turned this into a white box with grey dots in light mode.
+
+         The palette below is a real syntax scheme (salmon keywords, blue
+         strings, purple call, green prompt) and the window dots are the actual
+         macOS traffic-light values, because the point of the frame is that a
+         reader recognises it without being told. -->
     <div
-      class="relative min-h-[22rem] overflow-hidden rounded-2xl border border-line bg-ink-900/60 shadow-2xl shadow-shade"
+      class="term relative min-h-[22rem] overflow-hidden rounded-2xl shadow-2xl shadow-shade"
     >
-      <div class="flex items-center gap-2 border-b border-line-soft px-4 py-3">
-        <span class="h-2.5 w-2.5 rounded-full bg-ink-800"></span>
-        <span class="h-2.5 w-2.5 rounded-full bg-ink-800"></span>
-        <span class="h-2.5 w-2.5 rounded-full bg-ink-800"></span>
-        <span data-filename class="ml-2 font-mono text-xs text-ink-700">terminal</span>
+      <div class="term-bar flex items-center gap-2 px-4 py-3">
+        <span class="h-2.5 w-2.5 rounded-full" style="background:var(--t-red)"></span>
+        <span class="h-2.5 w-2.5 rounded-full" style="background:var(--t-amber)"></span>
+        <span class="h-2.5 w-2.5 rounded-full" style="background:var(--t-green)"></span>
+        <span data-filename class="t-dim ml-2 font-mono text-xs">terminal</span>
       </div>
 
       <div class="relative p-5 font-mono text-[13px] leading-6 sm:p-6 sm:text-sm">
         <!-- Step 1 — the install -->
         <div data-panel="0" class="panel">
           <p class="line" style="--i:0">
-            <span class="text-cyan-dim">$</span> <span class="text-ink-100">{INSTALL_COMMAND}</span>
+            <span class="t-prompt">$</span> <span class="t-text">{INSTALL_COMMAND}</span>
           </p>
-          <p class="line mt-4 text-ink-700" style="--i:1">added 1 package in 1.2s</p>
-          <p class="line mt-4 text-ink-500" style="--i:2">
-            <span class="text-ok">✓</span> 0 dependencies
+          <p class="line t-out mt-4" style="--i:1">added 1 package in 1.2s</p>
+          <p class="line t-out mt-4" style="--i:2">
+            <span class="t-ok">✓</span> 0 dependencies
           </p>
-          <p class="line text-ink-500" style="--i:3">
-            <span class="text-ok">✓</span> 0 vulnerabilities
+          <p class="line t-out" style="--i:3">
+            <span class="t-ok">✓</span> 0 vulnerabilities
           </p>
         </div>
 
         <!-- Step 2 — the key -->
         <div data-panel="1" class="panel">
-          <p class="line text-ink-700" style="--i:0"># .env</p>
+          <p class="line t-dim" style="--i:0"># .env</p>
           <p class="line mt-3" style="--i:1">
-            <span class="text-cyan">MCPULSE_KEY</span><span class="text-ink-500">=</span
-            ><span class="text-ink-100">mp_live_4f8a2c19bd7e</span>
+            <span class="t-key">MCPULSE_KEY</span><span class="t-punc">=</span
+            ><span class="t-str">mp_live_4f8a2c19bd7e</span>
           </p>
-          <p class="line mt-6 text-ink-700" style="--i:2">
+          <p class="line t-dim mt-6" style="--i:2">
             # An ingest key is a secret. Anyone holding it
           </p>
-          <p class="line text-ink-700" style="--i:3"># can write data into this MCP.</p>
+          <p class="line t-dim" style="--i:3"># can write data into this MCP.</p>
         </div>
 
         <!-- Step 3 — the wrap -->
         <div data-panel="2" class="panel">
           <p class="line" style="--i:0">
-            <span class="text-cyan-dim">import</span> <span class="text-ink-500">&#123;</span>
-            <span class="text-ink-100">watch</span> <span class="text-ink-500">&#125;</span>
-            <span class="text-cyan-dim">from</span> <span class="text-ok">"@mcpulse/sdk"</span><span
-              class="text-ink-500">;</span
+            <span class="t-kw">import</span> <span class="t-punc">&#123;</span>
+            <span class="t-fn">watch</span> <span class="t-punc">&#125;</span>
+            <span class="t-kw">from</span> <span class="t-str">"@mcpulse/sdk"</span><span
+              class="t-punc">;</span
             >
           </p>
-          <p class="line mt-4 text-ink-700" style="--i:1">// … your registerTool calls …</p>
+          <p class="line t-dim mt-4" style="--i:1">// … your registerTool calls …</p>
           <p class="line mt-4" style="--i:2">
-            <span class="text-ink-100">watch</span><span class="text-ink-500">(</span><span
-              class="text-ink-300">server</span
-            ><span class="text-ink-500">, &#123; </span><span class="text-ink-300">key</span><span
-              class="text-ink-500">: </span
-            ><span class="text-ink-300">process.env.MCPULSE_KEY</span><span class="text-ink-500"
+            <span class="t-fn">watch</span><span class="t-punc">(</span><span class="t-text"
+              >server</span
+            ><span class="t-punc">, &#123; </span><span class="t-prop">key</span><span
+              class="t-punc">: </span
+            ><span class="t-text">process.env.MCPULSE_KEY</span><span class="t-punc"
               > &#125;);</span
             >
           </p>
-          <p class="line mt-6 text-ink-700" style="--i:3">
+          <p class="line t-dim mt-6" style="--i:3">
             // Returns the same server. Nothing downstream changes.
           </p>
         </div>
 
         <!-- Step 4 — the payoff -->
         <div data-panel="3" class="panel">
-          <p class="line font-sans text-xs tracking-wide text-ink-700 uppercase" style="--i:0">
+          <p class="line t-dim font-sans text-xs tracking-wide uppercase" style="--i:0">
             Overview · last 7 days
           </p>
 
           <div class="mt-4 grid grid-cols-2 gap-3">
-            <div class="line rounded-xl border border-line-soft bg-surface p-3.5" style="--i:1">
-              <p class="font-sans text-[11px] tracking-wide text-ink-700 uppercase">Calls</p>
-              <p class="mt-1 text-2xl font-semibold text-ink-100">12,481</p>
-              <p class="mt-0.5 font-sans text-xs text-ok">+18% vs prior 7 days</p>
+            <div class="line t-card rounded-xl p-3.5" style="--i:1">
+              <p class="t-dim font-sans text-[11px] tracking-wide uppercase">Calls</p>
+              <p class="t-text mt-1 text-2xl font-semibold">12,481</p>
+              <p class="t-ok mt-0.5 font-sans text-xs">+18% vs prior 7 days</p>
             </div>
 
-            <div class="line rounded-xl border border-line-soft bg-surface p-3.5" style="--i:2">
-              <p class="font-sans text-[11px] tracking-wide text-ink-700 uppercase">First-call</p>
-              <p class="mt-1 text-2xl font-semibold text-ink-100">68%</p>
-              <p class="mt-0.5 font-sans text-xs text-bad">−4% vs prior 7 days</p>
+            <div class="line t-card rounded-xl p-3.5" style="--i:2">
+              <p class="t-dim font-sans text-[11px] tracking-wide uppercase">First-call</p>
+              <p class="t-text mt-1 text-2xl font-semibold">68%</p>
+              <p class="t-bad mt-0.5 font-sans text-xs">−4% vs prior 7 days</p>
             </div>
           </div>
 
           <p
-            class="line mt-4 rounded-xl border border-warn/20 bg-warn/[0.06] p-3.5 font-sans text-[13px] leading-6 text-ink-300"
+            class="line t-note mt-4 rounded-xl p-3.5 font-sans text-[13px] leading-6"
             style="--i:3"
           >
-            Agents retried <span class="font-mono text-warn">search_orders</span> 2.4 times on average
+            Agents retried <span class="t-warn font-mono">search_orders</span> 2.4 times on average
             before getting a usable answer.
           </p>
         </div>

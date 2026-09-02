@@ -3,6 +3,7 @@ import Detail from "../layouts/Detail.astro";
 import LanguagePicker from "../components/LanguagePicker.astro";
 import CopyBlock from "../components/CopyBlock.astro";
 import { WRAP_SNIPPET, SITE } from "../lib/site";
+import { highlight } from "../lib/highlight";
 
 const MANAGERS = [
   "npm install @mcpulse/sdk",
@@ -30,8 +31,10 @@ const OPTIONS = [
 ];
 
 const CODE = "rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-ink-100";
-const PRE =
-  "mt-4 overflow-x-auto rounded-xl border border-line bg-surface p-5 font-mono text-[13px] leading-6 text-ink-300";
+const PRE = "term mt-4 overflow-x-auto rounded-xl p-5 font-mono text-[13px] leading-6";
+
+const ENV_LINE = highlight("MCPULSE_KEY=mp_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+const HTTP_TOKENS = highlight(HTTP_SNIPPET);
 ---
 
 <Detail
@@ -72,7 +75,7 @@ const PRE =
         the repository and out of your client bundle. You are shown the full key once, at creation,
         because only a hash of it is stored.
       </p>
-      <pre class={PRE}><code>MCPULSE_KEY=mp_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code></pre>
+      <pre class={PRE}><code>{ENV_LINE.map((t) => (t.cls ? <span class={t.cls}>{t.text}</span> : t.text))}</code></pre>
     </li>
 
     <li class="reveal">
@@ -91,7 +94,7 @@ const PRE =
         cheap: the session and its buffer are shared for the life of the process, which is what keeps
         your calls grouped into one session rather than one per request.
       </p>
-      <pre class={PRE}><code>{HTTP_SNIPPET}</code></pre>
+      <pre class={PRE}><code>{HTTP_TOKENS.map((t) => (t.cls ? <span class={t.cls}>{t.text}</span> : t.text))}</code></pre>
     </li>
 
     <li class="reveal">

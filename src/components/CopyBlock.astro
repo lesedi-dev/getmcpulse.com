@@ -21,6 +21,8 @@
  * observability SDK is disproportionately likely to be running a strict browser.
  */
 
+import { highlight } from "../lib/highlight";
+
 interface Props {
   /** Lines of the block. Each gets a `$` prompt if `prompt` is set. */
   code: string;
@@ -30,11 +32,14 @@ interface Props {
 }
 
 const { code, copy, class: klass = "" } = Astro.props;
+
+/* Tokenised at build time — the block ships as coloured spans, no client JS. */
+const tokens = highlight(code);
 ---
 
 <div class:list={["group/copy relative", klass]}>
   <pre
-    class="overflow-x-auto rounded-xl border border-line bg-surface p-5 pr-20 font-mono text-[13px] leading-6 text-ink-300"><code>{code}</code></pre>
+    class="term overflow-x-auto rounded-xl p-5 pr-20 font-mono text-[13px] leading-6"><code>{tokens.map((t) => (t.cls ? <span class={t.cls}>{t.text}</span> : t.text))}</code></pre>
 
   {/*
     Positioned over the block rather than beside it, so a long command is not
@@ -44,7 +49,7 @@ const { code, copy, class: klass = "" } = Astro.props;
   <button
     type="button"
     data-copy={copy ?? code}
-    class="absolute top-3.5 right-3.5 rounded-lg border border-line bg-ink-950/80 px-2.5 py-1 font-mono text-[11px] text-ink-500 backdrop-blur transition-colors hover:border-line-strong hover:text-ink-100"
+    class="t-copy absolute top-3.5 right-3.5 rounded-lg px-2.5 py-1 font-mono text-[11px] backdrop-blur transition-colors"
   >
     <span data-copy-label>copy</span>
     <span class="sr-only"> to clipboard</span>

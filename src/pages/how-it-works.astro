@@ -1,5 +1,6 @@
 ---
 import Detail from "../layouts/Detail.astro";
+import { highlight } from "../lib/highlight";
 import PillarVisual from "../components/PillarVisual.astro";
 import DataFlow from "../components/DataFlow.astro";
 import Faq from "../components/Faq.astro";
@@ -33,6 +34,8 @@ const PAYLOAD = `{
   "is_empty": false,
   "args_hash": "9c1b4e2f0a11"
 }`;
+
+const PAYLOAD_TOKENS = highlight(PAYLOAD);
 
 /** Every field, and the reason it cannot hold anything of yours. */
 const FIELDS = [
@@ -147,7 +150,7 @@ const SECTIONS = [
 
       <div class="reveal mt-10 grid gap-4 lg:grid-cols-[minmax(0,22rem)_1fr]">
         <pre
-          class="overflow-x-auto rounded-xl border border-line bg-surface p-5 font-mono text-[12.5px] leading-6 text-ink-300"><code>{PAYLOAD}</code></pre>
+          class="term overflow-x-auto rounded-xl p-5 font-mono text-[12.5px] leading-6"><code>{PAYLOAD_TOKENS.map((t) => (t.cls ? <span class={t.cls}>{t.text}</span> : t.text))}</code></pre>
 
         <div class="overflow-hidden rounded-xl border border-line">
           <table class="w-full border-collapse text-left text-sm">

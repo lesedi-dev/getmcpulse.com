@@ -331,6 +331,106 @@
 }
 
 /**
+ * ── The terminal palette ──────────────────────────────────────────────────
+ *
+ * The one set of colours on this site that does NOT follow the theme toggle.
+ *
+ * Everything above inverts on purpose: `--color-ink-900` is near-white in light
+ * mode and near-black in dark. That is right for the page and wrong for a code
+ * block, which was rendering as a white card with three grey "window" dots in
+ * light mode — a terminal that turns white stops reading as a terminal.
+ *
+ * So these are fixed hex, in both themes, and they are a real syntax scheme
+ * rather than the brand ramp: salmon keywords, blue strings, purple calls, a
+ * green prompt. The frame only does its job if the reader recognises it without
+ * being told, and nobody's editor is cyan-on-white. Brand cyan is kept for one
+ * thing — the env-var name — so the block still belongs to us.
+ *
+ * Applies to block-level code only. Inline `<code>` chips inside prose stay on
+ * the theme tokens: a dark chip mid-sentence on a light page is a hole in the
+ * paragraph, and those are read as text, not as a screenshot of a tool.
+ */
+/* The palette lives on :root, not on .term. It does not vary by theme, and the
+   copy button sits *beside* the <pre> rather than inside it — scoping the
+   custom properties to .term left `var(--t-out)` undefined on that button, so
+   it silently inherited the page's ink-300 and went dark-on-dark. */
+:root {
+  --t-bg: #0b0f16;
+  --t-bar: #121821;
+  --t-border: rgb(255 255 255 / 0.08);
+
+  --t-text: #e6edf3; /* bright default — commands, values */
+  --t-out: #9aa4b2; /* command output */
+  --t-dim: #6e7885; /* comments, labels */
+  --t-punc: #8b949e; /* braces, semicolons */
+
+  --t-kw: #ff7b72; /* import / from / function / return */
+  --t-str: #a5d6ff; /* string literals */
+  --t-fn: #d2a8ff; /* the call */
+  --t-prop: #ffa657; /* object key */
+  --t-num: #79c0ff; /* numbers */
+  --t-key: #56d4dd; /* env-var name — brand cyan */
+
+  --t-ok: #3fb950;
+  --t-warn: #d29922;
+  --t-bad: #f85149;
+
+  /* macOS window controls, actual values */
+  --t-red: #ff5f57;
+  --t-amber: #febc2e;
+  --t-green: #28c840;
+}
+
+.term {
+  background: var(--t-bg);
+  border: 1px solid var(--t-border);
+  color: var(--t-text);
+}
+
+.term-bar {
+  background: var(--t-bar);
+  border-bottom: 1px solid var(--t-border);
+}
+
+.t-text { color: var(--t-text); }
+.t-out { color: var(--t-out); }
+.t-dim { color: var(--t-dim); }
+.t-punc { color: var(--t-punc); }
+.t-kw { color: var(--t-kw); }
+.t-str { color: var(--t-str); }
+.t-fn { color: var(--t-fn); }
+.t-prop { color: var(--t-prop); }
+.t-num { color: var(--t-num); }
+.t-key { color: var(--t-key); }
+.t-prompt { color: var(--t-green); }
+.t-ok { color: var(--t-ok); }
+.t-warn { color: var(--t-warn); }
+.t-bad { color: var(--t-bad); }
+
+.t-card {
+  background: rgb(255 255 255 / 0.03);
+  border: 1px solid var(--t-border);
+}
+
+.t-note {
+  background: color-mix(in oklab, var(--t-warn) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--t-warn) 28%, transparent);
+  color: var(--t-text);
+}
+
+/* The copy button sits on the dark block, so it cannot use theme tokens either. */
+.t-copy {
+  border: 1px solid var(--t-border);
+  background: rgb(0 0 0 / 0.4);
+  color: var(--t-out);
+}
+
+.t-copy:hover {
+  border-color: rgb(255 255 255 / 0.18);
+  color: var(--t-text);
+}
+
+/**
  * Everything above is decoration. Someone who has asked their operating system
  * to stop moving things gets the finished state immediately — including the
  * install sequence, which jumps to its last step rather than replaying.

@@ -10,9 +10,10 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "test": "esbuild tests/check.test.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/check.test.mjs --log-level=error && node node_modules/.cache/check.test.mjs && npm run test:frontmatter && npm run test:brand",
+    "test": "esbuild tests/check.test.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/check.test.mjs --log-level=error && node node_modules/.cache/check.test.mjs && npm run test:frontmatter && npm run test:brand && npm run test:highlight",
     "test:frontmatter": "esbuild tests/frontmatter.test.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/frontmatter.test.mjs --log-level=error && node node_modules/.cache/frontmatter.test.mjs",
-    "test:brand": "esbuild tests/brand.test.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/brand.test.mjs --log-level=error && node node_modules/.cache/brand.test.mjs"
+    "test:brand": "esbuild tests/brand.test.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/brand.test.mjs --log-level=error && node node_modules/.cache/brand.test.mjs",
+    "test:highlight": "esbuild tests/highlight.test.ts --bundle --platform=node --format=esm --define:import.meta.env.SITE='\"https://www.getmcpulse.com\"' --outfile=node_modules/.cache/highlight.test.mjs --log-level=error && node node_modules/.cache/highlight.test.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.19",
