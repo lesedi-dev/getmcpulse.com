@@ -36,8 +36,13 @@ The lockup is centred inside the **safe area**, not the canvas. That is the
 difference between a header that survives and one where X pastes the avatar
 over the wordmark or a phone crops YouTube down to a blank strip.
 
-`og-default` is a fallback only. Pages on this site get their own card from
-`src/lib/og.ts`, with their own title.
+`og-default` is **also written to `public/og-default.png`** by the same script,
+and the site serves it: `src/lib/og.ts` uses it as the `og:image` for any page
+without a card of its own — today that is `/404` only. Every other page gets its
+own card, with its own title, from `og.ts`.
+
+Do not copy it into `public/` by hand. `social.mjs` writes both, so the served
+file cannot stop matching the mark.
 
 ## Lockup
 

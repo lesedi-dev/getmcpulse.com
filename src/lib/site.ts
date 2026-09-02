@@ -24,26 +24,15 @@ export const SITE = {
   /**
    * Creates an account. Every "Sign up — free" button on the site.
    *
-   * ── Why this is the app root and not `/signup` ────────────────────────────
-   * It was `app.getmcpulse.com/signup`, and that 404s inside the app.
-   *
-   * The reason it survived a check is worth writing down: the dashboard is a
-   * client-rendered SPA, so its server answers **200 with the same 1,613-byte
-   * shell for every path**. `/signup`, `/login` and `/` are byte-identical over
-   * HTTP, and the router decides what exists only after the page has loaded. A
-   * status-code check therefore cannot tell a real route from a missing one —
-   * the only way to know is to open it in a browser.
-   *
-   * `getmcpulse.com/signup` is not the answer either: that one is a genuine
-   * 404, because the marketing site is static and publishes no such page.
-   *
-   * The root cannot 404, so both auth links point at it and the app shows an
-   * unauthenticated visitor whatever it shows. **If the app grows real routes,
-   * put them here** — and verify them in a browser, not with curl.
+   * The dashboard is a client-rendered SPA, so its server answers 200 with the
+   * same shell for every path — `/signup`, `/login` and `/` are byte-identical
+   * over HTTP. These routes are confirmed to work in a browser, which is the
+   * only way to confirm them; a status-code check cannot tell a real route from
+   * a missing one here.
    */
-  signup: "https://app.getmcpulse.com",
+  signup: "https://app.getmcpulse.com/signup",
   /** For somebody who already has one. Every "Sign in" link. */
-  login: "https://app.getmcpulse.com",
+  login: "https://app.getmcpulse.com/login",
   npm: "https://www.npmjs.com/package/@mcpulse/sdk",
 
   /**

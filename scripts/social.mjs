@@ -22,6 +22,15 @@ import sharp from "sharp";
 const require = createRequire(import.meta.url);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "brand", "social");
+/**
+ * `og-default` is also served, so it goes to `public/` as well as the kit.
+ *
+ * Written by the generator rather than copied, because a copy is a second file
+ * that can silently stop matching the mark — which is the whole failure this
+ * script exists to prevent. One drawing, two destinations.
+ */
+const PUBLIC = join(ROOT, "public");
+const ALSO_PUBLIC = { "og-default-1200x630.png": "og-default.png" };
 
 /** Same sRGB values as `og.ts` — a raster has no `oklch`. */
 const C = {
@@ -216,10 +225,16 @@ function lockup(w, h, { safeW, safeH, tagline = true }) {
 }
 
 async function write(name, buffer) {
-  const path = join(OUT, name);
-  writeFileSync(path, buffer);
+  writeFileSync(join(OUT, name), buffer);
+
+  const served = ALSO_PUBLIC[name];
+  if (served) writeFileSync(join(PUBLIC, served), buffer);
+
   const { width, height, size } = { ...(await sharp(buffer).metadata()), size: buffer.length };
-  console.log(`  ${name.padEnd(34)} ${String(width).padStart(5)}×${String(height).padEnd(5)} ${(size / 1024).toFixed(0)} kB`);
+  console.log(
+    `  ${name.padEnd(34)} ${String(width).padStart(5)}×${String(height).padEnd(5)} ${(size / 1024).toFixed(0)} kB` +
+      (served ? `   → public/${served}` : ""),
+  );
 }
 
 /** A square avatar: dark tile, cyan wash, mark centred well inside the circle crop. */
