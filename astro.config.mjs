@@ -21,6 +21,29 @@ import tailwindcss from "@tailwindcss/vite";
  */
 const POSTS_DIR = new URL("./src/content/blog/", import.meta.url);
 
+/**
+ * Slugs marked `draft: true`, read the same crude way as the dates.
+ *
+ * A draft still gets a URL — that is how it is reviewed — but it must not be in
+ * the sitemap. Submitting a bug report about somebody else's product to Google
+ * before they have been told about it is precisely the thing the flag exists to
+ * prevent, and the page rendering `noindex` is not enough on its own: a sitemap
+ * entry is an active request to index.
+ */
+function draftSlugs() {
+  const drafts = new Set();
+
+  for (const file of readdirSync(POSTS_DIR)) {
+    if (!file.endsWith(".md")) continue;
+    const front = readFileSync(new URL(file, POSTS_DIR), "utf8").slice(0, 1500);
+    if (/^draft:\s*true\s*$/m.test(front)) drafts.add(`/blog/${file.replace(/\.md$/, "")}`);
+  }
+
+  return drafts;
+}
+
+const DRAFTS = draftSlugs();
+
 /** Computed once. `serialize` is called per URL and this reads the whole blog. */
 const POST_DATES = (() => {
   const dates = new Map();
@@ -121,6 +144,8 @@ export default defineConfig({
        * it is a crawler's cue to decide for itself rather than a claim that
        * turns out to be false.
        */
+      /** Returning nothing drops the URL from the sitemap entirely. */
+      filter: (page) => !DRAFTS.has(new URL(page).pathname.replace(/\/+$/, "")),
       serialize(item) {
         const date = POST_DATES.get(new URL(item.url).pathname.replace(/\/+$/, ""));
         return date ? { ...item, lastmod: `${date}T00:00:00+00:00` } : item;

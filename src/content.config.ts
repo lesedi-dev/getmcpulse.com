@@ -19,6 +19,19 @@ const blog = defineCollection({
     topic: z.enum(["Measurement", "Tool design", "Engineering", "Privacy"]),
     /** Minutes. Written down rather than counted, so it matches the edit. */
     minutes: z.number().int().positive(),
+    /**
+     * Written, not published.
+     *
+     * A draft is excluded from the index, the feed, the sitemap, `llms.txt` and
+     * the share-card build — everywhere a post is *discovered*. Its own URL
+     * still renders, because a private link is how a draft gets reviewed.
+     *
+     * This exists for the post about the registry stripping `required`: it is a
+     * bug report about somebody else's product, and it should not be findable
+     * before they have been told. Writing it and remembering not to deploy is
+     * not a mechanism; a flag is.
+     */
+    draft: z.boolean().default(false),
   }),
 });
 

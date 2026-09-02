@@ -32,7 +32,7 @@
 
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { getCollection } from "astro:content";
+import { publishedPosts } from "./posts";
 import satori from "satori";
 import sharp from "sharp";
 import { SITE } from "./site";
@@ -383,7 +383,7 @@ let cards: (OgCard & { path: string })[] | null = null;
 export async function ogCards() {
   if (cards) return cards;
 
-  const posts = await getCollection("blog");
+  const posts = await publishedPosts();
 
   cards = [
     ...STATIC_PAGES,

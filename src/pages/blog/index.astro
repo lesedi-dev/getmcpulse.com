@@ -1,5 +1,5 @@
 ---
-import { getCollection } from "astro:content";
+import { publishedPosts } from "../../lib/posts";
 import Base from "../../layouts/Base.astro";
 import PostCover from "../../components/PostCover.astro";
 import { SITE } from "../../lib/site";
@@ -20,9 +20,7 @@ import { breadcrumbs } from "../../lib/schema";
  * are large enough to read as images and the remainder still carry one.
  */
 
-const posts = (await getCollection("blog")).sort(
-  (a, b) => b.data.published.valueOf() - a.data.published.valueOf(),
-);
+const posts = await publishedPosts();
 
 const [featured, ...rest] = posts;
 /** Two on the second row, the remainder on an even grid below it. */

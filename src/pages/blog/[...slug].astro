@@ -1,12 +1,13 @@
 ---
-import { getCollection, render, type CollectionEntry } from "astro:content";
+import { render, type CollectionEntry } from "astro:content";
+import { allPosts, publishedPosts } from "../../lib/posts";
 import Base from "../../layouts/Base.astro";
 import PostCover from "../../components/PostCover.astro";
 import { SITE, CTA } from "../../lib/site";
 import { article, breadcrumbs } from "../../lib/schema";
 
 export async function getStaticPaths() {
-  const posts = await getCollection("blog");
+  const posts = await allPosts();
 
   return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
 }
@@ -15,9 +16,7 @@ const { post } = Astro.props as { post: CollectionEntry<"blog"> };
 const { Content } = await render(post);
 
 /** Three from the same topic, falling back to the newest if a topic is thin. */
-const all = (await getCollection("blog")).sort(
-  (a, b) => b.data.published.valueOf() - a.data.published.valueOf(),
-);
+const all = await publishedPosts();
 const others = all.filter((entry) => entry.id !== post.id);
 /**
  * Three rather than two, now that the blog is out of the header.
@@ -69,6 +68,7 @@ const schema = [
   type="article"
   published={post.data.published}
   schema={schema}
+  noindex={post.data.draft}
 >
   {/* A reading position, drawn by CSS and nothing else.
       `animation-timeline` needs no scroll listener, so this costs no

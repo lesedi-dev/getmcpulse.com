@@ -31,16 +31,14 @@
  */
 
 import type { APIRoute } from "astro";
-import { getCollection } from "astro:content";
+import { publishedPosts } from "../lib/posts";
 import { SITE, NAV } from "../lib/site";
 
 export const GET: APIRoute = async ({ site }) => {
   const origin = (site ?? new URL(SITE.url ?? "https://getmcpulse.com")).origin;
   const url = (path: string) => `${origin}${path}`;
 
-  const posts = (await getCollection("blog")).sort(
-    (a, b) => b.data.published.valueOf() - a.data.published.valueOf(),
-  );
+  const posts = await publishedPosts();
 
   /** Newest first, with the date — recency is most of what dates a claim here. */
   const post_lines = posts.map((post) => {
