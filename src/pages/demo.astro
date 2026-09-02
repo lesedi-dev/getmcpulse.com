@@ -105,7 +105,13 @@ const FINDINGS = [
          preview, not a place to work.
 
          Eager, not lazy: this is the page's subject, and a lazy frame on a
-         short viewport loads after the reader has already scrolled past. -->
+         short viewport loads after the reader has already scrolled past.
+
+         Left inside the page container rather than run to the viewport edge.
+         The demo drops the app's sidebar, so the dashboard has the whole frame
+         to itself and does not need the extra 200-odd pixels a full-bleed
+         would buy — and full-bleed on a page with a vertical scrollbar is how
+         the phantom horizontal scroll gets in. -->
     <section id="what" class="scroll-mt-24">
       <div class="reveal overflow-hidden rounded-2xl border border-line bg-ink-900/40">
         <div class="flex items-center gap-3 border-b border-line-soft px-4 py-2.5">
