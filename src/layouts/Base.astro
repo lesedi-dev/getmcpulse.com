@@ -106,7 +106,15 @@ const publisher = {
   "@id": `${SITE.url}/#organization`,
   name: SITE.name,
   url: new URL("/", Astro.site).href,
-  logo: new URL("/favicon.svg", Astro.site).href,
+  /**
+   * A PNG, not the SVG.
+   *
+   * This pointed at `/favicon.svg`, which made the one image we nominate as our
+   * logo the one format Google's logo guidance is least likely to accept. The
+   * 192px raster is generated from the same drawing, so nothing about the mark
+   * changes — only whether the crawler can use it.
+   */
+  logo: new URL("/icon-192.png", Astro.site).href,
   sameAs: [SITE.github, SITE.npm],
 };
 
@@ -180,7 +188,25 @@ const structured_data = {
     <link rel="canonical" href={canonical} />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
+    {/*
+      The icon set, in the order a client should prefer.
+
+      A browser takes the first `rel="icon"` it understands, so the SVG is
+      first: it is one file, sharp at every size, and follows the tab's own
+      light or dark chrome. The `.ico` is the fallback for anything that does
+      not do SVG, and it is also the URL a browser requests unprompted.
+
+      The two PNGs are declared for Google specifically. Its favicon guidance
+      asks for a square icon whose side is a multiple of 48, which an SVG cannot
+      state — it has no pixel size — and which the old 32×32 raster did not meet.
+      96 and 192 both satisfy it, and declaring the size lets a client pick
+      without downloading both.
+    */}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" href="/icon-96.png" type="image/png" sizes="96x96" />
+    <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
 
     {/*
       Inter, fetched in parallel with the stylesheet instead of after it.

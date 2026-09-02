@@ -1,0 +1,82 @@
+---
+/**
+ * A code block with a copy button.
+ *
+ * ── Why this exists ───────────────────────────────────────────────────────
+ * The site had exactly one copy affordance — the `npm install` chip in the hero
+ * — and when that was removed the count went to zero. Including on `/install`,
+ * which is the page somebody has open *while installing*, where all four
+ * package-manager commands were plain text in a `<pre>`.
+ *
+ * A component rather than a second copy of the hero's script, because the
+ * script is the part that was easy to lose: it lived at the bottom of
+ * `index.astro`, bound to `querySelector("[data-copy]")` — a single element —
+ * and would have silently driven only the first block on a page with four.
+ * This binds all of them.
+ *
+ * ── Why not JavaScript-only ───────────────────────────────────────────────
+ * The `<pre>` renders and is selectable before any script arrives, and stays so
+ * if none does. The button is the enhancement; the text is the feature. That
+ * matters more here than elsewhere on the site, because a reader installing an
+ * observability SDK is disproportionately likely to be running a strict browser.
+ */
+
+interface Props {
+  /** Lines of the block. Each gets a `$` prompt if `prompt` is set. */
+  code: string;
+  /** What the button copies. Defaults to `code`, minus any prompts. */
+  copy?: string;
+  class?: string;
+}
+
+const { code, copy, class: klass = "" } = Astro.props;
+---
+
+<div class:list={["group/copy relative", klass]}>
+  <pre
+    class="overflow-x-auto rounded-xl border border-line bg-surface p-5 pr-20 font-mono text-[13px] leading-6 text-ink-300"><code>{code}</code></pre>
+
+  {/*
+    Positioned over the block rather than beside it, so a long command is not
+    made narrower by a control most readers will not use. `sr-only` label
+    because "copy" beside a code block is only unambiguous visually.
+  */}
+  <button
+    type="button"
+    data-copy={copy ?? code}
+    class="absolute top-3.5 right-3.5 rounded-lg border border-line bg-ink-950/80 px-2.5 py-1 font-mono text-[11px] text-ink-500 backdrop-blur transition-colors hover:border-line-strong hover:text-ink-100"
+  >
+    <span data-copy-label>copy</span>
+    <span class="sr-only"> to clipboard</span>
+  </button>
+</div>
+
+<script>
+  /**
+   * Every copy button on the page, not the first one.
+   *
+   * The version this replaces used `querySelector("[data-copy]")`, which was
+   * correct while exactly one existed and would have driven only the first of
+   * four here — three dead buttons that look identical to the working one.
+   *
+   * The label reverts after a moment: a button stuck on "copied" leaves you
+   * unsure whether the second click did anything.
+   */
+  for (const button of document.querySelectorAll<HTMLButtonElement>("[data-copy]")) {
+    const label = button.querySelector<HTMLElement>("[data-copy-label]");
+    if (!label) continue;
+
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(button.dataset.copy ?? "");
+        label.textContent = "copied";
+      } catch {
+        // Clipboard access can be refused outright — say so rather than
+        // claiming a copy that did not happen.
+        label.textContent = "press ⌘C";
+      }
+
+      window.setTimeout(() => (label.textContent = "copy"), 2000);
+    });
+  }
+</script>

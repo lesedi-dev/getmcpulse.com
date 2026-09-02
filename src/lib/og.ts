@@ -313,9 +313,12 @@ const STATIC_PAGES: (OgCard & { path: string })[] = [
     path: "/",
     id: "index",
     eyebrow: "Analytics for MCP servers",
-    title: "Find out what your MCP tools are actually doing",
+    // Kept in step with the `h1`. The card and the page are the same promise
+    // seen in two places, and a share preview that pitches something the page
+    // does not say is a bait the click then has to absorb.
+    title: "See what models actually do with your MCP server",
     blurb:
-      "Retries, empty answers, argument errors and schema cost — measured inside your own server, in two lines.",
+      "Which tools they call, which they retry, which come back empty, and what your schemas cost every session.",
   },
   {
     path: "/how-it-works",
@@ -352,7 +355,7 @@ const STATIC_PAGES: (OgCard & { path: string })[] = [
     path: "/pricing",
     id: "pricing",
     eyebrow: "Pricing",
-    title: "Free for one server, $49 for one people depend on",
+    title: "Free for one server. $49 for a server people depend on.",
     blurb:
       "Recording stops at the cap rather than billing past it, and history is hidden by a plan rather than deleted.",
   },
@@ -360,7 +363,7 @@ const STATIC_PAGES: (OgCard & { path: string })[] = [
     path: "/faq",
     id: "faq",
     eyebrow: "Questions",
-    title: "What this does to your server",
+    title: "Common questions about MCPulse",
     blurb:
       "What leaves your process, whether it can slow your tools down, which languages work today, and what happens at the cap.",
   },
@@ -368,7 +371,7 @@ const STATIC_PAGES: (OgCard & { path: string })[] = [
     path: "/blog",
     id: "blog",
     eyebrow: "Blog",
-    title: "Writing about MCP server observability",
+    title: "Notes on measuring what models do with your tools",
     blurb:
       "Retries, empty results, schema cost, and what the four outcomes of a tool call actually tell you.",
   },

@@ -1,6 +1,7 @@
 ---
 import Detail from "../layouts/Detail.astro";
 import LanguagePicker from "../components/LanguagePicker.astro";
+import CopyBlock from "../components/CopyBlock.astro";
 import { WRAP_SNIPPET, SITE } from "../lib/site";
 
 const MANAGERS = [
@@ -51,7 +52,14 @@ const PRE =
       <p class="mt-3 text-[15px] leading-7 text-ink-500">
         No runtime dependencies at all, so it will not drag anything into your tree.
       </p>
-      <pre class={PRE}><code>{MANAGERS.map((m) => `$ ${m}`).join("\n")}</code></pre>
+      {/* Copy takes the commands without their `$` prompts — pasting a prompt
+          into a shell is an error, and the reader who copies is the reader who
+          is about to paste. */}
+      <CopyBlock
+        class="mt-5"
+        code={MANAGERS.map((m) => `$ ${m}`).join("\n")}
+        copy={MANAGERS[0]}
+      />
     </li>
 
     <li class="reveal">
@@ -74,7 +82,7 @@ const PRE =
         One import, one call, after your tools are registered.
         <code class={CODE}>watch</code> returns the same server, so nothing downstream changes.
       </p>
-      <pre class={PRE}><code>{WRAP_SNIPPET}</code></pre>
+      <CopyBlock class="mt-5" code={WRAP_SNIPPET} />
 
       <p class="mt-6 text-[15px] leading-7 text-ink-500">
         Serving over HTTP instead? Those servers build a new <code class={CODE}>McpServer</code> per
