@@ -33,6 +33,19 @@ export const SITE = {
   signup: "https://app.getmcpulse.com/signup",
   /** For somebody who already has one. Every "Sign in" link. */
   login: "https://app.getmcpulse.com/login",
+
+  /**
+   * Google Analytics 4 measurement ID.
+   *
+   * Here rather than inline in `Base.astro` for the same reason every other
+   * external identity is here: one spelling. A measurement ID typo does not
+   * error — it collects into a property that does not exist, silently, for as
+   * long as nobody checks.
+   *
+   * Public by design: it is visible in the page source of every site that uses
+   * GA, so it is not a secret and does not want an env var.
+   */
+  ga_id: "G-0Z6TDR90XT",
   npm: "https://www.npmjs.com/package/@mcpulse/sdk",
 
   /**

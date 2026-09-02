@@ -73,7 +73,7 @@ const schema = webPage(Astro.site, { path: Astro.url.pathname, title, descriptio
     <header class="relative overflow-hidden border-b border-line-soft">
       <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>
 
-      <div class="mx-auto max-w-6xl px-5 pt-36 pb-14 sm:px-8 sm:pt-44">
+      <div class="mx-auto max-w-7xl px-5 pt-36 pb-14 sm:px-8 sm:pt-44">
         <div class="reveal mx-auto max-w-3xl">
           <p class="text-sm font-medium text-cyan">{eyebrow}</p>
           <h1
@@ -101,13 +101,13 @@ const schema = webPage(Astro.site, { path: Astro.url.pathname, title, descriptio
       </div>
     </header>
 
-    <div class="mx-auto max-w-6xl px-5 py-16 sm:px-8">
+    <div class="mx-auto max-w-7xl px-5 py-16 sm:px-8">
       {prose ? <div class="mx-auto max-w-3xl"><slot /></div> : <slot />}
     </div>
   </article>
 
   <aside class="border-t border-line-soft">
-    <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8">
+    <div class="mx-auto max-w-7xl px-5 py-14 sm:px-8">
       <div class="mx-auto max-w-3xl rounded-2xl border border-line bg-ink-900/40 p-7">
         <h2 class="text-lg font-semibold tracking-tight text-ink-100">
           Find out what your tools are actually doing

@@ -185,6 +185,47 @@ const structured_data = {
         }
       } catch {}
     </script>
+    {/*
+      Google Analytics, as high in the head as it can go.
+      
+      ── Why `is:inline`, and why `set:html` rather than `define:vars` ───────
+      Astro processes and bundles `<script>` by default, which for the loader
+      means rewriting a tag Google's snippet expects to run as-is. `is:inline`
+      leaves both exactly as pasted, which is the only form the snippet is
+      documented to work in.
+
+      The ID is interpolated with `set:html` because `define:vars` wraps the
+      body in an IIFE to scope the variable it injects — and that puts `gtag`
+      inside a closure instead of on `window`. Pageviews still worked, which is
+      what made it easy to miss: `dataLayer` is global either way. What broke
+      was every later call, so `gtag('event', ...)` from anywhere else on the
+      site would have thrown `gtag is not defined`.
+
+      The `async` loader plus the tiny inline config is Google's own shape: the
+      inline block queues into `dataLayer` immediately and the library drains
+      the queue whenever it finishes loading, so nothing is lost to the race and
+      nothing blocks the first paint.
+
+      ── What this joins ─────────────────────────────────────────────────────
+      Vercel Analytics and Speed Insights are already on every page, injected
+      at the foot of `<body>`. This is a third collector rather than a
+      replacement — Vercel's two answer "is the site fast and which pages get
+      traffic", GA answers "where did they come from and what did they do next".
+      Worth knowing they overlap on pageviews and will not agree exactly;
+      they sample and attribute differently.
+    */}
+    <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${SITE.ga_id}`}
+    ></script>
+    <script
+      is:inline
+      set:html={`
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '${SITE.ga_id}');
+      `}
+    />
+
     <link rel="canonical" href={canonical} />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />

@@ -55,6 +55,7 @@ export const OG_HEIGHT = 630;
 const C = {
   bg: "#0b0d13",
   ink_100: "#eceef4",
+  ink_300: "#c6cbd4",
   ink_500: "#9fa5b0",
   ink_800: "#252931",
   cyan: "#5ecfe4",
@@ -179,6 +180,111 @@ const text = (
   props: { style: { display: "flex", ...style }, children: content },
 });
 
+/**
+ * The in-page hero: the same drawing, centred.
+ *
+ * ── Why this exists ───────────────────────────────────────────────────────
+ * Posts used to open on `PostCover.astro` — a motif drawn per topic and varied
+ * by a hash of the slug. Good instinct, wrong output: the "Tool design" motif
+ * renders as five coloured pills, which reads as a loading skeleton rather than
+ * a picture. That file's own comment concedes one of its four motifs "read as
+ * an empty card rather than a drawing".
+ *
+ * So the hero is now generated from the post itself, from the same template
+ * every time, with the title in the middle. Same background, same palette and
+ * the same mark as the share card — it is one design seen in two places rather
+ * than two pieces of art to keep in step.
+ *
+ * ── Why centred rather than the share card verbatim ───────────────────────
+ * The share card is left-aligned because it sits alone in a timeline. The hero
+ * sits inside a reading column, where a left-aligned block of the same text
+ * reads as a duplicate paragraph. Centred, it reads as a plate.
+ *
+ * It carries the title everywhere it appears — the post page and every index
+ * card get the identical image. An earlier version dropped the title on the
+ * post page, on the grounds that the `h1` is directly above it; one image per
+ * post is the simpler contract and the one this site wants.
+ */
+function heroForeground(card: OgCard) {
+  const title = clamp(card.title, 110);
+
+  return {
+    type: "div",
+    props: {
+      style: {
+        width: `${OG_WIDTH}px`,
+        height: `${OG_HEIGHT}px`,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "72px 96px",
+        fontFamily: "Inter",
+      },
+      children: [
+        // The mark and the topic, above the title, centred.
+        {
+          type: "div",
+          props: {
+            style: { display: "flex", alignItems: "center", gap: "12px" },
+            children: [
+              { type: "img", props: { src: dataUri(MARK), width: 58, height: 30 } },
+              text(card.eyebrow.toUpperCase(), {
+                fontSize: 27,
+                fontWeight: 600,
+                color: C.cyan,
+                letterSpacing: "0.14em",
+              }),
+            ],
+          },
+        },
+
+        text(title, {
+          marginTop: "34px",
+          fontSize: titleSize(title.length) + 6,
+          fontWeight: 600,
+          color: C.ink_100,
+          lineHeight: 1.1,
+          letterSpacing: "-0.025em",
+          textAlign: "center",
+          maxWidth: "980px",
+        }),
+
+        /**
+         * One hairline, then the domain, centred.
+         *
+         * Sized up from 20px in `ink_500`, which was legible on the 1200×630
+         * original and gone by the time the same file was scaled into a 349px
+         * index card — the one place the domain has a job to do, because that
+         * card is what somebody sees before they know whose site it is.
+         * 30px in `ink_300` survives the scale-down.
+         */
+        {
+          type: "div",
+          props: {
+            style: {
+              display: "flex",
+              marginTop: "40px",
+              paddingTop: "30px",
+              borderTop: `1px solid ${C.ink_800}`,
+              width: "340px",
+              justifyContent: "center",
+            },
+            children: [
+              text(new URL(SITE.url ?? "https://getmcpulse.com").host, {
+                fontSize: 30,
+                fontWeight: 500,
+                color: C.ink_300,
+                letterSpacing: "0.01em",
+              }),
+            ],
+          },
+        },
+      ],
+    },
+  };
+}
+
 /** Satori's element form, written as plain objects — no JSX, so no React. */
 function foreground(card: OgCard) {
   const title = clamp(card.title, 120);
@@ -265,9 +371,9 @@ function foreground(card: OgCard) {
             },
             children: [
               text(new URL(SITE.url ?? "https://getmcpulse.com").host, {
-                fontSize: 22,
+                fontSize: 26,
                 fontWeight: 500,
-                color: C.ink_500,
+                color: C.ink_300,
               }),
             ],
           },
@@ -277,9 +383,13 @@ function foreground(card: OgCard) {
   };
 }
 
-/** One card, as PNG bytes. */
-export async function renderOgCard(card: OgCard): Promise<Buffer> {
-  const svg = await satori(foreground(card) as never, {
+/** One card, as PNG bytes. `hero` is the centred in-page variant. */
+export async function renderOgCard(
+  card: OgCard,
+  variant: "card" | "hero" = "card",
+): Promise<Buffer> {
+  const build = variant === "hero" ? heroForeground : foreground;
+  const svg = await satori(build(card) as never, {
     width: OG_WIDTH,
     height: OG_HEIGHT,
     fonts: interFonts(),

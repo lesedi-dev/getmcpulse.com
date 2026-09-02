@@ -1,0 +1,91 @@
+---
+import Base from "../../../layouts/Base.astro";
+import PostList from "../../../components/PostList.astro";
+import { publishedPosts, PER_PAGE, pageCount } from "../../../lib/posts";
+import { SITE } from "../../../lib/site";
+import { breadcrumbs } from "../../../lib/schema";
+
+/**
+ * `/blog/page/2` and up. Page one is `/blog`.
+ *
+ * ── Why this path ─────────────────────────────────────────────────────────
+ * `/blog/[...slug]` already claims every path directly under `/blog`, so
+ * `/blog/2` would be the same route as `/blog/dead-tools` with two meanings.
+ * A `page` segment cannot collide with a post slug.
+ *
+ * ── Why page one is excluded ──────────────────────────────────────────────
+ * `/blog/page/1` would be a second URL for the same twelve posts `/blog`
+ * already serves — a duplicate that a canonical tag then has to undo. The
+ * range below starts at 2 so it never exists.
+ */
+export async function getStaticPaths() {
+  const posts = await publishedPosts();
+  const total = pageCount(posts.length);
+
+  return Array.from({ length: Math.max(0, total - 1) }, (_, i) => {
+    const current = i + 2;
+    return {
+      params: { page: String(current) },
+      props: {
+        page: posts.slice((current - 1) * PER_PAGE, current * PER_PAGE),
+        current,
+        total,
+      },
+    };
+  });
+}
+
+const { page, current, total } = Astro.props;
+
+/**
+ * The title says which page, so the twelve of these are not twelve pages
+ * competing for the same query with the same title.
+ */
+const title = `Writing — page ${current}`;
+const description = `Posts ${(current - 1) * PER_PAGE + 1}–${(current - 1) * PER_PAGE + page.length} of ${total * PER_PAGE >= page.length ? "the archive" : ""} on measuring MCP servers.`.replace(
+  " of  on",
+  " of the archive on",
+);
+
+const schema = [
+  {
+    "@type": "CollectionPage",
+    "@id": new URL(`/blog/page/${current}`, Astro.site).href,
+    name: title,
+    url: new URL(`/blog/page/${current}`, Astro.site).href,
+    isPartOf: { "@id": `${SITE.url}/#website` },
+    publisher: { "@id": `${SITE.url}/#organization` },
+  },
+  breadcrumbs(Astro.site, [
+    { name: SITE.name, path: "/" },
+    { name: "Blog", path: "/blog" },
+    { name: `Page ${current}`, path: `/blog/page/${current}` },
+  ]),
+];
+---
+
+<Base title={title} description={description} schema={schema}>
+  <section class="relative overflow-hidden border-b border-line-soft">
+    <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>
+
+    <div class="mx-auto max-w-7xl px-5 pt-36 pb-14 sm:px-8 sm:pt-44">
+      <div class="reveal max-w-3xl">
+        <p class="text-sm font-medium text-cyan">Writing</p>
+        <h1
+          class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-[2.75rem] sm:leading-[1.1]"
+        >
+          Page {current} of {total}
+        </h1>
+        <p class="mt-5 text-lg leading-8 text-pretty text-ink-500">
+          Older posts on measuring MCP servers — retries, empty results, schema cost, and what the
+          four outcomes of a tool call actually tell you.
+        </p>
+        <p class="mt-6 text-sm">
+          <a href="/blog" class="font-medium text-cyan hover:underline">← Back to the latest</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <PostList posts={page} current={current} total={total} />
+</Base>

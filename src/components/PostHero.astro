@@ -1,0 +1,70 @@
+---
+/**
+ * A post's hero image, generated at build time from the post itself.
+ *
+ * Replaces `PostCover.astro`, which drew a motif per topic varied by a hash of
+ * the slug. The intent was right — no stock photography, nothing to keep in an
+ * image pipeline — and the output was not: the "Tool design" motif rendered as
+ * five coloured pills, which reads as a loading skeleton. That component's own
+ * comment conceded one of its four motifs "read as an empty card".
+ *
+ * What replaces it is the same idea done from the post's own text: one template,
+ * the title centred, the same background, palette and mark as the share card.
+ * Built by `/og/hero/<slug>.png` from the front matter, so retitling a post
+ * retitles its hero and there is no asset to regenerate by hand.
+ *
+ * ── Why a raster and not inline SVG ───────────────────────────────────────
+ * Because the text has to be laid out. `PostCover` could be inline SVG because
+ * it drew shapes; a centred, wrapped title needs a text engine, which is what
+ * Satori is for at build time. The cost is a real image request instead of a
+ * kilobyte of markup, which is why every one of these is lazy-loaded and
+ * carries its own dimensions.
+ */
+
+interface Props {
+  /** The post slug — `how-many-tools`. */
+  slug: string;
+  /** The post title. Only used to reason about the image, never rendered. */
+  title: string;
+  /**
+   * Load immediately rather than lazily.
+   *
+   * True for the one image above the fold — a post's own hero, and the
+   * featured card at the top of the index. The other 44 on the index page are
+   * lazy, which is the difference between one image request and forty-five.
+   *
+   * This used to be folded into a single `density` prop alongside a variant
+   * choice, and the two are unrelated: the index's featured card wants eager
+   * loading *and* its title, and one prop could not say both.
+   */
+  eager?: boolean;
+  class?: string;
+}
+
+const { slug, title, eager = false, class: klass = "" } = Astro.props;
+---
+
+{/*
+  `alt=""` on purpose.
+
+  The image contains the post's title and nothing else, and the title is already
+  the `h1` directly above it. Reading it out twice is worse than not reading it
+  at all — this is decorative in the precise sense the spec means.
+
+  Dimensions are stated so the layout does not shift when it lands.
+
+  `object-cover` because every call site sets its own aspect ratio — the index
+  wants 2:1 cards, the post wants 5:2 from `sm` up. The image is 1200×630, so
+  ~1.9:1, and cropping it to 2:1 takes three pixels off the top and bottom.
+  The title is centred with room around it precisely so any of those crops are
+  safe; a left-aligned card would lose words at the same ratios.
+*/}
+<img
+  src={`/og/hero/${slug}.png`}
+  alt=""
+  width="1200"
+  height="630"
+  loading={eager ? "eager" : "lazy"}
+  decoding="async"
+  class:list={["w-full object-cover", klass]}
+/>

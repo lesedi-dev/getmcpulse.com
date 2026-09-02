@@ -1,0 +1,93 @@
+---
+import { SITE } from "../lib/site";
+
+/**
+ * Page links for the blog index.
+ *
+ * ── Why the archive is paginated ──────────────────────────────────────────
+ * At forty-five posts the index rendered 8,795 pixels of page and forty-five
+ * images, which is a wall rather than an archive — and every one of those
+ * images is fetched by a reader who wanted the third post.
+ *
+ * ── Why `/blog/page/2` and not `/blog/2` ──────────────────────────────────
+ * `/blog/[...slug]` already claims every path under `/blog`, so `/blog/2` and
+ * `/blog/dead-tools` would be the same route with two meanings. A `page`
+ * segment cannot collide with a slug, and it stays readable.
+ *
+ * `/blog` itself is page one and has no `/page/1` twin — one canonical URL for
+ * one set of posts, which is the whole reason `rel="prev"` and `rel="next"`
+ * exist rather than a `?page=` parameter.
+ */
+
+interface Props {
+  current: number;
+  total: number;
+  class?: string;
+}
+
+const { current, total, class: klass = "" } = Astro.props;
+
+const href = (n: number) => (n === 1 ? "/blog" : `/blog/page/${n}`);
+
+/**
+ * The window of page numbers to show.
+ *
+ * First, last, and the two either side of the current page, with gaps marked.
+ * Printing all of them is fine at four pages and wrong at forty, and the
+ * archive only grows.
+ */
+const window_size = 1;
+const numbers: (number | "gap")[] = [];
+for (let n = 1; n <= total; n++) {
+  const near = Math.abs(n - current) <= window_size;
+  if (n === 1 || n === total || near) numbers.push(n);
+  else if (numbers[numbers.length - 1] !== "gap") numbers.push("gap");
+}
+
+const LINK =
+  "inline-flex h-10 min-w-10 items-center justify-center rounded-xl border px-3 text-sm font-medium transition-colors";
+---
+
+{
+  total > 1 && (
+    <nav aria-label="Blog pages" class:list={["flex flex-wrap items-center justify-center gap-2", klass]}>
+      {/* Disabled arrows are rendered as spans, not as links to nowhere. A
+          disabled anchor is still focusable and still announced as a link. */}
+      {current > 1 ? (
+        <a href={href(current - 1)} rel="prev" class={`${LINK} border-line text-ink-300 hover:border-line-strong hover:text-ink-100`}>
+          ← Newer
+        </a>
+      ) : (
+        <span class={`${LINK} border-line-soft text-ink-700`} aria-hidden="true">
+          ← Newer
+        </span>
+      )}
+
+      {numbers.map((n) =>
+        n === "gap" ? (
+          <span class="px-1 text-sm text-ink-700" aria-hidden="true">
+            …
+          </span>
+        ) : n === current ? (
+          <span aria-current="page" class={`${LINK} border-cyan/40 bg-cyan-wash text-cyan`}>
+            {n}
+          </span>
+        ) : (
+          <a href={href(n)} class={`${LINK} border-line text-ink-300 hover:border-line-strong hover:text-ink-100`}>
+            {n}
+          </a>
+        ),
+      )}
+
+      {current < total ? (
+        <a href={href(current + 1)} rel="next" class={`${LINK} border-line text-ink-300 hover:border-line-strong hover:text-ink-100`}>
+          Older →
+        </a>
+      ) : (
+        <span class={`${LINK} border-line-soft text-ink-700`} aria-hidden="true">
+          Older →
+        </span>
+      )}
+    </nav>
+  )
+}

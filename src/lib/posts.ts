@@ -31,3 +31,21 @@ export async function allPosts(): Promise<CollectionEntry<"blog">[]> {
   const posts = await getCollection("blog");
   return posts.sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
 }
+
+/**
+ * Posts per page on the archive.
+ *
+ * Twelve because page one spends three of them on the featured spread and the
+ * two half-rows, leaving nine for the grid — three full rows at `lg`, two at
+ * `sm`, and no orphan card on either. Later pages are a plain grid of twelve,
+ * which is four rows of three.
+ *
+ * At forty-five posts the unpaginated index was 8,795 pixels tall and fetched
+ * forty-five images, all of them for a reader who wanted the third post.
+ */
+export const PER_PAGE = 12;
+
+/** How many pages a given number of posts needs. At least one, always. */
+export function pageCount(total: number): number {
+  return Math.max(1, Math.ceil(total / PER_PAGE));
+}
