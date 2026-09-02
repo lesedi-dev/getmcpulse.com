@@ -1,0 +1,252 @@
+---
+import Detail from "../layouts/Detail.astro";
+import { SITE, CTA } from "../lib/site";
+import { STUDY } from "../lib/study";
+
+/**
+ * The demo, explained before it is opened.
+ *
+ * ── Why this page exists at all ───────────────────────────────────────────
+ * The demo itself is one link, and a link needs no page. This one does two
+ * things a link cannot.
+ *
+ * First, it tells the reader what to look at. The dashboard is dense — sixteen
+ * metrics, a tool table, a call feed — and a stranger who opens it cold sees a
+ * lot of numbers and no argument. The four findings below are the argument,
+ * and naming them beforehand turns a browse into a check: they arrive already
+ * looking for the retry cluster, and they find it.
+ *
+ * Second, it says the sample server is bad on purpose. Without that, the
+ * numbers read as our product performing poorly rather than as the problem our
+ * product exists to show. That sentence is load-bearing.
+ *
+ * ── Why the numbers here are the study's ──────────────────────────────────
+ * Every figure quoted against the demo comes from `STUDY`, the corpus of
+ * 4,749 real servers. The demo shows one server having each problem; the study
+ * says how common that problem is. One without the other is either an anecdote
+ * or a statistic — together they are a reason to look at your own.
+ */
+
+/**
+ * One decimal place, matching `/check` and the study post.
+ *
+ * Rounding to the whole number gave 18% and 22% where the rest of the site
+ * says 17.7% and 21.5%. The same numbers, but a reader arriving from the study
+ * and seeing a different figure has to work out which one is wrong — and
+ * rounding up is what quietly turns 21.5 into 22.
+ */
+const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
+
+const SECTIONS = [
+  { id: "what", label: "What you're seeing" },
+  { id: "look", label: "What to look for" },
+  { id: "yours", label: "Your own server" },
+] as const;
+
+/**
+ * The four findings, each pinned to a real number from the corpus.
+ *
+ * Ordered by how badly they hurt rather than by how visible they are on the
+ * page. A model calling the wrong tool wastes a whole turn; a fat schema is a
+ * standing charge. Both matter, but the first is the one that makes somebody
+ * open their own dashboard.
+ */
+const FINDINGS = [
+  {
+    heading: "The model picks the wrong tool, then retries",
+    where: "Overview → Tool health",
+    body: "The sample server registers search_orders and find_product. To you those are obviously different. To a model reading two descriptions that open the same way, they are a coin toss — so it calls one, gets nothing useful, and calls the other. The retry column is where that shows up, and no error was ever raised: both calls succeeded.",
+    stat: `${pct(STUDY.zero_distinctive_rate)} of tools in the corpus`,
+    statNote: "have no word distinguishing them from a sibling tool",
+  },
+  {
+    heading: "Calls succeed and come back empty",
+    where: "Overview → Outcomes",
+    body: "An empty result is not an error. Your server did its job, returned a valid response, and logged a 200 — and the model got nothing it could use, so it asked again a different way. Nothing in your own logs marks that call as a problem, which is exactly why it goes unfixed.",
+    stat: "Counted separately here",
+    statNote: "from errors, because it needs a different fix",
+  },
+  {
+    heading: "Arguments fail on the parameters nobody described",
+    where: "Tool detail → Outcomes",
+    body: "Argument errors are not spread evenly. They cluster on the one parameter whose description was left blank, because a model filling in a field it was told nothing about is guessing. The tool page shows which tool, and the corpus says how ordinary that is.",
+    stat: `${pct(STUDY.undescribed_parameter_rate)} of all parameters`,
+    statNote: "ship with no description at all",
+  },
+  {
+    heading: "Every session pays for the schemas before a single call",
+    where: "Overview → Schema budget",
+    body: "Your tool list is sent at every connection, whether or not a tool is ever called. The sample server has one tool nobody touches, and it costs the same as the busiest one. That is a standing charge on every conversation, and it is invisible unless something adds it up.",
+    stat: `${STUDY.median_tokens.toLocaleString("en-US")} tokens`,
+    statNote: "is the median tool list across the corpus",
+  },
+] as const;
+---
+
+<Detail
+  eyebrow="Live demo"
+  title="Open the dashboard, no account needed"
+  lead="This is the real MCPulse dashboard — the same screens a customer sees — reading a sample MCP server. Nothing to install, nothing to sign up for."
+  description="See the real MCPulse dashboard with no account: a sample MCP server with retries, empty returns and argument errors already in it. Free, no signup."
+  width="full"
+  sections={SECTIONS}
+>
+  <div class="space-y-24">
+    <!-- ── The dashboard, embedded ────────────────────────────────────────
+         Not a screenshot and not a button that opens one. A reader who
+         followed "Live demo" from the menu has already said yes; asking them
+         to click again to see the thing they asked for is a step that only
+         loses people.
+
+         The frame is the live app at `/m/demo`, so it cannot go out of date
+         the way an image would — and the toolbar above it is real chrome
+         rather than decoration: the address is the address, and "Open full
+         size" is there because a dense dashboard inside a 900px frame is a
+         preview, not a place to work.
+
+         Eager, not lazy: this is the page's subject, and a lazy frame on a
+         short viewport loads after the reader has already scrolled past. -->
+    <section id="what" class="scroll-mt-24">
+      <div class="reveal overflow-hidden rounded-2xl border border-line bg-ink-900/40">
+        <div class="flex items-center gap-3 border-b border-line-soft px-4 py-2.5">
+          <div class="flex shrink-0 gap-1.5" aria-hidden="true">
+            <span class="h-2.5 w-2.5 rounded-full bg-ink-800"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-ink-800"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-ink-800"></span>
+          </div>
+          <p class="min-w-0 flex-1 truncate font-mono text-xs text-ink-700">
+            app.getmcpulse.com/m/demo
+          </p>
+          <a
+            href={SITE.demo}
+            target="_blank"
+            rel="noopener"
+            class="shrink-0 text-xs font-medium text-cyan hover:underline"
+          >
+            Open full size ↗
+          </a>
+        </div>
+
+        {/* `color-scheme: dark` on the frame itself, not just a background
+            class. A cross-origin iframe paints the browser's default canvas —
+            white — before its document arrives, and a white slab on this page
+            reads as a broken embed for the second or two the app takes to
+            boot. `color-scheme` is the one property that reaches that canvas;
+            it does not override the app's own theme once it has loaded. */}
+        <iframe
+          src={SITE.demo}
+          title="The MCPulse dashboard, showing a sample MCP server"
+          loading="eager"
+          style="color-scheme: dark"
+          class="block h-[38rem] w-full border-0 bg-ink-950 sm:h-[44rem] lg:h-[52rem]"
+        ></iframe>
+      </div>
+
+      <div class="mx-auto mt-8 max-w-3xl">
+        <p class="reveal text-sm text-ink-300">
+          Read-only, and nothing above is your data. If the frame does not load,{" "}
+          <a
+            href={SITE.demo}
+            target="_blank"
+            rel="noopener"
+            class="text-cyan underline underline-offset-2 hover:text-cyan-dim"
+          >
+            open it directly
+          </a>{" "}
+          — or <a href="/check" class="text-cyan underline underline-offset-2 hover:text-cyan-dim">check your own schemas</a> instead.
+        </p>
+
+        <h2 class="reveal mt-14 text-2xl font-semibold tracking-tight text-ink-100">
+          The sample server has real problems in it
+        </h2>
+        <p class="reveal mt-4 text-[15px] leading-7 text-ink-500">
+          That is deliberate, and it is the point. A demo where everything works shows you a tidy
+          screen and teaches you nothing — you already know what a healthy server looks like,
+          because that is what yours looks like from the outside.
+        </p>
+        <p class="reveal mt-4 text-[15px] leading-7 text-ink-500">
+          So the sample server is one worth fixing. The model confuses two of its tools, some of
+          its calls come back empty, and one of its parameters was never described. Every one of
+          those is a thing your own server can be doing right now while every log you have says it
+          is fine.
+        </p>
+      </div>
+    </section>
+
+    <!-- ── What to look at ────────────────────────────────────────────── -->
+    <section id="look" class="scroll-mt-24">
+      <div class="mx-auto max-w-3xl">
+        <h2 class="reveal text-2xl font-semibold tracking-tight text-ink-100">
+          Four things to look for
+        </h2>
+        <p class="reveal mt-4 text-[15px] leading-7 text-ink-500">
+          The dashboard is dense on purpose, so here is where to look and what it means. Each one
+          is paired with how common it is across the {STUDY.servers.toLocaleString("en-US")} public
+          servers we read — the demo shows one server having the problem, the corpus says how many
+          do.
+        </p>
+      </div>
+
+      <div class="reveal mx-auto mt-10 grid max-w-5xl gap-5 lg:grid-cols-2">
+        {
+          FINDINGS.map((f) => (
+            <div class="flex flex-col rounded-2xl border border-line bg-surface p-6">
+              <p class="font-mono text-xs tracking-wide text-cyan uppercase">{f.where}</p>
+              <h3 class="mt-3 text-lg font-semibold tracking-tight text-ink-100">{f.heading}</h3>
+              <p class="mt-3 flex-1 text-sm leading-6.5 text-ink-500">{f.body}</p>
+              <div class="mt-5 border-t border-line-soft pt-4">
+                <p class="text-sm font-semibold text-ink-100">{f.stat}</p>
+                <p class="mt-0.5 text-sm leading-6 text-ink-500">{f.statNote}</p>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+
+      <div class="mx-auto mt-8 max-w-3xl">
+        <p class="reveal text-[15px] leading-7 text-ink-500">
+          Where those percentages come from, and what else the schemas said:{" "}
+          <a
+            href="/blog/reading-5000-mcp-schemas"
+            class="text-cyan underline underline-offset-2 hover:text-cyan-dim"
+          >
+            we read the schemas of {STUDY.servers.toLocaleString("en-US")} MCP servers
+          </a>.
+        </p>
+      </div>
+    </section>
+
+    <!-- ── The move to their own ──────────────────────────────────────── -->
+    <section id="yours" class="scroll-mt-24">
+      <div class="mx-auto max-w-3xl">
+        <h2 class="reveal text-2xl font-semibold tracking-tight text-ink-100">
+          Then point it at your own server
+        </h2>
+        <p class="reveal mt-4 text-[15px] leading-7 text-ink-500">
+          Two lines inside your own process — the package runs there, not as a proxy, so your URL
+          does not change and your OAuth does not break. Every account starts with a copy of this
+          same sample server, so you have something to read while your own traffic arrives.
+        </p>
+
+        <div class="reveal mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <a
+            href={SITE.signup}
+            class="inline-flex h-11 items-center justify-center rounded-xl bg-btn px-5 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover"
+          >
+            {CTA.primary}
+          </a>
+          <a
+            href="/install"
+            class="inline-flex h-11 items-center justify-center rounded-xl border border-line px-5 text-sm font-medium text-ink-300 transition-colors hover:border-line-strong hover:text-ink-100"
+          >
+            See the install
+          </a>
+        </div>
+
+        <p class="reveal mt-5 text-sm text-ink-300">
+          Free forever. No card, and no trial to expire.
+        </p>
+      </div>
+    </section>
+  </div>
+</Detail>

@@ -470,6 +470,16 @@ const STATIC_PAGES: (OgCard & { path: string })[] = [
       "Recording stops at the cap rather than billing past it, and history is hidden by a plan rather than deleted.",
   },
   {
+    path: "/demo",
+    id: "demo",
+    eyebrow: "Live demo",
+    title: "Open the real dashboard, no account needed",
+    blurb:
+      // Under the 120-char clamp on line 349: the first draft was 124 and the
+      // card rendered "already in…", which is a worse ending than a full stop.
+      "A sample MCP server where the model picks the wrong tool, calls come back empty and arguments fail.",
+  },
+  {
     path: "/faq",
     id: "faq",
     eyebrow: "Questions",

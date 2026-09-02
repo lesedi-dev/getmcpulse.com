@@ -229,7 +229,17 @@ const MEASURES = [
             Which tools get retried, which return empty, and what your schemas actually cost per
             session. Two lines inside your own server.
           </p>
-          <a href={SITE.signup} class="mt-5 inline-block text-sm font-medium text-cyan hover:underline">
+          {/* The demo above the signup, deliberately. This card names three things
+              a schema cannot show, and the demo is the one link that shows them
+              — asking somebody to create an account to find out whether the
+              answer is worth having is the wrong order. */}
+          <a href="/demo" class="mt-5 inline-block text-sm font-medium text-cyan hover:underline">
+            See those in the dashboard →
+          </a>
+          <a
+            href={SITE.signup}
+            class="mt-2 block text-sm font-medium text-ink-300 hover:text-ink-100"
+          >
             {CTA.primary} →
           </a>
         </div>

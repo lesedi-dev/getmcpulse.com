@@ -35,6 +35,19 @@ export const SITE = {
   login: "https://app.getmcpulse.com/login",
 
   /**
+   * The public demo: the real dashboard, reading a seeded sample server.
+   *
+   * `/m/demo` rather than a `/demo` route, because it *is* the ordinary MCP
+   * page with `demo` in place of an id — the same panels a customer sees, not a
+   * copy of them that could drift. The API serves that one MCP without a token
+   * and refuses any row not flagged `is_demo`.
+   *
+   * Dark until `DEMO_MCP_ID` is set on the API, which is deliberate: nothing is
+   * public by accident. If this link 404s, that variable is the thing to check.
+   */
+  demo: "https://app.getmcpulse.com/m/demo",
+
+  /**
    * Google Analytics 4 measurement ID.
    *
    * Here rather than inline in `Base.astro` for the same reason every other
@@ -100,6 +113,25 @@ export const NAV = [
    * sixth of public tools cannot be told apart — has already decided by then.
    */
   { href: "/check", label: "Schema checker" },
+  /**
+   * The demo, second.
+   *
+   * Second and not first because the checker asks for something the reader
+   * already has — their own `tools/list` — and answers about *their* server.
+   * The demo asks for nothing at all, which makes it cheaper to click, but it
+   * answers about ours. A reader deciding whether we are worth their time is
+   * better served by the one that talks about them.
+   *
+   * This is the fifth link, and the note under Metrics below says five links
+   * plus two actions only fit from 1024px. Measured after adding it, at 1024px
+   * the row is one line 65px tall and ends at 992px — 32px of slack, no wrap,
+   * no horizontal scroll. It fits because "Live demo" is two short words, and
+   * because the container is `max-w-7xl` now rather than `max-w-6xl`.
+   *
+   * 32px is not much. A sixth link, or a longer label on this one, is the
+   * thing that breaks it — so measure at 1024 before adding either.
+   */
+  { href: "/demo", label: "Live demo" },
   { href: "/how-it-works", label: "How it works" },
   /**
    * Metrics is **not** here, and it used to be.
