@@ -80,7 +80,7 @@ export const GET: APIRoute = async ({ site }) => {
     {
       href: "/check",
       label: "Schema checker",
-      note: "Paste a tools/list response and score it against 4,951 public servers — undescribed parameters, description collisions, schema token cost. Runs client-side; nothing is uploaded.",
+      note: "Paste a tools/list response and score it against 4,749 public servers — undescribed parameters, description collisions, schema token cost. Runs client-side; nothing is uploaded.",
     },
     {
       href: "/how-it-works",
@@ -107,7 +107,13 @@ export const GET: APIRoute = async ({ site }) => {
       label: "Questions",
       note: "What leaves your process, whether it can slow your tools down, which languages are supported today, and what happens at the plan cap.",
     },
-    { href: "/blog", label: "Blog", note: "Twenty-one essays on measuring MCP servers." },
+    {
+      href: "/blog",
+      label: "Blog",
+      // Counted, not written down. It said "twenty-one" and three posts later
+      // it was wrong — a hardcoded count is a fact with an expiry date on it.
+      note: `${posts.length} essays on measuring MCP servers, and on the schemas models read before they call anything.`,
+    },
   ];
 
   const seen = new Set(described.map((page) => page.href));

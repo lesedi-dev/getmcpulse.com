@@ -1,6 +1,6 @@
 ---
-title: We read the schemas of 4,951 public MCP servers
-description: Not what models do with your tools — what they are handed first. 87,146 tools, 270,487 parameters, one tool in six with nothing to tell it from its neighbour.
+title: We read the schemas of 4,749 public MCP servers
+description: Not what models do with your tools — what they are handed first. 82,549 tools, 257,287 parameters, one tool in six with nothing to tell it from its neighbour.
 published: 2026-08-31
 topic: Tool design
 minutes: 8
@@ -8,7 +8,7 @@ minutes: 8
 
 If you have built an MCP server, you have probably watched a model call the wrong tool, fill in a parameter you did not expect, or retry the same call three times before giving up. Your server was fine. The model just did not understand it.
 
-We wanted to know how often the *schema* is the reason. So we pulled the tool definitions from 4,951 public MCP servers — 87,146 tools and 270,487 parameters — and read them the way a model has to: as a wall of JSON, with no documentation, no repository, and no idea what the author meant.
+We wanted to know how often the *schema* is the reason. So we pulled the tool definitions from 4,749 public MCP servers — 82,549 tools and 257,287 parameters — and read them the way a model has to: as a wall of JSON, with no documentation, no repository, and no idea what the author meant.
 
 The short version: **one tool in six carries a description containing no word that distinguishes it from a sibling tool on the same server.** On servers with more than sixty tools, it is nearly one in three.
 
@@ -30,12 +30,12 @@ The registry's pagination caps at 500 results, so the corpus is two populations:
 
 | Pool | Servers | What it is |
 |---|---|---|
-| Popular | 465 | The most-installed servers. Page one opens in the tens of thousands of installs. |
+| Popular | 263 | The most-installed servers. Page one opens in the tens of thousands of installs. |
 | Long tail | 4,486 | A union of a few hundred search terms — whatever else the registry will show us. |
 
 Neither is a random sample. They are two *different* biases, which is the point of having both, and every figure below is reported for the combined set unless the two disagree.
 
-Of 5,123 servers in the frame, 154 detail requests failed, 5 had never been scanned, and 13 published no tools at all. That leaves **4,951 servers** with schemas.
+Of 5,123 servers in the frame, 154 detail requests failed, 5 had never been scanned, and 13 published no tools at all. That leaves **4,749 servers** with schemas.
 
 ## The check that nearly ended the study
 
@@ -59,13 +59,13 @@ So this study measures nothing about required-versus-optional parameters. Not be
 
 ## 1. One parameter in five has no description at all
 
-**59,038 of 270,487 parameters — 21.8% — ship with no `description`.** They appear on 33.7% of servers.
+**55,383 of 257,287 parameters — 21.5% — ship with no `description`.** They appear on 33.7% of servers.
 
 A parameter with no description is a parameter the model guesses at. It has the name, it has the type, and that is the entire brief. Sometimes the name carries it: `query` on a search tool is not mysterious. Often it does not — we found plenty of bare `id`, `type`, `mode` and `filter` parameters with nothing to say which of several plausible things they meant.
 
 The striking part is the contrast with tool descriptions. Only **0.4%** of tools have no description. Authors describe the tool and forget the arguments — which is understandable, because the tool is the thing you are thinking about when you write it, and the arguments are the thing the model has to fill in.
 
-Popular servers are slightly worse here than the long tail (28.2% against 20.8%), which is not what we expected and is discussed below.
+Popular servers are slightly worse here than the long tail (28.6% against 20.8%), which is not what we expected and is discussed below.
 
 ## 2. One tool in six has nothing to tell it apart from its neighbour
 
@@ -74,8 +74,8 @@ This is the finding we would lead with.
 For every tool, we took the content words in its description and asked how many appear in **no other tool's description on the same server**. Call it the tool's distinctive share.
 
 - The median tool's description is **26% distinctive**. Three-quarters of the words it spends are words its siblings also use.
-- **26.7% of tools are under 10% distinctive.**
-- **17.4% of tools are exactly zero** — not one content word in the description is unique to that tool. **23.1% of servers have at least one.**
+- **27.0% of tools are under 10% distinctive.**
+- **17.6% of tools are exactly zero** — not one content word in the description is unique to that tool. **22.8% of servers have at least one.**
 
 Zero does not mean the description is bad. Here are four from one widely-installed Gmail server:
 
@@ -110,16 +110,16 @@ Splitting the corpus by how many tools a server publishes:
 
 | Tools on the server | Servers | Parameters | No description | Zero-distinctive tools |
 |---|---|---|---|---|
-| 1–3 | 1,256 | 7,640 | 14.8% | **0.5%** |
-| 4–7 | 1,292 | 19,410 | 22.4% | **1.6%** |
-| 8–15 | 1,044 | 34,165 | 21.9% | **4.3%** |
-| 16–30 | 767 | 52,716 | 24.8% | **7.7%** |
-| 31–60 | 377 | 49,433 | 22.2% | **16.3%** |
-| 61+ | 215 | 107,123 | 20.5% | **31.3%** |
+| 1–3 | 1,193 | 7,640 | 15.2% | **0.5%** |
+| 4–7 | 1,257 | 19,410 | 22.4% | **1.6%** |
+| 8–15 | 1,013 | 34,165 | 21.9% | **4.4%** |
+| 16–30 | 738 | 52,716 | 24.8% | **7.6%** |
+| 31–60 | 350 | 49,433 | 21.4% | **16.6%** |
+| 61+ | 198 | 107,123 | 20.1% | **32.4%** |
 
-Description collision rises monotonically and by a factor of sixty, from 0.5% on the smallest servers to 31.3% on the largest. Some of that is arithmetic — more tools means more chances for two to collide — but it is also the point at which authors start generating descriptions from a template, and a template is a machine for producing tools that read alike.
+Description collision rises monotonically and by a factor of sixty, from 0.5% on the smallest servers to 32.4% on the largest. Some of that is arithmetic — more tools means more chances for two to collide — but it is also the point at which authors start generating descriptions from a template, and a template is a machine for producing tools that read alike.
 
-This is also what explains the popular-versus-long-tail gap in finding 1. Popular servers are simply bigger: a mean of 27.1 tools against 16.6.
+This is also what explains the popular-versus-long-tail gap in finding 1. Popular servers are simply bigger: a mean of 30.4 tools against 16.6.
 
 **And notice the column that does not move.** Missing parameter descriptions sit between 20% and 25% at every size above the smallest bucket. It is not a scale problem; it is a habit, and a two-tool server has it about as much as a two-hundred-tool one. The two failures are independent, which means shipping fewer tools will not fix your undescribed parameters and writing better descriptions will not fix your collisions.
 
@@ -127,15 +127,15 @@ This is also what explains the popular-versus-long-tail gap in finding 1. Popula
 
 Tool schemas are sent on every connection, whether or not a single tool gets called.
 
-- Median server: **4,991 bytes**, roughly **1,250 tokens**.
-- 90th percentile: **32,636 bytes**, roughly **8,200 tokens**.
+- Median server: **5,005 bytes**, roughly **1,250 tokens**.
+- 90th percentile: **31,968 bytes**, roughly **8,200 tokens**.
 - The largest in the corpus: **1,145,575 bytes** — on the order of 280,000 tokens of schema, from one server, before the conversation starts.
 
 Median tools per server is 7 and the mean is 17.6, which tells you the distribution's shape on its own. One server publishes 2,530 tools.
 
 ## 5. Some parameters name their valid values and then do not enforce them
 
-8.0% of all parameters carry an `enum`. The interesting question is how many *should*, and that is mostly unanswerable from a schema — you cannot tell from the outside that `status` accepts exactly three values.
+7.9% of all parameters carry an `enum`. The interesting question is how many *should*, and that is mostly unanswerable from a schema — you cannot tell from the outside that `status` accepts exactly three values.
 
 What you *can* find is the case where the author wrote the values down in prose and left the schema as an open string:
 
@@ -150,7 +150,7 @@ outcome_attribution   "Attribution type for the outcomes.
 commitment            "Optional processed|confirmed|finalized commitment"
 ```
 
-**895 parameters**, on **4.6% of servers**. That is 0.5% of all string parameters, and it is a floor rather than an estimate: it only catches authors who documented the set. A parameter whose closed set was never written down anywhere is invisible to this test.
+**857 parameters**, on **4.4% of servers**. That is 0.5% of all string parameters, and it is a floor rather than an estimate: it only catches authors who documented the set. A parameter whose closed set was never written down anywhere is invisible to this test.
 
 It is a small number and we are reporting it small. Our first version of this measurement said 108 hits in a 40-server sample, which would have scaled to something far more dramatic — and it was wrong. It was matching text like `Filter by line (e.g. "1", "A", "F")`, which is an illustration, not a closed set. A station name is not an enum. Requiring explicit closed-set language *and* the absence of `e.g.`/`such as` took that sample from 108 to 9, and all nine were real.
 
@@ -172,7 +172,7 @@ Three narrower caveats. We inherit Smithery's coverage and its scan freshness. N
 
 Three things, ordered by how common the problem is in the data. None of them changes your server's behaviour — they are all changes to the text a model reads.
 
-1. **Describe every parameter.** This is the most common gap by a distance: 21.8% of parameters, on a third of servers, and it does not get better at any size. If you do one thing, do this one.
+1. **Describe every parameter.** This is the most common gap by a distance: 21.5% of parameters, on a third of servers, and it does not get better at any size. If you do one thing, do this one.
 
 2. **Make each description say what the others do not.** Not "is it clear" — *is it clear which of my tools this is*. Read your tool list as one block and ask what a reader with only that block would use to choose. If you have a shared preamble on every tool, it is buying you less than it costs; the distinguishing sentence should not be a seventh of the text.
 

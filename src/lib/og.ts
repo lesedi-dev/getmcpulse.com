@@ -144,7 +144,7 @@ function titleSize(length: number) {
  * Trim to fit, preferring a full sentence.
  *
  * These descriptions are two or three sentences, and cutting the second one in
- * half mid-clause — "87,146 tools, 270,487 parameters,…" — reads as a broken
+ * half mid-clause — "82,549 tools, 257,287 parameters,…" — reads as a broken
  * page rather than a summary. Ending on the last full stop that fits says the
  * same thing and finishes a thought. Falling back to a word boundary, and only
  * then to a hard cut, because a description could be one long sentence.
@@ -347,7 +347,7 @@ const STATIC_PAGES: (OgCard & { path: string })[] = [
     path: "/check",
     id: "check",
     eyebrow: "Free tool",
-    title: "Score your tool schemas against 4,951 servers",
+    title: "Score your tool schemas against 4,749 servers",
     blurb:
       "Paste your tools/list JSON. Undescribed parameters, description collisions and schema token cost. Runs in your browser.",
   },

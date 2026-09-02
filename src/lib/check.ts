@@ -2,7 +2,7 @@
  * The schema checker's analysis, as pure functions.
  *
  * This is the study's method, reimplemented to run on one server instead of
- * 4,951 — same definitions, same thresholds, so a score here is comparable to
+ * 4,749 — same definitions, same thresholds, so a score here is comparable to
  * the figures in `study.ts`. Where the study had to make a judgement call, the
  * call is repeated here and the reasoning is in the comment, because a checker
  * that measures something subtly different from its own benchmark is a checker
@@ -212,7 +212,7 @@ export interface Nearest {
  *
  * Worse, it degrades exactly where it is needed. A tool is flagged when it has
  * almost nothing distinctive, so a server full of collisions flags nearly every
- * tool — and servers full of collisions are the big ones, where 31.3% of tools
+ * tool — and servers full of collisions are the big ones, where 32.4% of tools
  * collide against 0.5% on the smallest. The naive version is slowest on the
  * servers whose authors most need the answer.
  *
@@ -384,9 +384,9 @@ export interface DeepParam {
  * ── Why this is separate from the top-level count ──────────────────────────
  * Two different questions are being asked and one number cannot answer both.
  *
- * The **benchmark** question is "how do I compare to 4,951 servers", and that
- * comparison is only valid against the denominator the study used: 270,487
- * parameters over 87,146 tools is 3.1 each, which is a top-level count. Divide
+ * The **benchmark** question is "how do I compare to 4,749 servers", and that
+ * comparison is only valid against the denominator the study used: 257,287
+ * parameters over 82,549 tools is 3.1 each, which is a top-level count. Divide
  * a recursive count by a top-level rate and the percentage means something
  * different from the percentage it is printed next to — it will read as a worse
  * score for having a nested schema, which is not a finding about the schema.

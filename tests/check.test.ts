@@ -260,7 +260,13 @@ eq("7 tools", bucketFor(7).label, "4–7 tools");
 eq("30 tools", bucketFor(30).label, "16–30 tools");
 eq("61 tools", bucketFor(61).label, "61+ tools");
 eq("2,530 tools", bucketFor(2530).label, "61+ tools");
-eq("the 61+ bucket collision rate is the study's", STUDY.buckets[5].zero, 0.313);
+// 0.324, not the 0.313 originally published. The corpus double-counted
+// servers in the popular pool — 5,123 collected rows for 4,894 distinct
+// names — so every bucket was weighted by how often a server happened to be
+// collected. Deduplicating moved this figure and this assertion is what
+// caught it: the value is pinned here precisely so a corpus change cannot
+// pass silently into the checker's benchmarks.
+eq("the 61+ bucket collision rate is the study's", STUDY.buckets[5].zero, 0.324);
 
 /* ── Highlighting ─────────────────────────────────────────────────────────── */
 group("highlight segments");
