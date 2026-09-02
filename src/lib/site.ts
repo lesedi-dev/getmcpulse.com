@@ -21,10 +21,29 @@ export const SITE = {
   url: import.meta.env.SITE,
   app: "https://app.getmcpulse.com",
 
-  /** Creates an account. Every "Sign up — free" button on the site. */
-  signup: "https://app.getmcpulse.com/signup",
+  /**
+   * Creates an account. Every "Sign up — free" button on the site.
+   *
+   * ── Why this is the app root and not `/signup` ────────────────────────────
+   * It was `app.getmcpulse.com/signup`, and that 404s inside the app.
+   *
+   * The reason it survived a check is worth writing down: the dashboard is a
+   * client-rendered SPA, so its server answers **200 with the same 1,613-byte
+   * shell for every path**. `/signup`, `/login` and `/` are byte-identical over
+   * HTTP, and the router decides what exists only after the page has loaded. A
+   * status-code check therefore cannot tell a real route from a missing one —
+   * the only way to know is to open it in a browser.
+   *
+   * `getmcpulse.com/signup` is not the answer either: that one is a genuine
+   * 404, because the marketing site is static and publishes no such page.
+   *
+   * The root cannot 404, so both auth links point at it and the app shows an
+   * unauthenticated visitor whatever it shows. **If the app grows real routes,
+   * put them here** — and verify them in a browser, not with curl.
+   */
+  signup: "https://app.getmcpulse.com",
   /** For somebody who already has one. Every "Sign in" link. */
-  login: "https://app.getmcpulse.com/login",
+  login: "https://app.getmcpulse.com",
   npm: "https://www.npmjs.com/package/@mcpulse/sdk",
 
   /**

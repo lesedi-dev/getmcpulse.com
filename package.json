@@ -10,7 +10,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "test": "esbuild tests/check.test.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/check.test.mjs --log-level=error && node node_modules/.cache/check.test.mjs"
+    "test": "esbuild tests/check.test.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/check.test.mjs --log-level=error && node node_modules/.cache/check.test.mjs && npm run test:frontmatter",
+    "test:frontmatter": "esbuild tests/frontmatter.test.ts --bundle --platform=node --format=esm --outfile=node_modules/.cache/frontmatter.test.mjs --log-level=error && node node_modules/.cache/frontmatter.test.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.19",

@@ -1,6 +1,6 @@
 ---
 title: Telling a crash from an error return is harder than it looks
-description: "The MCP SDK catches whatever your handler throws and turns it into isError: true. From outside the request handler, a bug and a deliberate error are the same object."
+description: The MCP SDK catches whatever your handler throws and turns it into an error result. From outside the handler, a bug and a deliberate error look identical.
 published: 2026-07-07
 topic: Engineering
 minutes: 5
