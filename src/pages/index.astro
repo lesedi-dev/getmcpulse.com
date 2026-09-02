@@ -65,16 +65,10 @@ const schema = [
     >
     </div>
 
-    <div class="mx-auto max-w-7xl px-5 pt-36 pb-20 sm:px-8 sm:pt-44">
-      {/*
-        No `xl:max-w-[34rem]` here and no `xl:min-h-[54rem]` on the container.
-
-        Both existed to hold open a column for a panel floated to the right of
-        this copy. The panel now sits below it at full width, so the copy is
-        free to use the reading measure it wants and the section is free to be
-        as tall as its content.
-      */}
-      <div class="reveal max-w-3xl">
+    <div
+      class="mx-auto max-w-7xl px-5 pt-36 pb-24 sm:px-8 sm:pt-44 sm:pb-32 xl:min-h-[54rem] xl:pb-24"
+    >
+      <div class="reveal max-w-3xl xl:max-w-[34rem]">
         {/*
           What this is, and who it is for, before anything clever.
 
@@ -224,51 +218,22 @@ const schema = [
       </div>
     </div>
 
-    {/*
-      The app, below the copy and fully visible.
+    <!-- The app itself, floated past the container's right edge and allowed to
+         run off the viewport. Sized to the real page rather than to the space
+         left over — cropping it is what makes it read as a window onto
+         something bigger instead of a picture that happens to fit. Absolute,
+         so nothing in the hero's flow has to make room for it.
 
-      ── What this replaces ────────────────────────────────────────────────
-      It was `absolute` at `left-[calc(50%+2.5rem)]` with a fixed `w-[68rem]`,
-      deliberately cropped — the old comment argued that running off the edge
-      "makes it read as a window onto something bigger". Two problems with that
-      in practice.
-
-      It was cut hard enough to lose content: at 1440px the p95 card was sliced
-      mid-label and the tool-health table lost its right half, so the thing
-      being shown off was half unreadable. A 1088px panel cannot fit beside a
-      544px column inside a 1280px container — that arithmetic never worked, and
-      widening the container to `max-w-7xl` did not change it.
-
-      And it was `hidden xl:block`, so below 1280px there was no product on the
-      page at all. Every phone and most laptops got the argument without the
-      thing it was arguing about.
-
-      Full width below the copy fixes both: nothing is cropped, and it appears
-      at every breakpoint. `HeroPanel`'s own root has no fixed width, so it
-      fills whatever it is given. Below `sm` the wrapper scrolls rather than
-      squeezing — a dashboard compressed to 390px is not a picture of anything,
-      and a scroll is honest about that.
-    */}
-    <div class="mx-auto max-w-7xl px-5 pb-24 sm:px-8 sm:pb-32">
-      {/*
-        `overflow-x-auto` with vertical room for the glow.
-
-        `HeroPanel` draws a soft `-inset-10 blur-3xl` wash behind itself, which
-        extends 40px past the panel on every side. Inside a scroll container
-        that counts toward `scrollWidth`, so the first version produced a 40px
-        horizontal scrollbar at 1024, 1440 and 1920 — on a panel that fitted
-        perfectly. The negative margins give the wash somewhere to sit that is
-        not overflow, and the padding puts the panel back where it belongs.
-      */}
-      <div
-        class="reveal -mx-5 overflow-x-auto overflow-y-hidden px-5 py-10 sm:-mx-10 sm:px-10"
-        style="--reveal-delay: 200ms"
-        aria-hidden="true"
-      >
-        <div class="min-w-[52rem]">
-          <HeroPanel />
-        </div>
-      </div>
+         Height is capped and the fade measured against that cap, not against
+         the panel's own length. Masking the full panel put the fade below the
+         section's overflow-hidden, so it was sliced flat before it ever
+         started dissolving. -->
+    <div
+      class="reveal pointer-events-none absolute top-40 left-[calc(50%+2.5rem)] hidden h-[42rem] w-[68rem] overflow-hidden rounded-2xl [mask-image:linear-gradient(to_bottom,black_62%,transparent_97%)] xl:block"
+      style="--reveal-delay: 200ms"
+      aria-hidden="true"
+    >
+      <HeroPanel />
     </div>
   </section>
 
