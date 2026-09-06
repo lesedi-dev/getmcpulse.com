@@ -1,7 +1,7 @@
 ---
 title: How deep do MCP input schemas nest?
 description: 83.1% of tools are one level deep and the deepest is thirteen. Deeply nested schemas are better documented than flat ones, not worse — 18.2% against 21.8%.
-published: 2026-09-19
+published: 2026-08-22
 topic: Tool design
 minutes: 5
 ---

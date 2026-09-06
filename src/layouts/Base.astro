@@ -222,7 +222,17 @@ const structured_data = {
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', '${SITE.ga_id}');
+        gtag('config', '${SITE.ga_id}', {
+          // Cross-domain measurement. Without it the marketing site and the
+          // dashboard are two unrelated sessions and a signup is attributed to
+          // "direct" rather than to whatever brought the visitor here — which
+          // is the difference between knowing a channel works and guessing.
+          // gtag decorates links to these hosts with a _gl parameter so the app
+          // picks the same client id up. GA4 also wants them listed under Admin → Data
+          // streams → Configure tag settings → Configure your domains; the two
+          // together are what make the stitch reliable.
+          linker: { domains: ['getmcpulse.com', 'app.getmcpulse.com'], decorate_forms: false },
+        });
       `}
     />
 
@@ -388,6 +398,122 @@ const structured_data = {
 
         event.preventDefault();
         stripHash();
+      });
+
+      /**
+       * Outbound clicks, which are the only conversions this site has.
+       *
+       * Every action worth measuring here leaves the origin: `signup` and
+       * `login` go to `app.getmcpulse.com`, the demo goes to `/m/demo`, and
+       * docs, npm and GitHub go elsewhere again. GA was configured with
+       * `gtag('config', …)` and nothing else, which records pageviews and
+       * exactly nothing about what anyone did on the page — so "131 visitors
+       * and no signups" was not a measurement, it was the absence of one. A
+       * click on any of the ten app-bound links on the home page left no trace
+       * anywhere.
+       *
+       * Delegated from `document` rather than bound per link, because the CTAs
+       * are rendered from six components across thirty pages and a listener
+       * attached at each call site is a listener somebody forgets on the
+       * seventh. One handler covers every link that already exists and every
+       * one added later, with no markup change.
+       *
+       * `sign_up_click` is deliberately its own event name rather than a
+       * parameter on a generic one: GA4 marks *events* as key events, so an
+       * event you have to filter by parameter cannot be a conversion without a
+       * custom definition first. The generic `cta_click` fires alongside it for
+       * everything else.
+       *
+       * Delivery survives the navigation without `preventDefault`: gtag sends
+       * GA4 hits with `navigator.sendBeacon`, which the browser completes after
+       * the document is gone. Blocking the click to "make sure" the event lands
+       * would trade a real navigation for a measurement, which is the wrong way
+       * round.
+       */
+      type Gtag = (...args: unknown[]) => void;
+      type VercelAnalytics = (event: string, name: string, data?: Record<string, unknown>) => void;
+
+      /**
+       * Where on the page the click happened, without tagging every button.
+       *
+       * The nearest section's `id` is the best answer when there is one —
+       * `pricing`, `metrics`, `how` are already there for the anchor links. A
+       * section without an id falls back to its own heading, which is stable
+       * copy and reads better in a report than a DOM path. The nav and the
+       * footer are named outright because they are on every page and lumping
+       * them into "no section" would hide the two most-clicked regions.
+       */
+      function ctaLocation(link: HTMLAnchorElement): string {
+        if (link.closest("header, nav")) return "nav";
+        if (link.closest("footer")) return "footer";
+
+        const section = link.closest<HTMLElement>("section");
+        if (!section) return "page";
+        if (section.id) return section.id;
+
+        const heading = section.querySelector("h2, h3")?.textContent?.trim();
+        return heading ? heading.slice(0, 60) : "page";
+      }
+
+      /** Which action this is, from the destination rather than the label. */
+      function ctaKind(url: URL): string | null {
+        const host = url.hostname;
+
+        if (host === "app.getmcpulse.com") {
+          if (url.pathname.startsWith("/signup")) return "signup";
+          if (url.pathname.startsWith("/login")) return "login";
+          if (url.pathname.startsWith("/m/demo")) return "demo";
+          return "app";
+        }
+
+        if (host === "docs.getmcpulse.com") return "docs";
+        if (host.endsWith("npmjs.com")) return "npm";
+        if (host === "github.com") return "github";
+        return null;
+      }
+
+      document.addEventListener("click", (event) => {
+        // `auxclick` is not listened for, so this is left button and
+        // middle-click-as-left only. A modifier-click opens a new tab and the
+        // visitor is still here, which is a different thing from a conversion
+        // and should not be recorded as one.
+        if (event.defaultPrevented) return;
+
+        const link = (event.target as HTMLElement | null)?.closest?.("a[href]");
+        if (!(link instanceof HTMLAnchorElement)) return;
+
+        let url: URL;
+        try {
+          url = new URL(link.href, location.href);
+        } catch {
+          return;
+        }
+
+        if (url.origin === location.origin) return;
+
+        const kind = ctaKind(url);
+        if (!kind) return;
+
+        const payload = {
+          cta_kind: kind,
+          cta_location: ctaLocation(link),
+          cta_text: (link.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 80),
+          link_url: url.href,
+        };
+
+        const gtag = (window as unknown as { gtag?: Gtag }).gtag;
+        if (typeof gtag === "function") {
+          // The one that gets marked as a key event in GA4.
+          if (kind === "signup") gtag("event", "sign_up_click", payload);
+          gtag("event", "cta_click", payload);
+        }
+
+        // Vercel Analytics is already on the page for pageviews; custom events
+        // cost nothing extra to send and keep the funnel visible in the same
+        // dashboard the 131 came from. Guarded because the function only
+        // exists once the deferred script has loaded, and on Vercel only.
+        const va = (window as unknown as { va?: VercelAnalytics }).va;
+        if (typeof va === "function") va("event", "cta_click", payload);
       });
     </script>
   </body>

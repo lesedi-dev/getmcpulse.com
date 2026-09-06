@@ -1,7 +1,7 @@
 ---
 title: We read the schemas of 4,749 public MCP servers
 description: Not what models do with your tools — what they are handed first. 82,549 tools, 257,287 parameters, one tool in six with nothing to tell it from its neighbour.
-published: 2026-08-31
+published: 2026-07-29
 topic: Tool design
 minutes: 8
 ---

@@ -1,7 +1,7 @@
 ---
 title: Only 8% of MCP parameters use an enum
 description: 20,263 of 257,287 parameters constrain their values. 12.4% of string parameters do. One enum in the corpus has 3,517 values, and 270 have exactly one.
-published: 2026-09-10
+published: 2026-08-13
 topic: Tool design
 minutes: 6
 ---

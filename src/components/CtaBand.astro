@@ -1,0 +1,120 @@
+---
+/**
+ * The closing offer, on every page.
+ *
+ * ── Why this exists ───────────────────────────────────────────────────────
+ * An audit of the thirty pages on this site found five with no way to create an
+ * account anywhere on them: `/install`, `/how-it-works`, `/metrics`, `/faq` and
+ * the blog index. `/install` is the worst of the five and it is worth saying
+ * plainly — it is a page that walks a reader through adding a package and
+ * pasting `MCPULSE_KEY` into their environment, and there was nowhere on it to
+ * go and get a key. A reader who followed that page to the end had done the
+ * work and had no next step.
+ *
+ * The rest are the same fault in a quieter form. `/how-it-works` answers the
+ * objection that stops people signing up, `/faq` answers the other seven, and
+ * `/metrics` is what somebody reads when they are deciding whether the numbers
+ * are worth having. Those are the three pages a reader lands on *while making
+ * the decision*, and each one ended in white space.
+ *
+ * ── Why a component rather than a block per page ──────────────────────────
+ * Because there are nine pages and there will be more, and the version of this
+ * that lives in nine files is the version where three of them drift, one of
+ * them keeps the label that was changed everywhere else, and the next page
+ * added has none at all — which is exactly the state this component was written
+ * to fix.
+ *
+ * The labels come from `CTA` in `site.ts` for the same reason: one edit moves
+ * every button on the site.
+ */
+import { SITE, CTA } from "../lib/site";
+
+interface Props {
+  /**
+   * The heading. Every page gets its own, because a band that says the same
+   * sentence on nine pages reads as furniture and gets scrolled past — the
+   * reader has already learned there is nothing in it.
+   *
+   * Write it as the next step from *this* page: what the reader has just
+   * finished reading is the setup, and this is the line that follows from it.
+   */
+  heading: string;
+  /** One sentence. What happens if they click, in plain words. */
+  body: string;
+  /**
+   * The second button.
+   *
+   * `check` for a reader who is not ready to install anything — it is the only
+   * thing on this site that gives them a real answer without an account, so it
+   * is the right catch for somebody still deciding.
+   *
+   * `demo` for a reader who has not yet seen the product at all, where showing
+   * it beats scoring their schemas.
+   *
+   * `none` where a second button would compete with the page's own primary
+   * action rather than support it.
+   */
+  secondary?: "check" | "demo" | "none";
+  class?: string;
+}
+
+const { heading, body, secondary = "check", class: klass = "" } = Astro.props;
+
+const SECOND = {
+  check: { href: "/check", label: "Not ready? Score your schemas free" },
+  demo: { href: "/demo", label: "See the live demo first" },
+  none: null,
+} as const;
+
+const second = SECOND[secondary];
+---
+
+<section class:list={["border-t border-line-soft", klass]}>
+  <div class="mx-auto max-w-7xl px-5 py-20 sm:px-8">
+    <div
+      class="reveal relative overflow-hidden rounded-3xl border border-line bg-ink-900/50 px-6 py-14 text-center sm:px-16"
+    >
+      {/* The same wash the home page's closing band uses, so a reader moving
+          between pages meets one recurring shape rather than nine designs. */}
+      <div
+        aria-hidden="true"
+        class="absolute -top-24 left-1/2 -z-10 h-64 w-[40rem] -translate-x-1/2 rounded-full bg-cyan/10 blur-3xl"
+      >
+      </div>
+
+      <h2 class="text-2xl font-semibold tracking-tight text-balance text-ink-100 sm:text-3xl">
+        {heading}
+      </h2>
+      <p class="mx-auto mt-3 max-w-xl text-[15px] leading-7 text-pretty text-ink-500">
+        {body}
+      </p>
+
+      <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+        <a
+          href={SITE.signup}
+          class="inline-flex h-11 items-center justify-center rounded-xl bg-btn px-5 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover"
+        >
+          {CTA.primary}
+        </a>
+        {
+          second && (
+            <a
+              href={second.href}
+              class="inline-flex h-11 items-center justify-center rounded-xl border border-line px-5 text-sm font-medium text-ink-300 transition-colors hover:border-line-strong hover:text-ink-100"
+            >
+              {second.label}
+            </a>
+          )
+        }
+      </div>
+
+      {/* The three things that decide whether the button gets pressed, under
+          the button. Price, commitment, and the language limit — the last one
+          because a Python author finding out here costs a click, and finding
+          out after signing up costs the account. */}
+      <p class="mt-6 text-sm text-ink-300">
+        Free for one server. No card, no trial to expire. TypeScript SDK.
+      </p>
+    </div>
+  </div>
+</section>

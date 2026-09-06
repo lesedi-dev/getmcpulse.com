@@ -8,8 +8,27 @@
 export const SITE = {
   name: "MCPulse",
   tagline: "Analytics for MCP servers",
+  /**
+   * The description a stranger reads before they ever reach the site.
+   *
+   * This is the meta description, the OG card and the JSON-LD, which makes it
+   * the only copy on this site that has to earn the click rather than survive
+   * it. It said "See whether your MCP tools actually work for the models
+   * calling them", which is the same promise every other product in this
+   * category makes — and there are at least four, two of them free and already
+   * in the reader's stack.
+   *
+   * So it now leads on the failure the reader recognises (retried, ignored, got
+   * wrong) and closes on the one claim the alternatives cannot make: the ones
+   * that record a tool call record its arguments and its response, and this one
+   * structurally cannot.
+   *
+   * 157 characters. Google renders about 155–160 of a description and truncates
+   * from the end, so the privacy clause has to be inside the budget rather than
+   * trailing off after it — which is why it is a fragment and not a sentence.
+   */
   description:
-    "See whether your MCP tools actually work for the models calling them — retries, empty answers, schema cost and first-call success. Two lines to install.",
+    "Find which of your MCP tools AI agents retry, ignore or never call — first-call success, empty answers, schema cost. Two lines. Never your arguments or results.",
   /**
    * Read from Astro's own `site` rather than restated here.
    *

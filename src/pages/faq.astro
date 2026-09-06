@@ -4,6 +4,7 @@ import Faq from "../components/Faq.astro";
 import { SITE } from "../lib/site";
 import { FAQS, PRICING_NOTES } from "../lib/content";
 import { webPage } from "../lib/schema";
+import CtaBand from "../components/CtaBand.astro";
 
 /**
  * Every question, in one place.
@@ -119,4 +120,10 @@ const schema = [
       </section>
     </div>
   </div>
+
+  <CtaBand
+    heading="Answered? Then try it on one server"
+    body="Free for one server, with all sixteen metrics and no card. If a question here did not settle it, the how-it-works page has the long version."
+    secondary="check"
+  />
 </Base>

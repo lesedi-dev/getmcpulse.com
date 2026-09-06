@@ -1,7 +1,7 @@
 ---
 title: How MCP authors name tools — get, list, search
 description: Only 33.4% of 82,549 tool names start with a common verb. get alone is 15.6%, and 12,892 tools begin with it — which is where the collisions live.
-published: 2026-09-17
+published: 2026-08-20
 topic: Tool design
 minutes: 5
 ---

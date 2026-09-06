@@ -7,25 +7,285 @@ import ToolTable from "../components/ToolTable.astro";
 import PricingCards from "../components/PricingCards.astro";
 import Proof from "../components/Proof.astro";
 import Faq from "../components/Faq.astro";
+import CtaBand from "../components/CtaBand.astro";
 import { SITE, CTA } from "../lib/site";
-import { OUTCOMES, PILLARS, METRICS, INSIGHTS, FAQS, PLANS } from "../lib/content";
+import { PILLARS, METRICS, FAQS, PLANS } from "../lib/content";
+import { STUDY } from "../lib/study";
 
 /**
- * The FAQ, as structured data as well as as markup.
+ * ── What this page is for ─────────────────────────────────────────────────
+ * One reader, one decision: an MCP server author deciding whether to install
+ * something. Everything here is either a reason to say yes or a reason not to
+ * worry, in the order those questions get asked.
  *
- * `FAQPage` is the one schema type on this site that can change what a result
- * *looks like* rather than only how it is filed — the questions can appear
- * expandable under the link. Google requires the answer in the schema to match
- * the answer on the page, which is why both read from `FAQS` rather than one
- * being a rewrite of the other.
+ * ── The rewrite, and what was wrong ───────────────────────────────────────
+ * The previous version was twelve sections and about 114KB. It was well written
+ * — genuinely, in places beautifully — and it lost on three counts.
  *
- * `Base` would otherwise supply `SoftwareApplication` for this page; passing an
- * array keeps it and adds these two, because the home page is still primarily a
- * page about a piece of software.
+ * 1. It sold the category. "Analytics for MCP servers" is the same phrase
+ *    PostHog, AgentCat, BetterMeter and Sentry use for the same thing. Two of
+ *    those are free and at least one is already installed in the reader's
+ *    stack, and this page never acknowledged that any of them existed.
+ *
+ * 2. It was written to be read, not scanned. Long sentences, aphorisms, a
+ *    catalogue of sixteen metrics enumerated in full. A visitor four seconds
+ *    into a page they did not plan to be on does not read essays.
+ *
+ * 3. It buried both moats. The privacy guarantee — the one thing here no
+ *    competitor can copy, because they all record arguments and responses —
+ *    was FAQ item two, framed as an objection. The 4,749-server corpus was
+ *    section nine.
+ *
+ * ── The rule for editing this file ────────────────────────────────────────
+ * Short sentences. Concrete nouns. A number wherever a number exists. If a line
+ * could appear on any of the four competitors' home pages, it is not earning
+ * its place — cut it or make it specific.
  */
-/** One button style for the four "read the detail page" links below. */
+
+/** One button style for the "read the detail page" links. */
 const BUTTON =
   "inline-flex h-10 items-center rounded-xl border border-line bg-surface px-4 text-sm font-medium text-ink-100 transition-colors hover:border-line-strong hover:bg-surface-2";
+
+/**
+ * The four facts under the fold-line, chosen to answer four different fears.
+ *
+ * Not decoration and not vanity metrics: each one is the short answer to a
+ * question that otherwise stops somebody installing. Is there anything behind
+ * this (the corpus), will it bloat my tree (dependencies), can you see my data
+ * (no), how much of my afternoon is this (two lines).
+ */
+const TRUST = [
+  { figure: STUDY.servers.toLocaleString("en-GB"), label: "public servers analysed" },
+  { figure: "0", label: "runtime dependencies" },
+  // "None / of your arguments or results" was a sentence cut in half across a
+  // figure and its label, and it read as neither. Every other item here is a
+  // count, so the odd one out has to at least be a phrase that stands up on its
+  // own line. "Never" does; "None" needed the label to finish it.
+  { figure: "Never", label: "sees your arguments or results" },
+  { figure: "2", label: "lines to install" },
+];
+
+/**
+ * The problem, as three things a log file cannot show you.
+ *
+ * All three are real failure modes with a number attached, and all three are
+ * invisible to the tooling the reader already has — which is the point. A
+ * retried call is three successful calls in a log. An empty result is a 200. A
+ * dead tool never appears at all, because nothing happened.
+ */
+const BLIND_SPOTS = [
+  {
+    tone: "bad",
+    tool: "search_orders",
+    title: "Agents retry it and you cannot see that",
+    body: "The agent asks, gets something it cannot use, and asks again with different arguments — 2.4 times on average before it gives up. Your logs show three or four successful calls.",
+  },
+  {
+    tone: "warn",
+    tool: "get_invoice",
+    title: "It returns nothing, successfully",
+    body: "An empty list is still a success. No error is raised, nothing is logged as a failure, and the agent got nothing it could use. 12% of this tool's calls end that way.",
+  },
+  {
+    tone: "warn",
+    tool: "export_report",
+    title: "Nobody has ever called it",
+    body: "Registered, described, and dead. It still costs 480 tokens of schema in every single session, crowding the context agents use to pick between the tools that do work.",
+  },
+];
+
+/**
+ * "What to look at" — the dashboard's own insight panel, rebuilt here.
+ *
+ * The three cards above it explain why your existing tooling misses these
+ * failures. This is what the product actually hands you once it has a week of
+ * traffic: a short list, each line naming one tool, one number, and what it is
+ * costing. Argument first, then the deliverable.
+ *
+ * ── Why the numbers are the page's, not the panel's ───────────────────────
+ * The dashboard panel this was taken from runs on a different sample server —
+ * `find_product`, `sync_catalog`, 62% first-call, 3,724 calls. Pasting those in
+ * would put a fourth set of tool names on a page where the hero panel, the tool
+ * table and the cards all already use `search_orders`, `get_invoice`,
+ * `list_customers` and `export_report`. Two demos that disagree read as a
+ * product that cannot count.
+ *
+ * So the shape, the icons and the sentence patterns are the dashboard's. The
+ * tools and figures are the ones already on this page, and the money is derived
+ * from the call counts in `ToolTable` rather than invented — if the table
+ * changes, these change with it.
+ */
+const LOOK_AT = [
+  {
+    tone: "bad",
+    icon: "trending-down",
+    title: "Agents struggle with search_orders",
+    body: "Only 68% of calls to <code>search_orders</code> succeed first time. Agents retried it 2.4 times on average across 4,120 calls.",
+  },
+  {
+    tone: "warn",
+    icon: "info",
+    title: "get_invoice returns empty results",
+    // 306, not 312: the table's row is 12% of 2,551 calls, and 312 was the
+    // server-wide empty count from the hero panel's Outcomes bar — two different
+    // figures that happened to be near enough to look like one.
+    body: "306 calls to <code>get_invoice</code> returned empty with no error — 12% of 2,551 calls. The agent was told these succeeded.",
+  },
+  {
+    tone: "warn",
+    icon: "ghost",
+    title: "export_report has never been called",
+    body: "<code>export_report</code> has never been called but costs 480 tokens of schema every session — $1.73 across 1,200 sessions in this range.",
+  },
+  {
+    tone: "warn",
+    icon: "triangle-alert",
+    // 14 kB of JSON is roughly 3.5k tokens, not 14k. This said "roughly $0.04
+    // of context each time — $120 across 3,008 calls", which prices it as if
+    // the kilobytes were tokens and lands about four times too high. The table
+    // directly below prints "14 kB" in the same row, so the two numbers were
+    // visibly contradicting each other on one screen — and over-stating a cost
+    // is the one direction of error this product cannot afford, given the whole
+    // pitch is that its figures are ones you can recompute.
+    title: "list_customers returns a lot of context",
+    body: "<code>list_customers</code> returns 14 kB per call — about 3.5k tokens, roughly $0.01 of context each time, and $32 across 3,008 calls.",
+  },
+];
+
+/**
+ * Lucide paths, inlined. Four icons is not worth a dependency, and a runtime
+ * icon library would be the only JavaScript on this page drawing something the
+ * markup can draw itself.
+ */
+const ICONS: Record<string, string> = {
+  "trending-down": '<path d="M16 17h6v-6"/><path d="m22 17-8.5-8.5-5 5L2 7"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  ghost:
+    '<path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/>',
+  "triangle-alert":
+    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+};
+
+/**
+ * The three reasons to pick this over the tracing the reader already has.
+ *
+ * These stay as behaviours rather than brand names — they are the argument, and
+ * an argument that depends on who is on the other side of it is a weaker one.
+ * The named comparison below turns each of them into a checkable claim.
+ */
+const DIFFERENCE = [
+  {
+    // "durations, sizes, and twelve hex characters of a hash" is precise and it
+    // is the wrong register for the card that has to land in one read. The
+    // exact hash construction is on /how-it-works, where somebody who wants it
+    // will go looking; here it only has to be obvious that nothing readable
+    // leaves the process.
+    title: "It cannot read your traffic",
+    body: "The usual way to measure a tool call is to record it: the arguments going in, the answer coming back, sometimes the whole session. This records how long the call took, how big the answer was, and a scrambled fingerprint of the arguments. Nothing that could hold a customer record ever leaves your server.",
+  },
+  {
+    title: "It knows what good looks like",
+    body: "Your tool descriptions are scored against the whole ecosystem, not against your own last week. A trace viewer has one server in it: yours. It can never tell you that two of your tools read as the same thing to the agent choosing between them.",
+  },
+  {
+    // "retry this one" read as an instruction to the reader — the one thing the
+    // product never says. It reports that the *model* retried, which is the
+    // opposite direction, and on a card whose whole point is "we tell you what
+    // to do" a misread verb is expensive. Each clause is now an action the
+    // reader takes.
+    title: "It names the tool to fix",
+    body: "A trace is evidence you still have to read. This is a list: reword this one, this one comes back empty, delete this one. The teams that fixed tool selection cut tools rather than added dashboards — and cutting means knowing which.",
+  },
+];
+
+/**
+ * The named comparison.
+ *
+ * ── Why name them ─────────────────────────────────────────────────────────
+ * Because the reader already has. Somebody evaluating this has PostHog or
+ * Sentry open in another tab, and a page that describes "the usual way to
+ * measure a tool call" without saying whose way it is asks them to do the
+ * mapping themselves — which they will do badly, or not at all, and leave.
+ *
+ * ── The rules this table is written under ─────────────────────────────────
+ * Every cell is from the other product's own public documentation, read in
+ * September 2026, and the date is printed under the table so the claim ages
+ * visibly instead of quietly. Where a competitor does something well it says so
+ * — PostHog captures the advertised tool list, which is genuine dead-tool
+ * detection, and the row credits it. A comparison that loses every row is not
+ * read as a comparison, it is read as marketing, and it takes the credibility
+ * of the schema survey down with it.
+ *
+ * If any of this stops being true, fix the row. An out-of-date comparison table
+ * naming real companies is worse than having none.
+ *
+ * BetterMeter is deliberately not a column. Its documentation is thin enough
+ * that every cell would be a guess, and a guess about a named competitor is the
+ * one thing this table cannot contain. It is named in the footnote instead.
+ */
+const COMPARISON = {
+  columns: ["MCPulse", "PostHog", "AgentCat", "Sentry"],
+  rows: [
+    {
+      label: "Sees your arguments and results",
+      values: [
+        { text: "Never — sizes and a hash", tone: "good" },
+        { text: "Yes", tone: "plain" },
+        { text: "Yes, plus session replay", tone: "plain" },
+        { text: "Yes", tone: "plain" },
+      ],
+    },
+    {
+      label: "First-call success and retry rate",
+      values: [
+        { text: "Yes", tone: "good" },
+        { text: "No", tone: "plain" },
+        { text: "No", tone: "plain" },
+        { text: "No", tone: "plain" },
+      ],
+    },
+    {
+      label: "Scored against public servers",
+      values: [
+        { text: `${STUDY.servers.toLocaleString("en-GB")} servers`, tone: "good" },
+        { text: "No", tone: "plain" },
+        { text: "No", tone: "plain" },
+        { text: "No", tone: "plain" },
+      ],
+    },
+    {
+      label: "Dead tools and schema cost",
+      values: [
+        { text: "Yes", tone: "good" },
+        // "Tool list captured" was accurate and meant nothing to a reader who
+        // has not read PostHog's event reference. PostHog records the advertised
+        // tool list, which gets you dead tools; it does not size the schemas, so
+        // it cannot tell you what they cost.
+        { text: "Dead tools only", tone: "plain" },
+        { text: "No", tone: "plain" },
+        { text: "No", tone: "plain" },
+      ],
+    },
+    {
+      label: "Languages",
+      values: [
+        { text: "TypeScript", tone: "plain" },
+        { text: "TypeScript", tone: "plain" },
+        { text: "TypeScript", tone: "plain" },
+        { text: "Several", tone: "plain" },
+      ],
+    },
+    {
+      label: "Free tier",
+      values: [
+        { text: "1 server, 10k calls", tone: "plain" },
+        { text: "Yes", tone: "plain" },
+        { text: "500 sessions a month", tone: "plain" },
+        { text: "On every plan", tone: "plain" },
+      ],
+    },
+  ],
+} as const;
 
 const schema = [
   {
@@ -57,6 +317,22 @@ const schema = [
 
 <Base schema={schema}>
   <!-- ── Hero ──────────────────────────────────────────────────────────── -->
+  {/*
+    Two columns that both end, rather than one column and a screenshot running
+    off the edge.
+
+    The old hero floated a 68rem dashboard mock out past the container and let
+    it bleed off the viewport, cropped and unreadable, with the left column
+    ending 200px above the section's floor — so the first screen of the site was
+    a headline, a paragraph, and a large area of nothing next to a picture you
+    could not read. It was doing the job of texture and none of the job of
+    proof.
+
+    What replaced it is small enough to read. Four rows of a tool table, two of
+    them flagged, is this entire product in one glance: these are your tools,
+    this is which ones the model is failing on. A reader who understands the
+    picture has understood the offer before reaching the second section.
+  */}
   <section class="relative overflow-hidden">
     <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>
     <div
@@ -65,176 +341,212 @@ const schema = [
     >
     </div>
 
-    <div
-      class="mx-auto max-w-7xl px-5 pt-36 pb-24 sm:px-8 sm:pt-44 sm:pb-32 xl:min-h-[54rem] xl:pb-24"
-    >
-      <div class="reveal max-w-3xl xl:max-w-[34rem]">
-        {/*
-          What this is, and who it is for, before anything clever.
+    <div class="mx-auto max-w-7xl px-5 pt-24 pb-16 sm:px-8 sm:pt-28 sm:pb-20 xl:min-h-[48rem] xl:pb-24">
+      <div class="grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:gap-16 xl:block">
+        <div class="reveal xl:max-w-[34rem]">
+          <p class="text-sm font-medium tracking-wide text-cyan">Analytics for MCP servers</p>
 
-          This slot used to hold the blog promo, which meant the first words a
-          cold visitor read were "We read the schemas of 4,749 MCP servers".
-          That is a good hook and it is not an introduction: it never says what
-          is being sold, and the headline underneath it is a question rather than
-          a category. Somebody arriving from a search or a link could read the
-          whole hero and still not know this is an analytics product.
+          {/*
+            The headline names the reader's problem in their own words.
 
-          One line fixes it. It is the same sentence `site.ts` has always used to
-          describe the product to search engines and to the OG card — the site
-          just never said it to a human. The headline keeps doing its job, which
-          is to make the category matter.
+            "Make models pick the right tool, first time" was the promise, and a
+            promise is one step further from the reader than their symptom. What
+            somebody actually arrives thinking is "my server works and the agent
+            still fumbles it" — so the headline is that thought, finished.
 
-          "for the people who build them" is the audience half, and it is here
-          because "MCP servers" alone does not distinguish an author from someone
-          installing one. The product is for authors; the page should say so in
-          the first line rather than let a reader work it out from the pricing.
-        */}
-        <p class="text-sm font-medium tracking-wide text-cyan">
-          Analytics for MCP servers — for the people who build them
-        </p>
+            "Gets wrong" rather than anything more precise, because precision
+            here costs comprehension: retries, empty results, bad arguments and
+            dead tools are four different failures and the reader does not yet
+            have names for them. They all feel like the tool being wrong.
+          */}
+          {/*
+            "Agents", not "models" — and it is a consistency fix as much as a
+            word choice.
 
-        {/*
-          A statement, not a question.
+            This page used both for the same actor: fifteen "model" and nine
+            "agent", sometimes in adjacent blocks. Worse, the dashboard itself
+            says "Agents struggle with search_orders" and "Agents retried it",
+            so a visitor learned one vocabulary here and a second one the moment
+            they signed up.
 
-          This was "Your MCP server works. Does it work for the model?" — good
-          writing and the wrong job. Three faults, in order of how much they cost:
-          it asserts nothing, so the reader does the work; "work for the model"
-          never says *how*, so the tension it builds has nothing behind it; and it
-          takes two sentences to arrive at a setup rather than a promise.
+            "Agents" wins on all three counts. It is what the ecosystem writes —
+            Sentry describes "the agents and LLMs that invoke them", PostHog
+            "how AI agents use your MCP tools", AgentCat "how agents experience
+            your product". It is what this product's own UI already says. And it
+            is the more concrete of the two: an agent *does* things — calls,
+            retries, gives up, never calls at all — where a model predicts. Every
+            verb on this page is a behaviour, so the noun in front of them should
+            be the one that behaves.
 
-          It is also the same fault every `h2` on this site was just rewritten to
-          remove. Clever-over-clear was a tic, and the headline was not exempt
-          from the fix for being the headline.
-
-          What replaced it opens on the verb, names what you get, and lets
-          "actually" carry the whole tension the old pair spent two sentences
-          building — the gap between a server that runs and a server a model can
-          use. The muted second half keeps the two-tone shape the layout was built
-          around, so nothing below it had to move.
-        */}
-        <h1
-          class="mt-4 text-4xl font-semibold tracking-tight text-balance text-ink-100 sm:text-6xl sm:leading-[1.05] xl:text-5xl xl:leading-[1.08]"
-        >
-          See what models
-          <span class="text-ink-700">actually</span> do with your MCP server
-        </h1>
-
-        {/*
-          What you get, in the first clause.
-
-          This was forty-three words that opened on the problem — "you publish a
-          server and see nothing" — followed by three more things you cannot see,
-          and only reached the product in the last nine words. Every sentence in
-          it was true and it was the wrong shape for the position: a reader four
-          seconds into a page they did not plan to be on will not spend three
-          clauses on a problem before finding out what is being sold.
-
-          So the four things you get lead, and the problem statement moves into
-          the sections below, which is where a reader who is still here has the
-          patience for it. Same claims, twenty-eight words, and the first six say
-          what the product does.
-        */}
-        <p class="mt-6 max-w-2xl text-lg leading-8 text-pretty text-ink-500 sm:text-xl">
-          Which tools they call, which they retry, which come back empty, and what your schemas cost
-          every session — from two lines inside your own server.
-        </p>
-
-        {/*
-          Two actions, and the second one asks for nothing.
-
-          This slot has now held three things, and the reasoning is worth keeping
-          because each version was better than the last for the same reason.
-
-          It began as `npm install @mcpulse/sdk`, which assumes the reader has
-          already decided to install — so a visitor who had not decided had
-          exactly one thing to click and it was the sign-up.
-
-          Then it was "See pricing", which is at least a way to keep reading. But
-          pricing answers "what will this cost me", and a reader four seconds in
-          has an earlier question: is this thing any good, and does it apply to
-          me. Sending them to a price list to find out is asking them to evaluate
-          an offer before they have evaluated the product.
-
-          The checker answers that question instead, and it is the only thing on
-          this site that gives somebody something before they give us anything:
-          paste a schema, get scored against 4,749 servers, in their own browser,
-          no account. For a visitor who is not ready to sign up that is a better
-          offer than a number — and the ones it sends away leave having seen the
-          product's argument demonstrated on their own server.
-
-          Pricing loses nothing by moving: it is in the header, and the block
-          further down this page.
-        */}
-        <div class="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <a
-            href={SITE.signup}
-            class="inline-flex h-11 items-center justify-center rounded-xl bg-btn px-5 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover"
+            "The model" survives only where the claim is literally about reading
+            a description and choosing between tools, which is the model's job
+            inside the agent rather than the agent's.
+          */}
+          <h1
+            class="mt-4 text-4xl font-semibold tracking-tight text-balance text-ink-100 sm:text-5xl sm:leading-[1.08]"
           >
-            {CTA.primary}
-          </a>
+            Find out which of your tools
+            <span class="text-ink-700">agents get wrong</span>
+          </h1>
 
-          {/* The demo rather than the checker, which used to sit here.
-              Both are free and neither needs an account, but the checker asks
-              the reader to go and find their own `tools/list` first. The demo
-              asks for nothing — it is the only thing on the site that shows
-              the product working before anybody has done anything. */}
-          <a
-            href="/demo"
-            class="inline-flex h-11 items-center justify-center rounded-xl border border-line px-5 text-sm font-medium text-ink-300 transition-colors hover:border-line-strong hover:text-ink-100"
-          >
-            Try live demo
-          </a>
+          <p class="mt-6 max-w-xl text-lg leading-8 text-pretty text-ink-500">
+            MCPulse shows you which tools AI agents retry, which come back empty, and which they
+            never call at all. Two lines inside your own server. It never sees your arguments or
+            your results.
+          </p>
+
+          {/*
+            Two buttons. The second one is the only free thing in this market
+            that asks for nothing at all.
+
+            Every route to value here except the checker needs an account, an
+            install, a redeploy and a night of traffic before three of the
+            headline metrics populate. Against competitors who are free or
+            already installed, that is a hard first visit to win. The checker
+            ends in a real answer about the reader's own server, in their own
+            browser, in about fifteen seconds.
+          */}
+          <div class="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <a
+              href={SITE.signup}
+              class="inline-flex h-12 items-center justify-center rounded-xl bg-btn px-6 text-[15px] font-medium text-btn-fg transition-colors hover:bg-btn-hover"
+            >
+              {CTA.primary}
+            </a>
+            <a
+              href="/check"
+              class="inline-flex h-12 items-center justify-center rounded-xl border border-line px-6 text-[15px] font-medium text-ink-300 transition-colors hover:border-line-strong hover:text-ink-100"
+            >
+              Score my schemas free
+            </a>
+          </div>
+
+          {/*
+            Price, commitment and the language limit, on one line.
+
+            TypeScript is here rather than in the FAQ because the install page
+            opens on ten SDKs with nine marked coming soon, and a Python author
+            who finds that out two clicks in has caught the site overstating —
+            which then costs the schema survey its credibility too. Losing that
+            reader in four seconds is cheaper than losing the ones who stay.
+          */}
+          <p class="mt-5 text-sm text-ink-300">
+            Free for one server. No card, no trial to expire. TypeScript SDK today —
+            <a
+              href="/install"
+              class="text-ink-500 underline-offset-2 hover:text-ink-100 hover:underline"
+              >other languages</a
+            > are not ready yet.
+          </p>
         </div>
 
         {/*
-          The reassurance, and then the requirements — in that order.
+          The product, small enough to read.
 
-          This line was "Node 20.12+ · zero runtime dependencies · works with any
-          MCP transport", which is a specification. A specification answers a
-          question the reader has not asked yet; what they are weighing at this
-          point is what saying yes costs them. Free for one server, no card and
-          no trial is the answer, and unlike most versions of that sentence it is
-          literally true — there is no trial to expire because the free tier is
-          not one.
-
-          The requirements keep their line underneath, because for this audience
-          "zero runtime dependencies" is genuinely persuasive — just not before
-          the price.
+          Hand-built rather than the full dashboard mock because it has one job:
+          show that the output is a list of tools with named problems. The
+          numbers match the ones the sections below use, so the page tells one
+          story with one set of figures rather than three demos that disagree.
         */}
-        <p class="mt-5 text-sm text-ink-300">
-          Free forever. No card, and no trial to expire.
-        </p>
-
         {/*
-          The blog promo, demoted from above the headline to below the fold-line.
+          The small-screen visual, and only that.
 
-          It was the first thing on the page. It is still the strongest thing we
-          have to offer somebody who is not ready to sign up — but "here is our
-          research" is a second-paragraph move, not an opening line, and it was
-          standing where the category belonged.
+          Below `xl` there is no room for a dashboard to run off the edge — a
+          cropped panel on a laptop is just a picture with its right-hand third
+          missing. So this compact card carries the same argument in the space
+          that exists: four tools, two of them flagged. Above `xl` it gives way
+          to the real panel below, which has the room to show the clients row and
+          the outcomes beside the tools.
         */}
-        <a
-          href="/blog/reading-5000-mcp-schemas"
-          class="mt-8 inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 py-1 pr-3 pl-1 text-xs text-ink-300 transition-colors hover:border-cyan/30 hover:text-ink-100"
-        >
-          <span class="rounded-full bg-cyan-wash px-2 py-0.5 font-medium text-cyan">New</span>
-          We read the schemas of 4,749 MCP servers →
-        </a>
+        <div class="reveal min-w-0 xl:hidden" style="--reveal-delay: 150ms">
+          <div class="overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl shadow-black/20">
+            <div class="flex items-center justify-between border-b border-line px-5 py-3.5">
+              <p class="text-sm font-medium text-ink-100">Tool health</p>
+              <p class="font-mono text-xs text-ink-700">last 7 days</p>
+            </div>
+
+            <table class="w-full text-left">
+              <thead>
+                <tr class="border-b border-line-soft text-[11px] tracking-wide text-ink-700 uppercase">
+                  <th scope="col" class="px-5 py-2.5 font-medium">Tool</th>
+                  <th scope="col" class="px-3 py-2.5 text-right font-medium">Calls</th>
+                  <th scope="col" class="px-3 py-2.5 text-right font-medium">First-call</th>
+                  <th scope="col" class="px-5 py-2.5 text-right font-medium">Verdict</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-line-soft">
+                <tr class="bg-bad/[0.05]">
+                  <td class="px-5 py-3 font-mono text-[13px] text-ink-100">search_orders</td>
+                  <td class="px-3 py-3 text-right font-mono text-[13px] text-ink-500">4,120</td>
+                  <td class="px-3 py-3 text-right font-mono text-[13px] text-bad">68%</td>
+                  <td class="px-5 py-3 text-right text-[13px] text-bad">Retried 2.4×</td>
+                </tr>
+                {/* `create_order` rather than `list_customers`, which sat here
+                    marked "Healthy" while the desktop panel and the full table
+                    both flag it for a 14 kB response. Rather than colour a
+                    fourth row and leave this card with nothing healthy on it,
+                    it shows one of the two tools that genuinely are fine — so
+                    the card stays a true subset of the table instead of
+                    contradicting it. */}
+                <tr>
+                  <td class="px-5 py-3 font-mono text-[13px] text-ink-100">create_order</td>
+                  <td class="px-3 py-3 text-right font-mono text-[13px] text-ink-500">1,904</td>
+                  <td class="px-3 py-3 text-right font-mono text-[13px] text-ok">97%</td>
+                  <td class="px-5 py-3 text-right text-[13px] text-ink-700">Healthy</td>
+                </tr>
+                <tr class="bg-warn/[0.05]">
+                  <td class="px-5 py-3 font-mono text-[13px] text-ink-100">get_invoice</td>
+                  <td class="px-3 py-3 text-right font-mono text-[13px] text-ink-500">2,551</td>
+                  <td class="px-3 py-3 text-right font-mono text-[13px] text-warn">88%</td>
+                  <td class="px-5 py-3 text-right text-[13px] text-warn">12% empty</td>
+                </tr>
+                <tr class="bg-warn/[0.05]">
+                  <td class="px-5 py-3 font-mono text-[13px] text-ink-100">export_report</td>
+                  <td class="px-3 py-3 text-right font-mono text-[13px] text-ink-700">0</td>
+                  <td class="px-3 py-3 text-right font-mono text-[13px] text-ink-700">—</td>
+                  <td class="px-5 py-3 text-right text-[13px] text-warn">Never called</td>
+                </tr>
+              </tbody>
+            </table>
+
+            {/* No count here on purpose. This card shows four of the server's
+                six tools, so any number it printed would disagree with the full
+                table further down — which is exactly what happened: this said
+                "3 tools need attention" while the table said 2 and the insight
+                panel said 4. The table is the place that can count, because it
+                is the only one showing every row. */}
+            <div class="border-t border-line bg-surface-2 px-5 py-3.5">
+              <p class="text-[13px] leading-6 text-ink-500">
+                <span class="font-medium text-ink-100">Needs attention.</span> export_report costs 480
+                tokens of schema every session and has never been called.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- The app itself, floated past the container's right edge and allowed to
-         run off the viewport. Sized to the real page rather than to the space
-         left over — cropping it is what makes it read as a window onto
-         something bigger instead of a picture that happens to fit. Absolute,
-         so nothing in the hero's flow has to make room for it.
+    {/*
+      The dashboard, floated past the container's right edge and allowed to run
+      off the viewport.
 
-         Height is capped and the fade measured against that cap, not against
-         the panel's own length. Masking the full panel put the fade below the
-         section's overflow-hidden, so it was sliced flat before it ever
-         started dissolving. -->
+      Sized to the real page rather than to the space left over, because
+      cropping it is what makes it read as a window onto something bigger rather
+      than a picture that happens to fit. Absolute, so nothing in the hero's flow
+      has to make room for it.
+
+      What it shows was reordered for this position: clients first, then tool
+      health, then outcomes — see the note in `HeroPanel.astro`. Everything right
+      of about 60% is decoration, so the two rows that carry the argument are the
+      two on the left.
+
+      The height cap and the mask go together. Masking the full panel put the
+      fade below the section's `overflow-hidden`, so it was sliced flat before it
+      ever started dissolving; measuring the fade against the cap is what makes
+      it end in a gradient instead of an edge.
+    */}
     <div
-      class="reveal pointer-events-none absolute top-40 left-[calc(50%+2.5rem)] hidden h-[42rem] w-[68rem] overflow-hidden rounded-2xl [mask-image:linear-gradient(to_bottom,black_62%,transparent_97%)] xl:block"
+      class="reveal pointer-events-none absolute top-36 left-[calc(50%+2.5rem)] hidden h-[40rem] w-[68rem] overflow-hidden rounded-2xl [mask-image:linear-gradient(to_bottom,black_74%,transparent_99%)] xl:block"
       style="--reveal-delay: 200ms"
       aria-hidden="true"
     >
@@ -242,399 +554,311 @@ const schema = [
     </div>
   </section>
 
-  <!-- ── The four outcomes ─────────────────────────────────────────────── -->
-  <!-- Its own band rather than part of the hero: every number further down the
-       page is one of these four counted a different way. -->
-  <section class="border-t border-line-soft">
-    <div class="mx-auto max-w-7xl px-5 py-12 sm:px-8">
-      <ul
-        class="reveal grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4"
-      >
+  <!-- ── Trust strip ───────────────────────────────────────────────────── -->
+  {/*
+    Four facts, immediately under the first ask.
+
+    The site has no logos and no testimonials, which for this audience is the
+    right call — but it left nothing at all between the headline and three
+    sections of argument. These are the four numbers that answer the four
+    reasons somebody closes the tab, and they are all verifiable elsewhere on
+    the site rather than claims about popularity.
+  */}
+  <section class="border-y border-line-soft bg-ink-900/30">
+    <div class="mx-auto max-w-7xl px-5 py-8 sm:px-8">
+      <dl class="reveal grid grid-cols-2 gap-y-7 sm:gap-x-8 lg:grid-cols-4">
         {
-          OUTCOMES.map((outcome) => (
-            <li class="bg-ink-950 p-5">
-              <p class={`font-mono text-sm ${outcome.tone}`}>{outcome.name}</p>
-              <p class="mt-2 text-sm leading-6 text-ink-500">{outcome.detail}</p>
-            </li>
+          TRUST.map((item) => (
+            <div class="min-w-0">
+              <dt class="text-2xl font-semibold tracking-tight text-ink-100">{item.figure}</dt>
+              <dd class="mt-1 text-sm leading-6 text-ink-500">{item.label}</dd>
+            </div>
           ))
         }
-      </ul>
-
-      {/* Telling `crashed` from `tool_error` is the hardest thing the SDK does
-          and this strip only names the result. The section that explains it is
-          two clicks away otherwise. */}
-      <p class="reveal mt-5 text-sm text-ink-700">
-        <a href="/how-it-works#outcomes" class="font-medium text-cyan hover:underline">
-          How a crash is told from an error return
-        </a>
-         — and the fifth state that rides alongside these four.
-      </p>
+      </dl>
     </div>
   </section>
 
-  <!-- ── What you actually get ─────────────────────────────────────────── -->
+  <!-- ── The problem ───────────────────────────────────────────────────── -->
   {/*
-    The screen you live in, before the page explains anything.
+    The argument, before any of the product.
 
-    The hero draws the overview — four totals and a chart, which answers "is
-    anything wrong". This answers the next question, "wrong where", and it is
-    the one a reader is really asking: what do I look at after I install this.
-
-    It sits this early because everything below is an argument, and an argument
-    lands better once the reader can picture the thing being argued about. It
-    also carries the four cases the Insights section names further down in
-    prose, so the two read as one product seen twice rather than two demos.
+    The reader has to believe they have a problem before they will care what the
+    product shows. The persuasive thing about this particular problem is that
+    their existing tooling reports every one of these as fine — which is what
+    the three cards are each an example of, and what the panel underneath them
+    then puts a number and a cost against.
   */}
-  <section class="border-t border-line-soft">
+  <section class="border-b border-line-soft">
+    <div class="mx-auto max-w-7xl px-5 py-24 sm:px-8">
+      <div class="reveal max-w-2xl">
+        <p class="text-sm font-medium text-cyan">The problem</p>
+        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-4xl">
+          Your logs say the server is fine. The agents disagree.
+        </h2>
+        <p class="mt-4 text-lg leading-7 text-pretty text-ink-500">
+          Every failure below is recorded as a success by everything you already have. That is why
+          they go on happening.
+        </p>
+      </div>
+
+      <div class="mt-12 grid gap-4 lg:grid-cols-3">
+        {
+          BLIND_SPOTS.map((item, i) => (
+            <article
+              class:list={[
+                "reveal min-w-0 rounded-2xl border p-6",
+                item.tone === "bad"
+                  ? "border-bad/20 bg-bad/[0.04]"
+                  : "border-warn/20 bg-warn/[0.04]",
+              ]}
+              style={`--reveal-delay: ${i * 90}ms`}
+            >
+              <p class="font-mono text-sm text-ink-100">{item.tool}</p>
+              <h3 class="mt-3 text-lg font-semibold text-balance text-ink-100">{item.title}</h3>
+              <p class="mt-2.5 text-[15px] leading-7 text-ink-500">{item.body}</p>
+            </article>
+          ))
+        }
+      </div>
+
+      {/*
+        The panel itself, straight out of the dashboard, at the section's full
+        width so it sits square with the three cards above it.
+      */}
+      <div class="look-at reveal mt-4 rounded-2xl border border-line bg-surface p-6">
+        <div class="mb-4 flex items-baseline justify-between gap-3">
+          <h3 class="font-semibold tracking-tight text-ink-100">What to look at</h3>
+          <span class="shrink-0 text-xs text-ink-700">{LOOK_AT.length} found</span>
+        </div>
+
+        <ul class="flex flex-col gap-2.5">
+          {
+            LOOK_AT.map((item) => (
+              <li
+                class:list={[
+                  "flex gap-3 rounded-lg border p-3",
+                  item.tone === "bad"
+                    ? "border-bad/20 bg-bad/[0.04]"
+                    : "border-warn/20 bg-warn/[0.04]",
+                ]}
+              >
+                <svg
+                  class:list={[
+                    "mt-0.5 h-4 w-4 shrink-0",
+                    item.tone === "bad" ? "text-bad" : "text-warn",
+                  ]}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                  set:html={ICONS[item.icon]}
+                />
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-ink-100">{item.title}</p>
+                  {/* `set:html` because each body carries one <code> naming the
+                      tool. The strings are ours, written in this file. */}
+                  <p class="mt-0.5 text-sm leading-relaxed text-ink-500" set:html={item.body} />
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── What you get ──────────────────────────────────────────────────── -->
+  <section class="border-b border-line-soft">
     <div class="mx-auto max-w-7xl px-5 py-24 sm:px-8">
       <div class="reveal max-w-2xl">
         <p class="text-sm font-medium text-cyan">What you get</p>
         <h2 class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-4xl">
-          See every tool, and where models get stuck
+          One row per tool, and the bad ones marked
         </h2>
         <p class="mt-4 text-lg leading-7 text-pretty text-ink-500">
-          One row per tool. How often it is reached, how often the model got what it needed on the
-          first try, how often it came back empty, and what it costs to answer. The two rows worth
-          opening are coloured; the rest are left alone.
+          How often each tool is reached, how often the agent got what it needed first time, how
+          often it came back empty, and what it costs to answer. The rows worth opening are
+          coloured. The rest are left alone.
         </p>
       </div>
 
-      <ToolTable class="reveal mt-12 hidden lg:block" />
-      <ToolTable class="reveal mt-12 lg:hidden" density="compact" />
-
-      {/*
-        Three red cells, each linked to the post that explains it.
-
-        This section had no way out of it, and a generic "read more" button would
-        have been the wrong fix: the reader's question here is not "tell me more
-        about the product", it is "why does a tool return empty and why is that
-        my problem". There is an essay answering each of those exactly, and the
-        cards are already named after them.
-
-        So each card becomes the link. It also earns its keep for search: these
-        three posts previously had no route in except the blog index and the
-        related-post row at the foot of another post.
-      */}
-      <div class="reveal mt-8 grid gap-4 sm:grid-cols-3">
-        {
-          [
-            {
-              t: "search_orders retries 2.4×",
-              d: "The model asked, got something it could not use, and asked again with different arguments. Twice, on average, before moving on.",
-              href: "/blog/first-call-success",
-            },
-            {
-              t: "get_invoice returns empty 12% of the time",
-              d: "An empty array is a 200. No error was recorded anywhere, and the model got nothing it could use.",
-              href: "/blog/empty-results-are-failures",
-            },
-            {
-              t: "export_report has never been called",
-              d: "Registered, described, and dead — while costing 480 tokens of schema on every single session.",
-              href: "/blog/dead-tools",
-            },
-          ].map((item, i) => (
-            <a
-              href={item.href}
-              class="group flex flex-col rounded-xl border border-line bg-surface p-5 transition-colors hover:border-line-strong hover:bg-surface-2"
-              style={`--reveal-delay: ${i * 80}ms`}
-            >
-              <p class="text-sm font-medium text-ink-100">{item.t}</p>
-              <p class="mt-2 flex-1 text-sm leading-6.5 text-ink-500">{item.d}</p>
-              {/* Always visible, not revealed on hover.
-
-                  `opacity-0 group-hover:opacity-100` was the first version, and
-                  it hides the only thing marking these cards as links from every
-                  reader on a touchscreen — where there is no hover state and the
-                  label simply never appears. Muted and always present does the
-                  same job for a mouse and does not fail for a thumb. */}
-              <p class="mt-4 text-sm font-medium text-ink-500 transition-colors group-hover:text-cyan">
-                Why this happens →
-              </p>
-            </a>
-          ))
-        }
-      </div>
+      <ToolTable class="reveal mt-12" />
     </div>
   </section>
 
-  <!-- ── How it works ──────────────────────────────────────────────────── -->
-  <section id="how" class="scroll-mt-24 border-t border-line-soft">
+  <!-- ── Why this and not tracing ──────────────────────────────────────── -->
+  {/*
+    The section the old page did not have, and the likeliest reason a visitor
+    left without clicking anything.
+
+    There are at least four other ways to get analytics out of an MCP server,
+    two of them free, at least one of them already in the reader's stack. This
+    page not mentioning that did not read as confidence — it read as not knowing
+    what else was out there.
+  */}
+  <section class="border-b border-line-soft">
     <div class="mx-auto max-w-7xl px-5 py-24 sm:px-8">
       <div class="reveal max-w-2xl">
-        <p class="text-sm font-medium text-cyan">How it works</p>
-        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-ink-100 sm:text-4xl">
-          It runs inside your server, not in front of it
+        <p class="text-sm font-medium text-cyan">Why this one</p>
+        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-4xl">
+          You probably already have tracing. This answers a different question.
         </h2>
-        <p class="mt-4 text-lg leading-7 text-ink-500">
-          Nothing about your server should have to change so that you can see it.
+        <p class="mt-4 text-lg leading-7 text-pretty text-ink-500">
+          Tracing shows you one call that happened. This shows you whether agents can use your
+          server at all — and hands the answer back as a list of tools to change.
         </p>
       </div>
 
-      <!-- `min-w-0` on each card because a grid item's default
-           `min-width: auto` will not shrink below its content's min-content
-           width — and an SVG with no width/height has an intrinsic 300px. That
-           floor made every card 363px wide inside a 280px column at 320px,
-           where the grid's own overflow-hidden quietly cropped the right edge.
-           Padding eases off on small screens for the same reason. -->
-      <div class="mt-14 grid gap-px overflow-hidden rounded-2xl border border-line bg-line lg:grid-cols-3">
+      <div class="mt-12 grid gap-4 lg:grid-cols-3">
         {
-          PILLARS.map((pillar, i) => (
+          DIFFERENCE.map((item, i) => (
             <article
-              class="reveal min-w-0 bg-ink-950 p-5 sm:p-7"
+              class="reveal min-w-0 rounded-2xl border border-line bg-surface p-6"
               style={`--reveal-delay: ${i * 90}ms`}
             >
-              <PillarVisual kind={pillar.kind} />
-              <span class="mt-6 block font-mono text-xs text-ink-700">0{i + 1}</span>
-              <h3 class="mt-3 text-lg font-semibold tracking-tight text-ink-100">{pillar.title}</h3>
-              <p class="mt-3 text-sm leading-6.5 text-ink-500">{pillar.body}</p>
+              <p class="font-mono text-sm text-cyan">{String(i + 1).padStart(2, "0")}</p>
+              <h3 class="mt-3 text-lg font-semibold text-balance text-ink-100">{item.title}</h3>
+              <p class="mt-2.5 text-[15px] leading-7 text-ink-500">{item.body}</p>
             </article>
           ))
         }
       </div>
 
       {/*
-        The way through to the page that argues this properly.
+        The same three claims, with the names filled in.
 
-        Each of these three cards is a claim compressed into forty words. The
-        reader who does not believe one of them — and "we cannot see your
-        arguments" is the one they should not simply believe — needs somewhere to
-        go, and until now the only route was the header.
+        The cards above make the argument and this makes it checkable. It is one
+        table rather than three because the reader's real question is not "is
+        MCPulse private" — it is "which of these five should I install", and that
+        is a question you answer by putting them next to each other.
+
+        `overflow-x-auto` on the wrapper, not the page: six columns do not fit a
+        phone and the fix is a table that scrolls inside its own box, never a
+        document that scrolls sideways.
       */}
-      <a href="/how-it-works" class:list={["reveal mt-8", BUTTON]}>
-        Where your traffic goes, and what leaves your process →
-      </a>
-    </div>
-  </section>
-
-  <!-- ── Install ───────────────────────────────────────────────────────── -->
-  <div class="border-t border-line-soft">
-    <InstallSequence />
-
-    {/* The language question, answered where it is asked. The sequence above is
-        TypeScript, and a reader who writes something else needs the page that
-        lists all ten rather than a header link they have already scrolled past. */}
-    <div class="mx-auto -mt-10 max-w-7xl px-5 pb-24 sm:px-8">
-      <a href="/install" class:list={["reveal", BUTTON]}>
-        All ten SDKs, and every option →
-      </a>
-    </div>
-  </div>
-
-  <!-- ── Insights ──────────────────────────────────────────────────────── -->
-  <section class="border-t border-line-soft">
-    <div class="mx-auto max-w-7xl px-5 py-24 sm:px-8">
-      <div class="reveal max-w-2xl">
-        <p class="text-sm font-medium text-cyan">Insights</p>
-        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-ink-100 sm:text-4xl">
-          It tells you what to fix, not just what happened
-        </h2>
-        <p class="mt-4 text-lg leading-7 text-ink-500">
-          A dashboard that makes you work out what to do with it has done half the job. Every
-          insight names the tool, counts the thing, and says what it is costing you.
-        </p>
-      </div>
-
-      <div class="mt-12 grid gap-4 lg:grid-cols-2">
-        {
-          INSIGHTS.map((insight, i) => (
-            <article
-              class:list={[
-                "reveal rounded-2xl border p-5",
-                insight.tone === "bad"
-                  ? "border-bad/20 bg-bad/[0.04]"
-                  : "border-warn/20 bg-warn/[0.04]",
-              ]}
-              style={`--reveal-delay: ${(i % 2) * 90}ms`}
-            >
-              <p class="font-mono text-sm text-ink-100">{insight.tool}</p>
-              <p class="mt-2 text-[15px] leading-7 text-ink-300">{insight.text}</p>
-            </article>
-          ))
-        }
-      </div>
-
-      {/* Four examples invite the obvious question — what makes one appear —
-          and the thresholds are written down on the metrics page. */}
-      <a href="/metrics#insights" class:list={["reveal mt-8", BUTTON]}>
-        The rules that trigger these →
-      </a>
-    </div>
-  </section>
-
-  <!-- ── Metrics ───────────────────────────────────────────────────────── -->
-  <section id="metrics" class="scroll-mt-24 border-t border-line-soft">
-    <div class="mx-auto max-w-7xl px-5 py-24 sm:px-8">
-      <div class="reveal max-w-2xl">
-        <p class="text-sm font-medium text-cyan">Metrics</p>
-        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-ink-100 sm:text-4xl">
-          Sixteen metrics, from schema cost to first-call success
-        </h2>
-        <p class="mt-4 text-lg leading-7 text-ink-500">
-          Most are counted as your calls arrive. Three need a night's worth of calls in order and
-          are labelled as of yesterday, because pretending otherwise would be the first lie the
-          product told you.
-        </p>
+      <div class="reveal mt-14">
+        <div class="overflow-x-auto rounded-2xl border border-line">
+          <table class="w-full min-w-[46rem] border-collapse text-left">
+            <caption class="sr-only">
+              How MCPulse compares to other MCP analytics products
+            </caption>
+            <thead>
+              <tr class="border-b border-line bg-surface-2">
+                <th scope="col" class="px-5 py-4 text-sm font-medium text-ink-500">
+                  <span class="sr-only">Capability</span>
+                </th>
+                {
+                  COMPARISON.columns.map((name, i) => (
+                    <th
+                      scope="col"
+                      class:list={[
+                        "px-5 py-4 text-sm font-semibold",
+                        i === 0 ? "bg-cyan-wash text-ink-100" : "text-ink-300",
+                      ]}
+                    >
+                      {name}
+                    </th>
+                  ))
+                }
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-line-soft">
+              {
+                COMPARISON.rows.map((row) => (
+                  <tr>
+                    <th
+                      scope="row"
+                      class="px-5 py-4 text-left text-sm font-medium text-ink-300"
+                    >
+                      {row.label}
+                    </th>
+                    {row.values.map((value, i) => (
+                      <td
+                        class:list={[
+                          "px-5 py-4 text-sm",
+                          i === 0 ? "bg-cyan-wash/60" : "",
+                          value.tone === "good" ? "font-medium text-ok" : "text-ink-500",
+                        ]}
+                      >
+                        {value.text}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
 
         {/*
-          The way through to `/metrics`, which is now this page's job.
+          The date, and the credit where it is due.
 
-          Metrics left the header, and before that change this section did not
-          link to it at all — the page was reachable from the footer and nowhere
-          else. A reader who has just read a section about sixteen metrics is the
-          single most likely person to want the page that lists them, so the link
-          belongs here rather than in a row of five.
+          Printed rather than implied, so a reader can tell at a glance whether
+          this was checked last week or last year — and so we can be held to it.
         */}
-        <a href="/metrics" class:list={["mt-6", BUTTON]}>
-          All sixteen, and when each one updates →
-        </a>
-      </div>
-
-      {/* Numbered straight through 01–16 across the three groups, so the
-          count in the heading is something you can verify rather than take on
-          trust. `index` walks the flattened list. */}
-      <div class="mt-16 space-y-12">
-        {
-          METRICS.map((column, groupIndex) => {
-            const offset = METRICS.slice(0, groupIndex).reduce((n, g) => n + g.items.length, 0);
-
-            return (
-              <section class="reveal">
-                <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-line pb-4">
-                  <h3 class="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight text-ink-100">
-                    <span aria-hidden="true" class:list={["h-1.5 w-1.5 rounded-full", column.dot]} />
-                    {column.group}
-                  </h3>
-                  <p class="text-sm text-ink-700">{column.note}</p>
-                  {/* Spelled out. A bare "11" beside tiles numbered 01–16 reads
-                      as another index rather than a count of the group. */}
-                  <p class="ml-auto text-xs text-ink-700">
-                    {column.items.length} metrics
-                  </p>
-                </div>
-
-                {/* Spaced cards rather than a hairline grid sharing one
-                    background. A group of 11 in three columns leaves a cell
-                    empty, and with the grid's own background showing through
-                    that gap rendered as a filled tile — a box with nothing in
-                    it, in a section about there being sixteen of something. */}
-                <ul class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {column.items.map((item, i) => (
-                    <li class="group relative overflow-hidden rounded-xl border border-line bg-surface p-5 transition-colors hover:border-line-strong hover:bg-surface-2">
-                      {/* The rule lights up on hover instead of a border moving,
-                          so nothing in the grid shifts by a pixel. */}
-                      <span
-                        aria-hidden="true"
-                        class:list={[
-                          "absolute inset-y-0 left-0 w-0.5 origin-top scale-y-0 transition-transform duration-300 group-hover:scale-y-100",
-                          column.dot,
-                        ]}
-                      />
-
-                      <div class="flex items-baseline gap-3">
-                        <span class="font-mono text-xs text-ink-700">
-                          {String(offset + i + 1).padStart(2, "0")}
-                        </span>
-                        <h4 class="text-[15px] leading-6 font-medium text-ink-100">{item.name}</h4>
-                      </div>
-
-                      <p class="mt-2 pl-8 text-sm leading-6 text-ink-500">{item.detail}</p>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            );
-          })
-        }
-      </div>
-
-      <p class="reveal mt-12 max-w-3xl border-l-2 border-warn/40 pl-5 text-[15px] leading-7 text-ink-500">
-        Retries are the hard one, and the one worth having. Within a session, the same tool called
-        twice inside 30 seconds with <em class="text-ink-100 not-italic">different</em> arguments is
-        the model rewording and trying again. With the <em class="text-ink-100 not-italic">same</em>
-        arguments it is pagination or polling, and it is not a retry. Get that distinction wrong and
-        every well-behaved paginating tool grades as broken.
-      </p>
-    </div>
-  </section>
-
-  <!-- ── Pricing ───────────────────────────────────────────────────────── -->
-  {/*
-    On the home page, not only on `/pricing`.
-
-    "What does it cost" is the question every visitor has and the one this page
-    used to answer by sending them somewhere else. A price behind a click reads
-    as a price with something to hide, and for a product whose free tier is a
-    genuine offer that is the opposite of the truth.
-
-    The cards are the component `/pricing` renders, so the two pages cannot
-    disagree. What stays on `/pricing` is the part that needs room: caps,
-    downgrades, who takes the payment.
-  */}
-  <section id="pricing" class="scroll-mt-24 border-t border-line-soft">
-    <div class="mx-auto max-w-7xl px-5 py-24 sm:px-8">
-      <div class="reveal mx-auto max-w-2xl text-center">
-        <p class="text-sm font-medium text-cyan">Pricing</p>
-        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-4xl">
-          Free for one server. $49 for a server people depend on.
-        </h2>
-        <p class="mt-4 text-lg leading-7 text-pretty text-ink-500">
-          Every plan records all sixteen metrics and reaches its own data through the API and an MCP
-          connector. What you are buying is how much traffic, how far back, and whether it tells you
-          when something breaks.
+        <p class="mt-4 max-w-3xl text-sm leading-6.5 text-ink-700">
+          Taken from each product's own documentation in September 2026. They are all good at what
+          they are for. If you want session replay, or a tool call stitched into the agent trace
+          around it, install one of those instead. BetterMeter is left out because its documentation
+          is too thin to fill a row honestly. Datadog and Grafana solve the opposite problem — their
+          MCP servers hand <em class="text-ink-500 not-italic">their</em> telemetry to an agent.
         </p>
       </div>
 
-      <PricingCards class="mt-14" />
-
-      <div class="reveal mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm">
-        <span class="text-ink-700">
-          Every plan starts free. No trial to expire, no card up front.
-        </span>
-        <a href="/pricing" class="font-medium text-cyan hover:underline">
-          Caps, downgrades and who takes the payment →
-        </a>
-      </div>
+      <a href="/how-it-works" class:list={["reveal mt-8", BUTTON]}>
+        What actually leaves your process →
+      </a>
     </div>
   </section>
 
   <!-- ── The checker ───────────────────────────────────────────────────── -->
   {/*
-    Above the sign-up CTA on purpose.
+    Placed directly under the claim it proves, and five sections earlier than it
+    used to be.
 
-    Everything below this point asks for something — an account, a key, an
-    install. This asks for a paste, runs in the reader's own tab, and answers a
-    question they already have about a server they have already written. It is
-    the only thing on this page somebody can get value from without trusting us
-    with anything, which makes it the right last stop before we ask them to.
+    It sat below pricing, ninth of twelve, on the argument that everything after
+    it asks the reader for something and this asks for nothing — so it made the
+    right last stop. That holds only if the reader gets there. Nine sections in,
+    most do not.
   */}
-  <section class="border-t border-line-soft">
+  <section class="border-b border-line-soft">
     <div class="mx-auto max-w-7xl px-5 py-16 sm:px-8">
       <div
-        class="reveal flex flex-col gap-7 rounded-2xl border border-line bg-surface p-8 sm:p-10 lg:flex-row lg:items-center lg:justify-between"
+        class="reveal relative flex flex-col gap-7 overflow-hidden rounded-2xl border border-cyan/40 bg-cyan-wash p-8 sm:p-10 lg:flex-row lg:items-center lg:justify-between"
       >
-        <div class="max-w-xl">
-          <p class="text-sm font-medium text-cyan">Free, no account</p>
+        <div
+          aria-hidden="true"
+          class="absolute -top-32 -right-20 h-64 w-96 rounded-full bg-cyan/10 blur-3xl"
+        >
+        </div>
+
+        <div class="relative max-w-xl">
+          <p class="text-sm font-medium text-cyan">Free, no account, nothing uploaded</p>
           <h2 class="mt-2.5 text-2xl font-semibold tracking-tight text-balance text-ink-100">
-            Score your tool schemas against 4,749 public servers
+            Score your schemas against {STUDY.servers.toLocaleString("en-GB")} public servers
           </h2>
           <p class="mt-3 text-[15px] leading-7 text-pretty text-ink-500">
-            We read the tool definitions of 4,749 public MCP servers — 82,549 tools — and found one
-            tool in six with no word to tell it apart from the tool beside it. Paste your
-            <code class="font-mono text-[0.95em] text-ink-300">tools/list</code> response and see
-            where yours sits. It runs in this browser; nothing is uploaded.
+            We read the tool definitions of {STUDY.servers.toLocaleString("en-GB")} public MCP servers
+            — {STUDY.tools.toLocaleString("en-GB")} tools. One in six had no word to tell it apart
+            from the tool beside it. Paste your
+            <code class="font-mono text-[0.95em] text-ink-300">tools/list</code> and see where yours
+            sits. It runs in this browser, and nothing is uploaded.
           </p>
         </div>
 
-        <div class="flex shrink-0 flex-col gap-3 sm:flex-row lg:flex-col">
+        <div class="relative flex shrink-0 flex-col gap-3 sm:flex-row lg:flex-col">
           <a
             href="/check"
             class="inline-flex h-11 items-center justify-center rounded-xl bg-btn px-5 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover"
           >
-            Check my schema
+            Check my schemas
           </a>
           <a
-            href="/blog/reading-5000-mcp-schemas"
+            href={STUDY.post}
             class="inline-flex h-11 items-center justify-center rounded-xl border border-line px-5 text-sm font-medium text-ink-300 transition-colors hover:border-line-strong hover:text-ink-100"
           >
             Read the survey
@@ -644,79 +868,208 @@ const schema = [
     </div>
   </section>
 
+  <!-- ── How it works ──────────────────────────────────────────────────── -->
+  <section id="how" class="scroll-mt-24 border-b border-line-soft">
+    <div class="mx-auto max-w-7xl px-5 py-24 sm:px-8">
+      <div class="reveal max-w-2xl">
+        {/* The heading said "It runs inside your server, not in front of it",
+            which is word for word the title of the first card underneath it —
+            so the section opened by saying the same sentence twice, and the
+            three cards read as one card plus two extras. The heading now states
+            the consequence and lets the cards give the three reasons. */}
+        <p class="text-sm font-medium text-cyan">How it works</p>
+        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-4xl">
+          Nothing about your server has to change
+        </h2>
+        <p class="mt-4 text-lg leading-7 text-pretty text-ink-500">
+          Not its URL, not its auth, not its dependencies, and not its uptime.
+        </p>
+      </div>
+
+      <div class="mt-12 grid gap-4 lg:grid-cols-3">
+        {
+          PILLARS.map((pillar, i) => (
+            <article
+              class="reveal min-w-0 overflow-hidden rounded-2xl border border-line bg-surface"
+              style={`--reveal-delay: ${i * 90}ms`}
+            >
+              <PillarVisual kind={pillar.kind} />
+              <div class="p-6">
+                <p class="font-mono text-sm text-cyan">{String(i + 1).padStart(2, "0")}</p>
+                <h3 class="mt-3 text-lg font-semibold text-balance text-ink-100">{pillar.title}</h3>
+                <p class="mt-2.5 text-[15px] leading-7 text-ink-500">{pillar.body}</p>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Install ───────────────────────────────────────────────────────── -->
+  <div class="border-b border-line-soft">
+    <InstallSequence />
+
+    {/*
+      The language question, answered honestly where it is asked.
+
+      This link said "All ten SDKs, and every option", which is what the install
+      page lists and not what it ships: one of the ten is available and nine are
+      marked coming soon. A reader who catches the site overstating once will
+      discount the schema survey too, and that is the one claim here that cannot
+      afford it.
+    */}
+    <div class="mx-auto -mt-10 max-w-7xl px-5 pb-24 sm:px-8">
+      <a href="/install" class:list={["reveal", BUTTON]}>
+        TypeScript today — which languages are coming →
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Metrics ───────────────────────────────────────────────────────── -->
+  {/*
+    Sixteen names, not sixteen cards.
+
+    This was sixteen padded tiles across three groups and ran to about a screen
+    and a half. A catalogue is a reference, and the reader who wants one has
+    already decided — there is a whole page at `/metrics` built for them. The
+    reader who has not decided needs two things from this section: that the
+    number is real, and that the three update cadences are stated honestly.
+    Every name is still here, so both are checkable.
+  */}
+  <section id="metrics" class="scroll-mt-24 border-b border-line-soft">
+    <div class="mx-auto max-w-7xl px-5 py-24 sm:px-8">
+      <div class="reveal max-w-2xl">
+        <p class="text-sm font-medium text-cyan">Metrics</p>
+        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-4xl">
+          Sixteen metrics, from schema cost to first-call success
+        </h2>
+        {/* "labelled as of yesterday because they are" also appears verbatim as
+            the Nightly pass group's own note, four lines below this. Saying it
+            twice on one screen spends the honesty twice and buys it once, so the
+            lead now gives the split — which is information the group notes do
+            not repeat — and leaves the caveat to the group that owns it. */}
+        <p class="mt-4 text-lg leading-7 text-pretty text-ink-500">
+          Thirteen are counted as your calls arrive, or the moment your server boots. Three need a
+          night's worth of calls before they mean anything, and say so on the dashboard.
+        </p>
+
+        <a href="/metrics" class:list={["mt-6", BUTTON]}>
+          All sixteen, and when each one updates →
+        </a>
+      </div>
+
+      <div class="mt-14 space-y-4">
+        {
+          METRICS.map((column, groupIndex) => (
+            <section
+              class="reveal rounded-2xl border border-line bg-surface p-6"
+              style={`--reveal-delay: ${groupIndex * 90}ms`}
+            >
+              <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <h3 class="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight text-ink-100">
+                  <span aria-hidden="true" class:list={["h-1.5 w-1.5 rounded-full", column.dot]} />
+                  {column.group}
+                </h3>
+                <p class="text-sm text-ink-700">{column.note}</p>
+                <p class="ml-auto text-xs text-ink-700">{column.items.length} metrics</p>
+              </div>
+
+              {/* Each name carries its one-line definition as a title, which
+                  costs no height and answers the obvious follow-up on hover. */}
+              <ul class="mt-4 flex flex-wrap gap-2">
+                {column.items.map((item) => (
+                  <li
+                    title={item.detail}
+                    class="rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-sm text-ink-300"
+                  >
+                    {item.name}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Pricing ───────────────────────────────────────────────────────── -->
+  <section id="pricing" class="scroll-mt-24 border-b border-line-soft">
+    <div class="mx-auto max-w-7xl px-5 py-24 sm:px-8">
+      <div class="reveal max-w-2xl">
+        <p class="text-sm font-medium text-cyan">Pricing</p>
+        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-4xl">
+          Free for one server. $49 when people depend on it.
+        </h2>
+        <p class="mt-4 text-lg leading-7 text-pretty text-ink-500">
+          Every plan records all sixteen metrics and reaches its own data through the API and an MCP
+          connector. What you pay for is how much traffic, how far back, and whether it tells you
+          when something breaks.
+        </p>
+      </div>
+
+      <PricingCards class="reveal mt-12" level="h3" />
+
+      <p class="reveal mt-8 text-sm text-ink-300">
+        Every plan starts free. No trial to expire, no card up front.
+        <a href="/pricing" class="ml-1 font-medium text-cyan hover:underline">
+          Caps, downgrades and who takes the payment →
+        </a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Proof ─────────────────────────────────────────────────────────── -->
   <Proof />
 
   <!-- ── Questions ─────────────────────────────────────────────────────── -->
-  {/*
-    The objections, before the last ask rather than after it.
-
-    Every one of these was already answered somewhere on the site — in a pillar,
-    in a blog post, in a sentence on the install page. Answered somewhere is not
-    answerable: nobody deciding whether to put our package inside their server is
-    going to read twenty-one essays to find out whether we can see their
-    arguments. The three that can actually stop a sale are here, and the rest are
-    one click away.
-  */}
   <section class="border-t border-line-soft">
     <div class="mx-auto max-w-7xl px-5 py-24 sm:px-8">
-      <div class="mx-auto max-w-3xl">
-        <div class="reveal">
-          <p class="text-sm font-medium text-cyan">Questions</p>
-          <h2 class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-4xl">
-            What this does to your server
-          </h2>
-          <p class="mt-4 text-lg leading-7 text-pretty text-ink-500">
-            Three versions of the same question, which is the one worth asking before installing
-            anything.
-          </p>
-        </div>
-
-        <Faq class="reveal mt-10" limit={4} />
-
-        <p class="reveal mt-6 text-sm text-ink-700">
-          <a href="/faq" class="font-medium text-cyan hover:underline">All {FAQS.length} questions</a>
-           — languages, getting at your own data, and what a security review will ask.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── CTA ───────────────────────────────────────────────────────────── -->
-  <section class="border-t border-line-soft">
-    <div class="mx-auto max-w-7xl px-5 py-24 sm:px-8">
-      <div
-        class="reveal relative overflow-hidden rounded-3xl border border-line bg-ink-900/50 px-6 py-16 text-center sm:px-16"
-      >
-        <div
-          aria-hidden="true"
-          class="absolute -top-24 left-1/2 -z-10 h-64 w-[40rem] -translate-x-1/2 rounded-full bg-cyan/10 blur-3xl"
-        >
-        </div>
-
-        <h2 class="text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-4xl">
-          Find out what your tools are actually doing
+      <div class="reveal max-w-2xl">
+        <p class="text-sm font-medium text-cyan">Questions</p>
+        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-balance text-ink-100 sm:text-4xl">
+          What this does to your server
         </h2>
-        <p class="mx-auto mt-4 max-w-xl text-lg leading-7 text-pretty text-ink-500">
-          Create an MCP, paste the key, restart. The first payload lands before you have finished
-          reading the install page.
+        <p class="mt-4 text-lg leading-7 text-pretty text-ink-500">
+          The four worth asking before you install anything.
         </p>
-
-        <div class="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-          <a
-            href={SITE.signup}
-            class="inline-flex h-11 items-center justify-center rounded-xl bg-btn px-5 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover"
-          >
-            {CTA.primary}
-          </a>
-          <a
-            href={SITE.npm}
-            class="inline-flex h-11 items-center justify-center rounded-xl border border-line px-5 text-sm font-medium text-ink-300 transition-colors hover:border-line-strong hover:text-ink-100"
-          >
-            Read the package docs
-          </a>
-        </div>
       </div>
+
+      <Faq class="reveal mt-10" limit={4} />
+
+      <a href="/faq" class:list={["reveal mt-8", BUTTON]}>
+        All {FAQS.length} questions — languages, your own data, security review →
+      </a>
     </div>
   </section>
+
+  <!-- ── Close ─────────────────────────────────────────────────────────── -->
+  <CtaBand
+    heading="Find out which of your tools agents get wrong"
+    body="Create a server, paste the key, restart. Your dead tools and what each schema costs show up immediately. The call metrics fill in as traffic arrives."
+    secondary="check"
+  />
 </Base>
 
+<style>
+  /**
+   * The tool-name chips inside "What to look at".
+   *
+   * The panel's bodies are injected with `set:html` so that each can name its
+   * tool in a <code> element, which means those elements arrive without classes.
+   * Styling them here rather than baking a class list into every string keeps
+   * the strings readable and means the chip is defined once.
+   *
+   * Matches the dashboard's own treatment — a soft fill and tight padding, so a
+   * tool name reads as an identifier rather than as emphasis.
+   */
+  .look-at :global(code) {
+    border-radius: 0.25rem;
+    background: var(--color-surface-2);
+    padding: 0.125rem 0.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    color: var(--color-ink-100);
+  }
+</style>

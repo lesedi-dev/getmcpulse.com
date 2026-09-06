@@ -1,7 +1,7 @@
 ---
 title: The MCP server that ships 2,530 tools
 description: 866KB of schema, about 216,000 tokens on every connection, and every single tool carries a description. 34.3% of its parameters do not.
-published: 2026-09-15
+published: 2026-08-18
 topic: Measurement
 minutes: 5
 ---

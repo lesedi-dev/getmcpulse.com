@@ -1,7 +1,7 @@
 ---
 title: An MCP tool description checklist
 description: Nine checks, each with the rate it occurs across 4,749 public servers, so you can spend your time on the two faults that are actually likely.
-published: 2026-09-29
+published: 2026-09-01
 topic: Tool design
 minutes: 4
 ---
@@ -57,7 +57,7 @@ Free, unambiguous, and it stops the model requesting something that will be reje
 
 **☐ Anything with a format has an `examples` entry.** — *0.3% usage, the least-used keyword there is.*
 
-A `description` says what the field means; an example shows the string that works. `format: "date-time"` tells a model far less than `["2026-09-29T14:22:31Z"]`.
+A `description` says what the field means; an example shows the string that works. `format: "date-time"` tells a model far less than `["2026-09-01T14:22:31Z"]`.
 
 ## Two things not to do
 

@@ -1,7 +1,7 @@
 ---
 title: Almost nobody duplicates MCP tool names
 description: 9 servers out of 4,749 ship a duplicate tool name — 0.19%, and only 16 duplicated entries in the whole corpus. If this is on your review checklist, take it off.
-published: 2026-09-09
+published: 2026-08-12
 topic: Tool design
 minutes: 4
 ---

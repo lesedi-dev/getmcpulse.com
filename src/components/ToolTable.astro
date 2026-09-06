@@ -208,7 +208,13 @@ const tone = (cell: Cell) =>
   {/* The footer is the insight, which is the actual product: the table shows
       you a red cell, this tells you what it costs. */}
   <div class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line bg-surface px-4 py-3 sm:px-5">
-    <span class="font-mono text-[11px] text-bad">2 tools need attention</span>
+    {/* Four, not two. `ROWS` carries a `tone` on a cell of `search_orders`,
+        `list_customers`, `get_invoice` and `export_report` — so the table
+        colours four rows and its own footer used to claim two. The "What to
+        look at" panel on the home page lists the same four and says "4 found",
+        which is what made the disagreement visible. If a row gains or loses a
+        tone, this number moves with it. */}
+    <span class="font-mono text-[11px] text-bad">4 tools need attention</span>
     <span class="text-[11px] text-ink-700">
       export_report has never been called and costs 480 tokens of schema every session
     </span>

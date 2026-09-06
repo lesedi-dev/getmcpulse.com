@@ -1,7 +1,7 @@
 ---
 title: Which JSON Schema features do MCP servers actually use?
 description: default appears on 17.2% of parameters — more than enum. format is 2.1%, pattern 1.6%, and examples 0.3%. Most of JSON Schema goes unused.
-published: 2026-09-22
+published: 2026-08-25
 topic: Tool design
 minutes: 5
 ---
@@ -39,7 +39,7 @@ One caveat worth knowing: `default` in JSON Schema is annotation, not behaviour.
 
 That is striking because an example is the single most useful thing you can hand a model that is filling in a field. A `description` says what the field means; an example shows the exact string that works. And [the corpus's most common fault is parameters with no description at all](/blog/21-percent-of-parameters) — so the field that would help most is used least, in a population where the baseline field is missing a fifth of the time.
 
-The comparison that makes the point: `format` (2.1%) is used seven times more often than `examples`, and `format: "date-time"` tells a model far less than `"examples": ["2026-09-22T14:22:31Z"]`. One names a standard; the other shows the string.
+The comparison that makes the point: `format` (2.1%) is used seven times more often than `examples`, and `format: "date-time"` tells a model far less than `"examples": ["2026-08-25T14:22:31Z"]`. One names a standard; the other shows the string.
 
 ## `format` and `pattern` are barely used, and that is defensible
 

@@ -1,7 +1,7 @@
 ---
 title: Why models pick the wrong MCP tool
 description: 17.6% of tools across 4,749 servers have no word setting them apart from a sibling. But 89.6% still have a distinctive name, which shrinks the claim and sharpens it.
-published: 2026-09-03
+published: 2026-08-05
 topic: Tool design
 minutes: 7
 ---

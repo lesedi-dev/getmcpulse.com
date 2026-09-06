@@ -62,7 +62,7 @@ const FINDINGS = [
   {
     heading: "Calls succeed and come back empty",
     where: "Overview → Outcomes",
-    body: "An empty result is not an error. Your server did its job, returned a valid response, and logged a 200 — and the model got nothing it could use, so it asked again a different way. Nothing in your own logs marks that call as a problem, which is exactly why it goes unfixed.",
+    body: "An empty result is not an error. Your server did its job, returned a valid response, and logged a success — and the agent got nothing it could use, so it asked again a different way. Nothing in your own logs marks that call as a problem, which is exactly why it goes unfixed.",
     stat: "Counted separately here",
     statNote: "from errors, because it needs a different fix",
   },
@@ -86,7 +86,7 @@ const FINDINGS = [
 <Detail
   eyebrow="Live demo"
   title="Open the dashboard, no account needed"
-  lead="This is the real MCPulse dashboard — the same screens a customer sees — reading a sample MCP server. Nothing to install, nothing to sign up for."
+  lead="The real dashboard, reading a sample server that has real problems in it. Nothing to install and nothing to sign up for."
   description="See the real MCPulse dashboard with no account: a sample MCP server with retries, empty returns and argument errors already in it. Free, no signup."
   width="full"
   sections={SECTIONS}

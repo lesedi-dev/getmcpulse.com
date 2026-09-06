@@ -73,7 +73,20 @@ const schema = webPage(Astro.site, { path: Astro.url.pathname, title, descriptio
     <header class="relative overflow-hidden border-b border-line-soft">
       <div aria-hidden="true" class="grid-fade absolute inset-0 -z-10"></div>
 
-      <div class="mx-auto max-w-7xl px-5 pt-36 pb-14 sm:px-8 sm:pt-44">
+      {/*
+        Tightened from `pt-36 sm:pt-44`.
+
+        The nav is 64px and the eyebrow sat 176px below it, so every page on the
+        site opened on a band of empty roughly the height of the headline that
+        followed. On a 1100px viewport that pushed the first real content — the
+        lead paragraph, and on `/check` the paste box that is the entire point of
+        the page — a third of the way down the screen for no gain.
+
+        The space above a title is doing a real job and it is not being deleted,
+        only halved: enough that the heading is not jammed under the nav, not so
+        much that a reader has to scroll to find out what the page is about.
+      */}
+      <div class="mx-auto max-w-7xl px-5 pt-24 pb-14 sm:px-8 sm:pt-28">
         <div class="reveal mx-auto max-w-3xl">
           <p class="text-sm font-medium text-cyan">{eyebrow}</p>
           <h1

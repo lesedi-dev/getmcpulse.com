@@ -65,19 +65,66 @@ const CARDS = [
   },
 ] as const;
 
+/**
+ * The five outcomes, made to reconcile with the tool table.
+ *
+ * These are demo numbers and they still have to add up, because the readers of
+ * this page are the people most likely to add them up — the product's whole
+ * argument is that its figures are ones you can recompute.
+ *
+ * Two things were wrong. The empty count said 312, but the per-tool empty rates
+ * in `ToolTable` (2%, 1%, 12%, 0%, 3% of their call counts) imply 445. And 312
+ * was then quoted a second time on the home page as `get_invoice`'s own empty
+ * count, which is 306 — so one number was doing duty as both the server total
+ * and a single tool's share of it.
+ *
+ * Empty is now 445 and Succeeded absorbs the difference, so the five still sum
+ * to the 12,481 total calls that the table's own rows add up to.
+ */
 const OUTCOMES = [
-  { label: "Succeeded", count: "11,204", pct: 90, bar: "bg-ok" },
-  { label: "Returned empty", count: "312", pct: 3, bar: "bg-warn" },
+  { label: "Succeeded", count: "11,071", pct: 89, bar: "bg-ok" },
+  { label: "Returned empty", count: "445", pct: 4, bar: "bg-warn" },
   { label: "Bad arguments", count: "604", pct: 5, bar: "bg-orange-400" },
   { label: "Tool error", count: "241", pct: 2, bar: "bg-bad" },
   { label: "Crashed", count: "120", pct: 1, bar: "bg-red-600" },
 ] as const;
 
 const TOOLS = [
-  { name: "search_orders", calls: "2,110", rate: "58%", size: "1.4 kb", status: "Low first-call", tone: "bad" },
-  { name: "get_customer", calls: "1,204", rate: "94%", size: "0.9 kb", status: "Healthy", tone: "ok" },
-  { name: "list_products", calls: "890", rate: "91%", size: "12.4 kb", status: "Heavy payload", tone: "warn" },
+  { name: "search_orders", calls: "4,120", rate: "68%", size: "1.2 kb", status: "Low first-call", tone: "bad" },
+  { name: "list_customers", calls: "3,008", rate: "94%", size: "14 kb", status: "Heavy payload", tone: "warn" },
+  { name: "get_invoice", calls: "2,551", rate: "88%", size: "0.8 kb", status: "Returns empty", tone: "warn" },
   { name: "export_report", calls: "0", rate: "—", size: "—", status: "Never used", tone: "muted" },
+] as const;
+
+/**
+ * The client breakdown, which is the panel's most under-appreciated row.
+ *
+ * "Which client" is one of the sixteen metrics and it is the one that surprises
+ * people: the same tool has a different first-call rate depending on what is
+ * calling it, because the clients differ in how much of your description they
+ * put in front of the model and how they format the schema. A server that
+ * grades fine overall can be failing badly on one client and nowhere else.
+ *
+ * It earns its place in the hero because it is a shape no trace viewer draws —
+ * a trace knows which call it is looking at, not how one tool behaves across
+ * four callers.
+ *
+ * ── `pct` is the rate, not the share ──────────────────────────────────────
+ * These two were different numbers, and it was a bug you could read off the
+ * screen: the bar was drawn at the client's share of traffic (50%, 32%, 12%,
+ * 6%) while the figure printed beside it was the first-call rate (71%, 64%,
+ * 76%, 58%). So Claude Desktop showed a half-width bar labelled 71%, and Claude
+ * Code — the *best* performing client — drew the second-shortest bar on the
+ * panel. A chart whose length contradicts its own label is worse than no chart.
+ *
+ * The bar is now the rate it is labelled with. The call counts stay in the data
+ * because the row is one line from wanting them back, but nothing draws them.
+ */
+const CLIENTS = [
+  { name: "Claude Desktop", calls: "6,240", rate: "71%", pct: 71, tone: "bg-cyan" },
+  { name: "Cursor", calls: "3,980", rate: "64%", pct: 64, tone: "bg-cyan/70" },
+  { name: "Claude Code", calls: "1,510", rate: "76%", pct: 76, tone: "bg-cyan/50" },
+  { name: "Unknown", calls: "751", rate: "58%", pct: 58, tone: "bg-line-strong" },
 ] as const;
 
 const STATUS_TONE = {
@@ -177,6 +224,118 @@ const area = `${line} L${W} ${H} L0 ${H} Z`;
       }
     </div>
 
+    {/*
+      The rows that carry the argument sit above the chart, not below it.
+
+      This panel is masked to fade out at 62% of its height so it dissolves
+      rather than ending in a hard edge. With the chart in the middle, the
+      clients row and the tool table landed exactly in that fade — present in
+      the markup, illegible on screen, which is the worst of both: the space
+      is spent and the reader gets nothing for it.
+
+      A line chart is the one thing here that still reads at 30% opacity,
+      because its meaning is a shape rather than a number. So it takes the
+      fade and the two rows of real content move up into the opaque part.
+    */}
+    <!-- ── Clients, tool health, outcomes ─────────────────────────────── -->
+    {/*
+      Ordered left to right by what a reader actually sees.
+
+      This panel is positioned to run off the right edge of the viewport, so
+      roughly the leftmost 60% of it is on screen and the rest is a promise that
+      there is more. That makes column order an editorial decision rather than a
+      layout one: whatever goes right of centre is decoration.
+
+      So the two rows that carry the argument lead. Clients first, because a
+      per-client first-call rate is the shape nothing else in this market draws.
+      Tool health second and widest, because it is the actual deliverable — one
+      row per tool with the bad ones named. Outcomes last: it is the least
+      surprising of the three and the one that loses least by being cropped.
+    */}
+    <div class="grid grid-cols-12 gap-4 px-7 pb-7">
+      <div class="col-span-4 rounded-xl border border-line bg-surface p-5">
+        <div class="flex items-baseline justify-between">
+          <p class="text-sm font-medium text-ink-100">Clients</p>
+          <p class="text-[11px] text-ink-700">first-call</p>
+        </div>
+
+        <ul class="mt-4 space-y-3">
+          {
+            CLIENTS.map((client) => (
+              <li>
+                <div class="flex items-baseline justify-between gap-2 text-[13px]">
+                  <span class="truncate text-ink-300">{client.name}</span>
+                  <span class="shrink-0 font-mono text-ink-500">{client.rate}</span>
+                </div>
+                <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line-soft">
+                  <div
+                    class:list={["h-full rounded-full", client.tone]}
+                    style={`width: ${Math.max(client.pct, 2)}%`}
+                  />
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div class="col-span-3 order-last rounded-xl border border-line bg-surface p-5">
+        <p class="text-sm font-medium text-ink-100">Outcomes</p>
+
+        <ul class="mt-4 space-y-3">
+          {
+            OUTCOMES.map((outcome) => (
+              <li>
+                <div class="flex items-baseline justify-between text-[13px]">
+                  <span class="text-ink-300">{outcome.label}</span>
+                  <span class="text-ink-500">{outcome.count}</span>
+                </div>
+                <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line-soft">
+                  <div class:list={["h-full rounded-full", outcome.bar]} style={`width: ${Math.max(outcome.pct, 2)}%`} />
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div class="col-span-5 rounded-xl border border-line bg-surface p-5">
+        <p class="text-sm font-medium text-ink-100">Tool health</p>
+
+        <table class="mt-4 w-full text-left">
+          <thead>
+            <tr class="text-[11px] tracking-wide text-ink-700 uppercase">
+              <th class="pb-2 font-medium">Tool</th>
+              <th class="pb-2 font-medium">Calls</th>
+              <th class="pb-2 font-medium">First-call</th>
+              <th class="pb-2 font-medium">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              TOOLS.map((tool) => (
+                <tr class="border-t border-line-soft">
+                  <td class="py-2.5 font-mono text-[13px] text-ink-100">{tool.name}</td>
+                  <td class="py-2.5 text-[13px] text-ink-500">{tool.calls}</td>
+                  <td class="py-2.5 text-[13px] text-ink-500">{tool.rate}</td>
+                  <td class="py-2.5">
+                    <span
+                      class:list={[
+                        "rounded-md px-2 py-0.5 text-[11px] font-medium whitespace-nowrap",
+                        STATUS_TONE[tool.tone],
+                      ]}
+                    >
+                      {tool.status}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- ── Calls per day ──────────────────────────────────────────────── -->
     <div class="px-7 pb-5">
       <div class="rounded-xl border border-line bg-surface p-5">
@@ -225,65 +384,6 @@ const area = `${line} L${W} ${H} L0 ${H} Z`;
             vector-effect="non-scaling-stroke"
             class="hero-line"></path>
         </svg>
-      </div>
-    </div>
-
-    <!-- ── Outcomes and tool health ───────────────────────────────────── -->
-    <div class="grid grid-cols-2 gap-4 px-7 pb-7">
-      <div class="rounded-xl border border-line bg-surface p-5">
-        <p class="text-sm font-medium text-ink-100">Outcomes</p>
-
-        <ul class="mt-4 space-y-3">
-          {
-            OUTCOMES.map((outcome) => (
-              <li>
-                <div class="flex items-baseline justify-between text-[13px]">
-                  <span class="text-ink-300">{outcome.label}</span>
-                  <span class="text-ink-500">{outcome.count}</span>
-                </div>
-                <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line-soft">
-                  <div class:list={["h-full rounded-full", outcome.bar]} style={`width: ${Math.max(outcome.pct, 2)}%`} />
-                </div>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-
-      <div class="rounded-xl border border-line bg-surface p-5">
-        <p class="text-sm font-medium text-ink-100">Tool health</p>
-
-        <table class="mt-4 w-full text-left">
-          <thead>
-            <tr class="text-[11px] tracking-wide text-ink-700 uppercase">
-              <th class="pb-2 font-medium">Tool</th>
-              <th class="pb-2 font-medium">Calls</th>
-              <th class="pb-2 font-medium">First-call</th>
-              <th class="pb-2 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              TOOLS.map((tool) => (
-                <tr class="border-t border-line-soft">
-                  <td class="py-2.5 font-mono text-[13px] text-ink-100">{tool.name}</td>
-                  <td class="py-2.5 text-[13px] text-ink-500">{tool.calls}</td>
-                  <td class="py-2.5 text-[13px] text-ink-500">{tool.rate}</td>
-                  <td class="py-2.5">
-                    <span
-                      class:list={[
-                        "rounded-md px-2 py-0.5 text-[11px] font-medium whitespace-nowrap",
-                        STATUS_TONE[tool.tone],
-                      ]}
-                    >
-                      {tool.status}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            }
-          </tbody>
-        </table>
       </div>
     </div>
 

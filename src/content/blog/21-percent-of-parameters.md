@@ -1,7 +1,7 @@
 ---
 title: 21.5% of MCP parameters have no description at all
 description: 55,383 of 257,287 parameters across 4,749 servers ship with nothing but a name and a type. Only 0.4% of tools do. That asymmetry is the whole finding.
-published: 2026-09-02
+published: 2026-07-30
 topic: Tool design
 minutes: 5
 ---

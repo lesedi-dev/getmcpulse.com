@@ -24,12 +24,17 @@ export const PILLARS = [
   {
     kind: "inside",
     title: "Inside your server, not in front of it",
-    body: "An npm package you install, not a proxy. Directory-listed servers cannot change their URL and OAuth breaks the moment traffic is redirected — so the SDK sits beside your traffic instead of in it. If we are down, your server keeps serving.",
+    // "Directory-listed servers cannot change their URL and OAuth breaks the
+    // moment traffic is redirected" was the hardest sentence on the site: a
+    // subordinate clause, a term of art, and two failure modes, in one breath.
+    // Split into the two consequences a reader actually cares about — my URL
+    // stays, my login stays — with the proxy comparison left as the punchline.
+    body: "An npm package you install, not a proxy. Your server keeps its own URL, so anything that already links to it still works and your OAuth still works. Nothing of ours sits in the request path. If we are down, your server keeps serving.",
   },
   {
     kind: "hash",
     title: "Never your arguments, never your results",
-    body: "Sizes and hashes only. args_hash is twelve hex characters of a SHA-256 over the arguments with keys sorted: enough to tell whether two calls were the same, and not enough for anything else. There is no option to turn this off, because a guarantee you can switch off is not one.",
+    body: "Sizes and fingerprints only. Your arguments become twelve characters of a one-way hash — enough to tell whether two calls were the same, and not enough for anything else. There is no option to turn this off, because a guarantee you can switch off is not one.",
   },
   {
     kind: "wrap",
@@ -51,7 +56,7 @@ export const METRICS = [
     note: "Counted as each payload lands.",
     dot: "bg-cyan",
     items: [
-      { name: "Calls per tool", detail: "Which of your tools the model actually reaches." },
+      { name: "Calls per tool", detail: "Which of your tools agents actually reach." },
       {
         name: "Calls per day",
         detail:
@@ -69,7 +74,7 @@ export const METRICS = [
       },
       {
         name: "Bad arguments",
-        detail: "Validation rejected the call. Usually your schema, not the model.",
+        detail: "Validation rejected the call. Usually your schema, not the agent.",
       },
       {
         name: "Empty answers",
@@ -117,7 +122,11 @@ export const INSIGHTS = [
   {
     tone: "warn",
     tool: "list_customers",
-    text: "Returns ~14k tokens per call, roughly $0.04 of context every time it runs.",
+    // "~14k tokens" was reading the tool table's "14 kB" as a token count. 14 kB
+    // of JSON is about 3.5k tokens, so the cost was roughly four times too high.
+    // Stated in bytes here — that is what the SDK actually measures, and it is
+    // the figure the table prints — with the token estimate marked as one.
+    text: "Returns ~14 kB per call — about 3.5k tokens, roughly $0.01 of context every time it runs.",
   },
   { tone: "warn", tool: "get_invoice", text: "312 calls returned empty with no error at all." },
   {
@@ -178,7 +187,11 @@ export const PLANS = [
     highlights: [
       "7 days of history",
       "10,000 calls a month",
-      "1 MCP",
+      // "1 MCP" / "Unlimited MCPs" used the protocol's name as a countable noun
+      // for the thing it is a protocol for. The heading directly above these
+      // cards says "Free for one server", so the page named the same unit two
+      // ways within a screen — and "1 MCP" is the one a reader has to translate.
+      "1 server",
       "1 person",
       "All 16 metrics",
       "API and MCP access",
@@ -192,7 +205,7 @@ export const PLANS = [
     highlights: [
       "Every date range",
       "1M calls a month",
-      "Unlimited MCPs",
+      "Unlimited servers",
       "Unlimited team",
       "Alerts and the weekly digest",
       "90 days of individual calls",
@@ -384,7 +397,7 @@ export const FAQS = [
   {
     q: "Can you see my tool arguments or my results?",
     short: "No, and there is no setting that would let us.",
-    a: "No. What leaves your process is one object per call carrying dimensions, durations, sizes and one hash — there is no field that could hold customer data, which is a stronger statement than a promise about how fields are used. Arguments become twelve hex characters of a SHA-256 with keys sorted: enough to tell whether two calls were the same, not enough for anything else. There is no option to turn this off, because a guarantee you can switch off is not one.",
+    a: "No. One row leaves your process per call. It holds which tool ran, how long it took, how big the answer was, and a one-way fingerprint of the arguments. There is no field that could hold customer data — which is a stronger thing to be able to say than a promise about how the fields get used. The fingerprint is twelve characters of a SHA-256 with the keys sorted: enough to tell whether two calls were the same, not enough for anything else. There is no option to turn this off, because a guarantee you can switch off is not one.",
   },
   {
     q: "Will it slow my tools down?",
@@ -394,7 +407,7 @@ export const FAQS = [
   {
     q: "Do I have to change my server's URL or its auth?",
     short: "No. Nothing about how your server is reached changes.",
-    a: "No. You add a package and wrap the server object you already built; `watch()` hands the same server back, so nothing downstream sees a difference. Your URL, your OAuth, your deployment and your dependencies are untouched. Directory-listed servers cannot change their URL and OAuth breaks the moment traffic is redirected — which is exactly why this is not a proxy.",
+    a: "No. You add a package and wrap the server object you already built; `watch()` hands the same server back, so nothing downstream sees a difference. Your URL, your OAuth, your deployment and your dependencies are untouched. That is the point of not being a proxy: a proxy would move your traffic to a new address, which breaks your OAuth and breaks every directory that already lists you.",
   },
   {
     q: "Which languages can I use it from?",

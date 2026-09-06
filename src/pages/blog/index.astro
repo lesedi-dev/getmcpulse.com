@@ -5,6 +5,7 @@ import PostList from "../../components/PostList.astro";
 import { PER_PAGE, pageCount } from "../../lib/posts";
 import { SITE } from "../../lib/site";
 import { breadcrumbs } from "../../lib/schema";
+import CtaBand from "../../components/CtaBand.astro";
 
 /**
  * The index, in three tiers rather than one grid.
@@ -106,4 +107,10 @@ const schema = [
   </section>
 
   <PostList posts={page} featuredFirst current={1} total={totalPages} />
+
+  <CtaBand
+    heading="Stop reading about it and measure yours"
+    body="Every post here came out of the same data the product runs on. Two lines inside your server and the numbers are about you instead."
+    secondary="check"
+  />
 </Base>

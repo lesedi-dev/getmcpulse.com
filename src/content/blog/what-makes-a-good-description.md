@@ -1,7 +1,7 @@
 ---
 title: What makes a good MCP tool description?
 description: Length is not the answer. Across 75,914 tools the correlation between description length and distinctiveness is +0.034 — statistically nothing.
-published: 2026-09-16
+published: 2026-08-19
 topic: Tool design
 minutes: 6
 ---

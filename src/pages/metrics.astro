@@ -3,6 +3,7 @@ import Detail from "../layouts/Detail.astro";
 import ToolTable from "../components/ToolTable.astro";
 import { METRICS, INSIGHT_RULES, INSIGHTS } from "../lib/content";
 import { SITE } from "../lib/site";
+import CtaBand from "../components/CtaBand.astro";
 
 /**
  * The sixteen metrics, and the screen they live in.
@@ -34,7 +35,7 @@ const SECTIONS = [
 <Detail
   eyebrow="Metrics"
   title="The sixteen metrics MCPulse records"
-  lead="Most are counted as your calls arrive, into one table keyed by the hour, the tool and the client — so a single day is drawn by the hour, and every figure narrows to one model as easily as to one tool. Three need a night's worth of calls in order and are labelled as of yesterday, because pretending otherwise would be the first lie the product told you."
+  lead="Eleven are counted as your calls arrive. Two land when your server boots, before a single call happens. Three need a night's worth of calls first, and the page says so rather than pretending."
   description="The sixteen metrics MCPulse records, what each one tells you, and which are counted live versus computed overnight."
   width="full"
   sections={SECTIONS}
@@ -216,4 +217,10 @@ const SECTIONS = [
       </p>
     </section>
   </div>
+
+  <CtaBand
+    heading="See all sixteen on your own server"
+    body="Dead tools and schema cost appear as soon as you install. The per-call numbers fill in as traffic arrives, and three of them land after the first night."
+    secondary="check"
+  />
 </Detail>

@@ -1,7 +1,7 @@
 ---
 title: Should you split a large MCP server?
 description: A decision framework with the corpus data as the input. Under fifteen tools the answer is no. Past sixty it is probably yes, and rewording will not save you.
-published: 2026-09-30
+published: 2026-09-02
 topic: Tool design
 minutes: 6
 ---

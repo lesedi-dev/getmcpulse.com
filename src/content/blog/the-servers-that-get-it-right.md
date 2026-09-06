@@ -1,7 +1,7 @@
 ---
 title: The MCP servers that get their schemas right
 description: 718 of 2,255 servers have no undescribed parameters, no colliding tools, and no unenforced closed sets. They are smaller, cheaper and more distinctive.
-published: 2026-10-01
+published: 2026-09-03
 topic: Tool design
 minutes: 6
 ---

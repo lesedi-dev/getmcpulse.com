@@ -1,7 +1,7 @@
 ---
 title: Tool descriptions or parameter descriptions?
 description: One failure scales sixty-three times with server size. The other is flat at every size. So fixing either does nothing for the other — they are separate jobs.
-published: 2026-09-08
+published: 2026-08-08
 topic: Tool design
 minutes: 5
 ---

@@ -1,7 +1,7 @@
 ---
 title: Popular MCP servers vs the long tail
 description: The most-installed servers are bigger — 30.4 tools against 16.6 — and worse on both schema measures. 28.6% of their parameters are undescribed, against 20.8%.
-published: 2026-09-12
+published: 2026-08-15
 topic: Measurement
 minutes: 5
 ---

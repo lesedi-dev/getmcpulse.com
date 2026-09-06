@@ -149,7 +149,21 @@ const MEASURES = [
       </p>
     </div>
 
-    <div id="check-results" class="mx-auto mt-12 hidden max-w-7xl"></div>
+    {/*
+      The two destinations, carried on the element rather than restated.
+
+      The results are built in a module script, which cannot see the frontmatter
+      — so the signup URL would otherwise be hardcoded a second time, in a file
+      whose whole argument is that `site.ts` holds each of these exactly once.
+      A data attribute is the cheapest way for the script to read the same
+      constant every button on the site reads.
+    */}
+    <div
+      id="check-results"
+      data-signup={SITE.signup}
+      class="mx-auto mt-12 hidden max-w-7xl"
+    >
+    </div>
   </section>
 
   <!-- ── What it measures, before you have pasted anything ──────────────── -->
@@ -303,6 +317,62 @@ const MEASURES = [
    * only harmless until someone is talked into pasting a "schema" from a
    * stranger. `el()` takes text, never markup.
    */
+  /**
+   * The card that follows a verdict: what a schema cannot tell you, and the
+   * one link that can. Personalised with the reader's own two numbers.
+   */
+  function nextStep(report: Report): HTMLElement {
+    const card = el(
+      "section",
+      "mt-10 rounded-2xl border border-cyan/25 bg-cyan-wash/40 p-7 sm:p-9",
+    );
+
+    card.append(el("p", "text-sm font-medium text-cyan", "What a schema cannot tell you"));
+    card.append(
+      el(
+        "h2",
+        "mt-2.5 text-2xl font-semibold tracking-tight text-balance text-ink-100",
+        "You have the schema half. The other half needs real calls.",
+      ),
+    );
+
+    const tools = plural(report.tool_count, "tool");
+    const tokens = report.cost.tokens.toLocaleString("en-US");
+
+    card.append(
+      el(
+        "p",
+        "mt-3 max-w-2xl text-[15px] leading-7 text-pretty text-ink-500",
+        `That was ${tools}, costing ${tokens} tokens of context on every session before anyone ` +
+          `asks a question. What it cannot show you is which of them agents retried, which ` +
+          `came back empty without raising an error, and which it never called at all. Those ` +
+          `need traffic. MCPulse measures them from inside your own server — two lines, free ` +
+          `for one server, and it never sees an argument or a result.`,
+      ),
+    );
+
+    const actions = el("div", "mt-7 flex flex-col gap-3 sm:flex-row sm:items-center");
+
+    const signup = el(
+      "a",
+      "inline-flex h-11 items-center justify-center rounded-xl bg-btn px-5 text-sm font-medium text-btn-fg transition-colors hover:bg-btn-hover",
+      "Sign up — free",
+    );
+    signup.href = results.dataset.signup ?? "/";
+
+    const demo = el(
+      "a",
+      "inline-flex h-11 items-center justify-center rounded-xl border border-line px-5 text-sm font-medium text-ink-300 transition-colors hover:border-line-strong hover:text-ink-100",
+      "See it on the live demo",
+    );
+    demo.href = "/demo";
+
+    actions.append(signup, demo);
+    card.append(actions);
+
+    return card;
+  }
+
   function el<K extends keyof HTMLElementTagNameMap>(
     tag: K,
     className = "",
@@ -760,6 +830,31 @@ const MEASURES = [
     }
 
     results.append(findings);
+
+    /**
+     * What to do about it, at the moment the reader is looking at the damage.
+     *
+     * This page was the site's best asset and its worst funnel. It gives a
+     * stranger a real, specific verdict on their own server — and then handed
+     * them a two-column aside below the fold with the sign-up as a plain text
+     * link in the second card. The reader most likely to convert on this whole
+     * site is the one who has just been told four of their tools are
+     * indistinguishable, and at that exact moment the page asked them for
+     * nothing.
+     *
+     * So the next step is appended to the results themselves, arriving in the
+     * same scroll as the findings rather than after them.
+     *
+     * It is built from `report` on purpose. "It cannot tell you which of your
+     * 14 tools the model retried" is a different sentence from the generic
+     * version, because the reader has just watched those 14 tools get counted
+     * and knows the number is theirs. The honest limit of a schema check is
+     * also the product's entire pitch, which is a rare thing to be able to say
+     * without stretching: this really cannot see traffic, and traffic really is
+     * where the rest of the answer is.
+     */
+    results.append(nextStep(report));
+
     show(results, true);
     show(error, false);
     show(clear, true);

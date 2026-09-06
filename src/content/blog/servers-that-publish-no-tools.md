@@ -1,7 +1,7 @@
 ---
 title: Eight MCP servers publish no tools at all
 description: They are listed, installable and reachable, and tools/list comes back empty. This figure was 13 until we deduplicated the corpus — a lesson in counting.
-published: 2026-09-23
+published: 2026-08-26
 topic: Measurement
 minutes: 4
 ---

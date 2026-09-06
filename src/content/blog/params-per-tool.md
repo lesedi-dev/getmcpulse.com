@@ -1,7 +1,7 @@
 ---
 title: Is there a right number of parameters per MCP tool?
 description: The median MCP tool takes 2 parameters and 9.5% take none. The undescribed-parameter rate is worst on tools with exactly one — 26.9%, against 19.9% at four to six.
-published: 2026-09-05
+published: 2026-08-07
 topic: Tool design
 minutes: 5
 ---

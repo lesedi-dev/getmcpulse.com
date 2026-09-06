@@ -43,7 +43,7 @@ The rest of the payload is deliberately dimensional:
   "session_id": "s_7f2a91",
   "tool_name": "search_orders",
   "client_name": "claude-desktop",
-  "started_at": "2026-08-09T14:22:31Z",
+  "started_at": "2026-06-23T14:22:31Z",
   "duration_ms": 240,
   "outcome": "ok",
   "response_bytes": 1420,

@@ -1,7 +1,7 @@
 ---
 title: How to test your MCP server's tool schemas
 description: A twenty-minute pass — dump the real response, run four checks, fix the two faults that account for most of the corpus, then put one assertion in CI.
-published: 2026-09-25
+published: 2026-08-28
 topic: Tool design
 minutes: 6
 ---

@@ -1,7 +1,7 @@
 ---
 title: How to read a tools/list response
 description: The JSON your MCP server returns is the entire brief a model gets. Here is how to read it the way a model has to, field by field.
-published: 2026-09-24
+published: 2026-08-27
 topic: Tool design
 minutes: 6
 ---

@@ -4,6 +4,7 @@ import LanguagePicker from "../components/LanguagePicker.astro";
 import CopyBlock from "../components/CopyBlock.astro";
 import { WRAP_SNIPPET, SITE } from "../lib/site";
 import { highlight } from "../lib/highlight";
+import CtaBand from "../components/CtaBand.astro";
 
 const MANAGERS = [
   "npm install @mcpulse/sdk",
@@ -40,7 +41,7 @@ const HTTP_TOKENS = highlight(HTTP_SNIPPET);
 <Detail
   eyebrow="Installation"
   title="Install MCPulse in two lines"
-  lead="The package runs inside your own server. It is not a proxy — your URL does not change, your OAuth does not break, and if MCPulse is down your server keeps serving."
+  lead="Add the package, paste your key, wrap your server. It runs inside your own process, not in front of it — so your URL, your OAuth and your uptime are untouched."
   description="Install @mcpulse/sdk: pick your language, add the package, set your key, wrap your server. Four steps, about two minutes."
 >
   {/* The language grid comes first, and the four steps are its TypeScript
@@ -165,4 +166,10 @@ const HTTP_TOKENS = highlight(HTTP_SNIPPET);
     </p>
   </section>
   </LanguagePicker>
+
+  <CtaBand
+    heading="Get your key, then run these two lines"
+    body="Create a server in the dashboard and copy the key into the .env above. It takes about a minute, and your dead tools and schema cost show up straight away."
+    secondary="demo"
+  />
 </Detail>

@@ -1,7 +1,7 @@
 ---
 title: Should you prefix MCP tool names with the server name?
 description: 10.6% of servers do. They collide less, not more — 14.6% zero-distinctive against 18.5% — and the cost is bytes rather than clarity.
-published: 2026-09-18
+published: 2026-08-21
 topic: Tool design
 minutes: 5
 ---

@@ -1,7 +1,7 @@
 ---
 title: When "valid values" is prose and the schema says string
 description: 857 parameters across 4.4% of servers name their valid values in prose and leave the schema an open string. A one-line fix, and only one of the two is enforced.
-published: 2026-09-11
+published: 2026-08-14
 topic: Tool design
 minutes: 4
 ---

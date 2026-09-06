@@ -6,6 +6,7 @@ import DataFlow from "../components/DataFlow.astro";
 import Faq from "../components/Faq.astro";
 import { OUTCOMES, PILLARS } from "../lib/content";
 import { SITE } from "../lib/site";
+import CtaBand from "../components/CtaBand.astro";
 
 /**
  * How it works, at the length the question deserves.
@@ -70,8 +71,8 @@ const SECTIONS = [
 
 <Detail
   eyebrow="How it works"
-  title="How MCPulse sees your server without touching its traffic"
-  lead="Nothing about your server should have to change so that you can see it — not its URL, not its auth, not its dependencies, and not its uptime."
+  title="How it works, and what never leaves your server"
+  lead="Nothing about your server has to change so that you can see it. Not its URL, not its auth, not its dependencies, and not its uptime."
   description="How MCPulse collects data: an npm package inside your own server, sizes and hashes only, two lines to install."
   width="full"
   sections={SECTIONS}
@@ -278,4 +279,10 @@ const SECTIONS = [
       </div>
     </section>
   </div>
+
+  <CtaBand
+    heading="Now point it at your own server"
+    body="Two lines inside your process. Your URL, your OAuth, your deployment and your dependencies all stay exactly as they are."
+    secondary="check"
+  />
 </Detail>

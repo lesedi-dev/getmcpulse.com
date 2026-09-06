@@ -1,7 +1,7 @@
 ---
 title: What does your MCP tool list cost per connection?
 description: The median public MCP server spends about 1,250 tokens of schema before anyone asks a question. The 90th percentile spends 7,992. One spends 286,000.
-published: 2026-09-02
+published: 2026-08-01
 topic: Measurement
 minutes: 6
 ---

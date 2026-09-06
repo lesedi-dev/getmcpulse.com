@@ -1,5 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
+import CtaBand from "../components/CtaBand.astro";
 ---
 
 {/* `noindex` because Astro serves this as a real 200 on a static host: without
@@ -35,4 +36,10 @@ import Base from "../layouts/Base.astro";
       </div>
     </div>
   </section>
+
+  <CtaBand
+    heading="While you are here"
+    body="MCPulse shows you which of your MCP tools agents retry, which come back empty, and which they never call at all."
+    secondary="check"
+  />
 </Base>

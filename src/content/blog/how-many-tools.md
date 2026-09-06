@@ -1,7 +1,7 @@
 ---
 title: How many tools should an MCP server have?
 description: Across 4,749 public servers, the share of tools with nothing to tell them apart rises from 0.5% to 32.4% as the tool count grows. That is a factor of sixty-three.
-published: 2026-09-02
+published: 2026-07-31
 topic: Tool design
 minutes: 7
 ---

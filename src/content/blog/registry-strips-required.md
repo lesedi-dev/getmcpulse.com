@@ -1,10 +1,9 @@
 ---
 title: The Smithery registry strips required from stored schemas
 description: Zero of 82,549 stored tools carry a top-level required array. 2,064 nested objects still carry theirs, which narrows the cause considerably.
-published: 2026-10-02
+published: 2026-09-04
 topic: Engineering
 minutes: 5
-draft: true
 ---
 
 If you are analysing MCP tool schemas from the [Smithery](https://smithery.ai) registry, one field is not there, and it does not announce itself: the top-level `required` array on `inputSchema`.
@@ -84,4 +83,6 @@ Our collector, the raw corpus and the reference-server diff are all in [getmcpul
 
 We think Smithery is a good thing and this is a small bug in a useful service. The registry is what made a 4,749-server survey possible at all; booting containers would have given us a few hundred servers selected for needing no secrets, which is a different and much worse corpus.
 
-We reported this to them before publishing.
+We have not raised this with Smithery privately — this post is the report. Everything needed to
+confirm or dismiss it is above: the two-line check, the four reference servers we diffed against,
+and the collector and raw corpus in the study repo.

@@ -1,7 +1,7 @@
 ---
 title: Why the model won't call your tool
 description: Six causes, ordered by how often they turn up in a corpus of 4,749 servers. Start with the one that is 17.7% likely, not the one that feels most plausible.
-published: 2026-09-26
+published: 2026-08-29
 topic: Tool design
 minutes: 7
 ---

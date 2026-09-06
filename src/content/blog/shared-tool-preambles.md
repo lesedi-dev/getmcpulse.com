@@ -1,7 +1,7 @@
 ---
 title: Your shared tool preamble costs more than it buys
 description: One server repeats the same 112 words at the start of all 193 of its tool descriptions. It was added to help. It is why its tools cannot be told apart.
-published: 2026-09-04
+published: 2026-08-06
 topic: Tool design
 minutes: 6
 ---
