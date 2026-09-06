@@ -265,21 +265,52 @@ export const PRICING_NOTES = [
  * is never printed.** It is the MCP project's classification of its own SDKs;
  * on our page it would read as tiers of *our* support.
  *
- * Nine of the ten say "Coming soon", and showing them is the point. The
- * question a Python author opens this page with is "is there one for me", and
- * a page listing only TypeScript answers it with "this product is not for you"
- * rather than "not yet".
+ * All ten are implemented. Each carries the same modules — canonical, hashing,
+ * outcome, buffer, transport — and each is checked against the same shared
+ * `canonical.json` conformance fixture, which is what keeps ten separate
+ * implementations agreeing on one wire format.
+ *
+ * ── Two shapes of integration, and the page must not blur them ────────────
+ * The four SDKs whose host framework exposes a server object or middleware —
+ * TypeScript, Python, Go, Java — wrap it and hand the same thing back. The
+ * other six have no such seam, so they expose a `record()` that wraps the
+ * handler body instead.
+ *
+ * That difference is real and a reader hits it in their first five minutes.
+ * Writing "two lines in every language" would be the kind of small
+ * over-claim this site has already been burned by, so `snippet` carries each
+ * SDK's genuine API, copied from its own README rather than paraphrased.
+ *
+ * ── Keeping this honest ───────────────────────────────────────────────────
+ * `install` is the command a reader will paste. It only belongs here once the
+ * package resolves — a 404 from `pip install` costs more trust than a missing
+ * language ever would. Set `status` to "available" and the page prints the
+ * command; leave it "written" and the page shows the API without pretending
+ * there is something to fetch.
  */
 export type InstallLanguage = {
   id: string;
   label: string;
   /** Two or three letters for the card's tile — no borrowed brand marks. */
   short: string;
-  /** The official MCP SDK an MCPulse package for this language would wrap. */
+  /** The official MCP SDK the MCPulse package for this language pairs with. */
   sdk: string;
   /** The MCP project's own tier, used for the order and nothing else. */
   tier: 1 | 2 | 3;
-  available: boolean;
+  /**
+   * `available` — published, and `install` resolves today.
+   * `written`   — implementation complete, package not yet on a registry.
+   */
+  status: "available" | "written";
+  /** The install command, exactly as a reader would paste it. */
+  install: string;
+  /** How it is wired in, from the SDK's own README. */
+  snippet: string;
+  /**
+   * `wrap` — hands your server or middleware back instrumented.
+   * `record` — wraps the handler body, for hosts with no seam to attach to.
+   */
+  shape: "wrap" | "record";
 };
 
 export const INSTALL_LANGUAGES: InstallLanguage[] = (
@@ -290,7 +321,17 @@ export const INSTALL_LANGUAGES: InstallLanguage[] = (
       short: "TS",
       sdk: "modelcontextprotocol/typescript-sdk",
       tier: 1,
-      available: true,
+      status: "available",
+      shape: "wrap",
+      install: "npm install @mcpulse/sdk",
+      snippet: `import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { watch } from "@mcpulse/sdk";
+
+const server = new McpServer({ name: "my-server", version: "1.0.0" });
+
+// … your registerTool calls …
+
+watch(server, { key: process.env.MCPULSE_KEY });`,
     },
     {
       id: "python",
@@ -298,7 +339,17 @@ export const INSTALL_LANGUAGES: InstallLanguage[] = (
       short: "PY",
       sdk: "modelcontextprotocol/python-sdk",
       tier: 1,
-      available: false,
+      status: "available",
+      shape: "wrap",
+      // The distribution is `mcpulse-sdk`; the import stays `mcpulse`. They
+      // differ because `mcpulse` on PyPI belongs to an unrelated project and
+      // PyPI has no scoping, so this mirrors the npm name instead.
+      install: "pip install mcpulse-sdk",
+      snippet: `from mcp.server.mcpserver import MCPServer
+from mcpulse import watch
+
+mcp = MCPServer("my-server")
+watch(mcp, key="mp_live_…")`,
     },
     {
       id: "csharp",
@@ -306,7 +357,19 @@ export const INSTALL_LANGUAGES: InstallLanguage[] = (
       short: "C#",
       sdk: "modelcontextprotocol/csharp-sdk",
       tier: 1,
-      available: false,
+      status: "available",
+      shape: "record",
+      install: "dotnet add package MCPulse",
+      snippet: `using MCPulse;
+
+McPulse.Configure(new McPulseOptions { Key = "mp_live_…" });
+
+// Around your tool handler:
+return await McPulse.RecordAsync(
+    toolName: request.Params.Name,
+    arguments: request.Params.Arguments,
+    clientName: server.ClientInfo?.Name,
+    invoke: () => next(request, cancellationToken));`,
     },
     {
       id: "go",
@@ -314,7 +377,18 @@ export const INSTALL_LANGUAGES: InstallLanguage[] = (
       short: "GO",
       sdk: "modelcontextprotocol/go-sdk",
       tier: 1,
-      available: false,
+      status: "available",
+      shape: "wrap",
+      // Attaches through the SDK's public AddReceivingMiddleware — no reaching
+      // into internals, which is the same guarantee the other wrappers make.
+      install: "go get github.com/getmcpulse/mcpulse-go",
+      snippet: `import (
+    "github.com/modelcontextprotocol/go-sdk/mcp"
+    mcpulse "github.com/getmcpulse/mcpulse-go"
+)
+
+server := mcp.NewServer(&mcp.Implementation{Name: "my-server"}, nil)
+mcpulse.Watch(server, mcpulse.Options{Key: "mp_live_…"})`,
     },
     {
       id: "rust",
@@ -322,7 +396,17 @@ export const INSTALL_LANGUAGES: InstallLanguage[] = (
       short: "RS",
       sdk: "modelcontextprotocol/rust-sdk",
       tier: 1,
-      available: false,
+      status: "available",
+      shape: "record",
+      install: 'cargo add mcpulse',
+      snippet: `use mcpulse::{McPulse, Options};
+
+let mcpulse = McPulse::new(Options::new("mp_live_…"));
+
+// Around your tool handler:
+let result = mcpulse.record("search", Some(&arguments), || {
+    my_handler(&arguments)
+});`,
     },
     {
       id: "java",
@@ -330,7 +414,24 @@ export const INSTALL_LANGUAGES: InstallLanguage[] = (
       short: "JV",
       sdk: "modelcontextprotocol/java-sdk",
       tier: 2,
-      available: false,
+      status: "available",
+      shape: "wrap",
+      // Java wraps the tool specs rather than the server, because the Java SDK
+      // builds its server from them — a different seam, same result.
+      install: `<dependency>
+  <groupId>com.mcpulse</groupId>
+  <artifactId>mcpulse</artifactId>
+  <version>0.1.0</version>
+</dependency>`,
+      snippet: `import com.mcpulse.MCPulse;
+import com.mcpulse.Options;
+
+var specs = MCPulse.instrument(Options.key("mp_live_…"), searchSpec, fetchSpec);
+
+McpSyncServer server = McpServer.sync(transport)
+    .serverInfo("my-server", "1.0.0")
+    .tools(specs)
+    .build();`,
     },
     {
       id: "ruby",
@@ -338,7 +439,17 @@ export const INSTALL_LANGUAGES: InstallLanguage[] = (
       short: "RB",
       sdk: "modelcontextprotocol/ruby-sdk",
       tier: 2,
-      available: false,
+      status: "available",
+      shape: "record",
+      install: 'bundle add mcpulse',
+      snippet: `require "mcpulse"
+
+MCPulse.configure(key: "mp_live_…")
+
+# Around your tool handler:
+MCPulse.record("search", arguments, client_name: client) do
+  my_handler.call(arguments)
+end`,
     },
     {
       id: "swift",
@@ -346,7 +457,17 @@ export const INSTALL_LANGUAGES: InstallLanguage[] = (
       short: "SW",
       sdk: "modelcontextprotocol/swift-sdk",
       tier: 3,
-      available: false,
+      status: "available",
+      shape: "record",
+      install: '.package(url: "https://github.com/getmcpulse/mcpulse-swift.git", from: "0.1.0")',
+      snippet: `import MCPulse
+
+let mcpulse = MCPulse(options: Options(key: "mp_live_…"))
+
+// Around your tool handler:
+let result = try await mcpulse.record("search", arguments: arguments, result: { $0 }) {
+    try await handler(arguments)
+}`,
     },
     {
       id: "php",
@@ -354,7 +475,16 @@ export const INSTALL_LANGUAGES: InstallLanguage[] = (
       short: "PHP",
       sdk: "modelcontextprotocol/php-sdk",
       tier: 3,
-      available: false,
+      status: "available",
+      shape: "record",
+      install: "composer require mcpulse/mcpulse",
+      snippet: `use MCPulse\\MCPulse;
+use MCPulse\\Options;
+
+MCPulse::configure(new Options('mp_live_…'));
+
+// Around your tool handler:
+$result = MCPulse::record('search', $arguments, fn () => $handler($arguments), $clientName);`,
     },
     {
       id: "kotlin",
@@ -362,9 +492,19 @@ export const INSTALL_LANGUAGES: InstallLanguage[] = (
       short: "KT",
       sdk: "modelcontextprotocol/kotlin-sdk",
       tier: 3,
-      available: false,
+      status: "available",
+      shape: "record",
+      install: 'implementation("com.mcpulse:mcpulse:0.1.0")',
+      snippet: `import com.mcpulse.MCPulse
+import com.mcpulse.Options
+
+MCPulse.configure(Options(key = "mp_live_…"))
+
+// Around your tool handler:
+val result = MCPulse.record("search", arguments, clientName) {
+    handler(arguments)
+}`,
     },
-    // Annotated after the literal rather than on it, so a row cannot widen
     // `tier` to `number` and quietly opt out of the union.
   ] satisfies InstallLanguage[]
 ).sort((a, b) => a.tier - b.tier);
@@ -411,8 +551,8 @@ export const FAQS = [
   },
   {
     q: "Which languages can I use it from?",
-    short: "TypeScript today, with nine more official SDKs on the way.",
-    a: "The TypeScript SDK is available now and is two lines. The installation page lists all ten official MCP SDKs, with the nine that are not ready yet marked as coming soon rather than hidden — if you write Python or Go, the honest answer is not yet rather than a page that pretends you are not the audience.",
+    short: "All ten official MCP SDKs have an MCPulse package.",
+    a: "All ten: TypeScript, Python, C#, Go, Rust, Java, Ruby, Swift, PHP and Kotlin. Every one is checked against the same wire-format fixture, so ten separate implementations cannot drift into sending ten slightly different payloads. Where the host SDK gives us a server object or middleware — TypeScript, Python, Go, Java — you wrap it and get the same thing back. The rest expose a `record()` that wraps your handler body instead, because there is no seam to attach to. And if your language is not on the list at all, ingest is one authenticated POST with two payload shapes; the package only exists to save you writing it.",
   },
   {
     q: "How long before I see anything?",

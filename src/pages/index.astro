@@ -430,13 +430,26 @@ const schema = [
             which then costs the schema survey its credibility too. Losing that
             reader in four seconds is cheaper than losing the ones who stay.
           */}
+          {/* This said "TypeScript SDK today — other languages are not ready
+              yet", which was true of one SDK and is now true of none: all ten
+              official MCP SDKs have an MCPulse package. The line was costing
+              every Python and Go author on the page. */}
+          {/* "Free forever", not "Free for one server".
+
+              The two say different things and belong in different places. This
+              line sits under the button and answers "what does saying yes cost
+              me" — and the answer is nothing, ever, because the free tier is a
+              tier rather than a trial. "One server" is a plan *limit*, which is
+              the pricing section's job further down; putting it here spends the
+              reader's attention on a cap before they have any reason to care
+              what the caps are. */}
           <p class="mt-5 text-sm text-ink-300">
-            Free for one server. No card, no trial to expire. TypeScript SDK today —
+            Free forever. No card, no trial to expire.
             <a
               href="/install"
               class="text-ink-500 underline-offset-2 hover:text-ink-100 hover:underline"
-              >other languages</a
-            > are not ready yet.
+              >All ten MCP SDKs</a
+            > supported.
           </p>
         </div>
 
@@ -921,7 +934,7 @@ const schema = [
     */}
     <div class="mx-auto -mt-10 max-w-7xl px-5 pb-24 sm:px-8">
       <a href="/install" class:list={["reveal", BUTTON]}>
-        TypeScript today — which languages are coming →
+        Install steps for all ten MCP SDKs →
       </a>
     </div>
   </div>

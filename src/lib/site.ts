@@ -108,6 +108,20 @@ export const SITE = {
 
   /** The agent skill: a workflow guide to pair with the MCP connector. */
   skills: "https://github.com/getmcpulse/skills",
+
+  /**
+   * The Smithery listing for the MCP connector.
+   *
+   * It earns its place in the footer twice over. It is where somebody browsing
+   * a registry rather than this site finds the connector, which is a real route
+   * in — and Smithery's own vendor verification scans the homepage for a link
+   * back to the listing, so this link is what makes the server verifiable.
+   * Remove it and the listing quietly loses its tick.
+   *
+   * The path is `/servers/`, not `/server/`: the singular answers a 308 to the
+   * plural, which is fine in a browser and one hop a scanner need not follow.
+   */
+  smithery: "https://smithery.ai/servers/mcpulse/mcpulse",
 } as const;
 
 /**

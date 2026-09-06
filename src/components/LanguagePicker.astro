@@ -51,17 +51,27 @@ const css = INSTALL_LANGUAGES.map(
     <legend class="text-xl font-semibold tracking-tight text-ink-100">
       Your server's language
     </legend>
+    {/* "TypeScript today. The rest are on the way" was true when one SDK
+        existed. All ten are written now, each against the same conformance
+        fixture, so the lead says that instead of apologising for nine of
+        them. */}
     <p class="mt-3 text-[15px] leading-7 text-ink-500">
-      TypeScript today. The rest are on the way, in the order the MCP project ships its own SDKs —
-      and none of them is a wall: ingest is a plain HTTP <code
+      All ten official MCP SDKs have an MCPulse package, each checked against the same wire-format
+      fixture so they cannot drift apart. And none of them is a wall: ingest is a plain HTTP <code
         class="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-ink-100">POST</code
-      >, so any language can report today.
+      >, so a language without a package can still report today.
     </p>
 
     {/* The inputs, ahead of everything that reacts to them. Hidden with
         clip rather than `display: none`, which would take them out of the
         tab order and off the accessibility tree — the control would then
-        be ten unreachable labels. */}
+        be ten unreachable labels.
+
+        The default is TypeScript by name, not "whichever one is available".
+        All ten are available now, so a status test marked all ten `checked`
+        and the browser kept the last radio it parsed — the page opened on
+        Kotlin. Which one leads is an editorial choice regardless: TypeScript
+        has the richest panel and the largest share of MCP servers. */}
     {
       INSTALL_LANGUAGES.map((language) => (
         <input
@@ -69,7 +79,7 @@ const css = INSTALL_LANGUAGES.map(
           name="lang"
           id={`lang-${language.id}`}
           class="sr-only"
-          checked={language.available}
+          checked={language.id === "typescript"}
         />
       ))
     }
@@ -99,14 +109,30 @@ const css = INSTALL_LANGUAGES.map(
                 {language.label}
               </span>
               {/* The state in words, on the card, so the grid reads without
-                  selecting anything. */}
+                  selecting anything.
+
+                  Three labels rather than two. "Coming soon" covered both a
+                  finished package awaiting a release and a language nobody has
+                  started, and flattening those told a Python author the least
+                  useful version of the truth — their SDK is written and tested,
+                  and the old label made it sound like an intention. */}
               <span
                 class:list={[
                   "mt-1 block text-[11px]",
-                  language.available ? "text-ok" : "text-ink-700",
+                  language.status === "available"
+                    ? "text-ok"
+                    : language.status === "written"
+                      ? "text-cyan"
+                      : "text-ink-700",
                 ]}
               >
-                {language.available ? "Available" : "Coming soon"}
+                {
+                  language.status === "available"
+                    ? "Available"
+                    : language.status === "written"
+                      ? "Written, unreleased"
+                      : "Planned"
+                }
               </span>
             </span>
           </label>
@@ -120,30 +146,88 @@ const css = INSTALL_LANGUAGES.map(
       <slot />
     </div>
 
+    {/*
+      Every language except TypeScript, each with its own real steps.
+
+      TypeScript keeps the `<slot />` above because the install page hands it a
+      richer panel — the animated four-step sequence with the terminal, the
+      .env and the wrap. The other nine get the same three beats in a plainer
+      form: install, wrap, key.
+
+      This block used to be a "Coming soon" card for nine languages. All ten
+      SDKs exist, so the card was describing a state that had not been true for
+      a while — a page telling a Go author to go and read the MCP Go SDK instead
+      of telling them `go get`.
+    */}
     {
-      INSTALL_LANGUAGES.filter((language) => !language.available).map((language) => (
+      INSTALL_LANGUAGES.filter((language) => language.id !== "typescript").map((language) => (
         <div data-panel={language.id} class="lang-panel">
           <div class="rounded-2xl border border-line bg-ink-900/40 p-7">
-            <p class="text-xs font-medium tracking-wide text-ink-700 uppercase">Coming soon</p>
-            <h2 class="mt-2 text-xl font-semibold tracking-tight text-ink-100">
-              An MCPulse package for {language.label}
-            </h2>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h2 class="text-xl font-semibold tracking-tight text-ink-100">
+                Install for {language.label}
+              </h2>
+              {language.status === "written" && (
+                <span class="rounded-md bg-warn-wash px-2 py-0.5 text-[11px] font-medium text-warn">
+                  Package not published yet
+                </span>
+              )}
+            </div>
 
-            {/* No date. A promise with a month on it is a promise to be wrong
-                about — and the reader's real question is answered below it
-                anyway. */}
+            {/*
+              The shape, said once, at the top.
+
+              Six of the ten have no server object or middleware to attach to,
+              so they wrap the handler body with `record()` instead. A reader
+              who expects the TypeScript two-liner and meets a closure needs to
+              know why before they read the code, not after.
+            */}
             <p class="mt-3 text-[15px] leading-7 text-ink-500">
-              It will wrap the official SDK, so if this is the one you are building on, the install
-              will be the same two lines TypeScript gets.
+              {language.shape === "wrap"
+                ? "Wrap the server you already built. It is handed straight back, so nothing downstream changes."
+                : "Wrap your handler body. There is no server object to attach to here, so recording goes around the call instead of in front of it."}
             </p>
+
+            <ol class="mt-7 space-y-6">
+              <li>
+                <p class="text-[13px] font-medium tracking-wide text-ink-700 uppercase">
+                  1 · Add the package
+                </p>
+                <pre class="term mt-2.5 overflow-x-auto rounded-xl p-4 font-mono text-[13px] leading-6 text-ink-300">{language.install}</pre>
+                {language.status === "written" && (
+                  <p class="mt-2 text-[13px] leading-6 text-warn">
+                    This resolves once the package is released. The implementation is complete and
+                    tested against the same conformance fixture as the rest.
+                  </p>
+                )}
+              </li>
+
+              <li>
+                <p class="text-[13px] font-medium tracking-wide text-ink-700 uppercase">
+                  2 · {language.shape === "wrap" ? "Wrap your server" : "Wrap your handler"}
+                </p>
+                <pre class="term mt-2.5 overflow-x-auto rounded-xl p-4 font-mono text-[13px] leading-6 text-ink-300">{language.snippet}</pre>
+              </li>
+
+              <li>
+                <p class="text-[13px] font-medium tracking-wide text-ink-700 uppercase">
+                  3 · Add your key
+                </p>
+                <pre class="term mt-2.5 overflow-x-auto rounded-xl p-4 font-mono text-[13px] leading-6 text-ink-300">MCPULSE_KEY=mp_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</pre>
+                <p class="mt-2 text-[13px] leading-6 text-ink-700">
+                  Shown once, when you create the MCP. An ingest key is a secret — anyone holding it
+                  can write data into this MCP.
+                </p>
+              </li>
+            </ol>
 
             <a
               href={`https://github.com/${language.sdk}`}
               target="_blank"
               rel="noreferrer noopener"
-              class="mt-4 inline-flex items-center gap-1.5 font-mono text-[13px] text-cyan transition-colors hover:text-cyan-dim"
+              class="mt-7 inline-flex items-center gap-1.5 font-mono text-[13px] text-cyan transition-colors hover:text-cyan-dim"
             >
-              {language.sdk}
+              Pairs with {language.sdk}
               <svg
                 class="h-3 w-3 shrink-0"
                 viewBox="0 0 12 12"
@@ -160,9 +244,7 @@ const css = INSTALL_LANGUAGES.map(
 
             <hr class="my-7 border-0 border-t border-line-soft" />
 
-            <h3 class="text-[15px] font-semibold text-ink-100">
-              You do not have to wait to send data
-            </h3>
+            <h3 class="text-[15px] font-semibold text-ink-100">Or skip the package entirely</h3>
             <p class="mt-2.5 text-[15px] leading-7 text-ink-500">
               Ingest is one authenticated{" "}
               <code class="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em] text-ink-100">

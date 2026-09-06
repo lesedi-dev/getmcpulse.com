@@ -67,6 +67,14 @@ const COLUMNS = [
       { href: `${SITE.docs}/mcp/skills`, label: "Agent skill" },
       { href: SITE.npm, label: "@mcpulse/sdk on npm" },
       { href: SITE.github, label: "GitHub" },
+      /**
+       * Below GitHub because it is a listing rather than a thing to read, and
+       * last in the column for the same reason. It is also the one link here
+       * that has a second job: Smithery's vendor verification scans this
+       * homepage for a link to the listing, and the tick on that listing
+       * depends on this row existing.
+       */
+      { href: SITE.smithery, label: "Smithery listing" },
     ],
   },
 ] as const;
