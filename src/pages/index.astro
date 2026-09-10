@@ -6,6 +6,7 @@ import PillarVisual from "../components/PillarVisual.astro";
 import ToolTable from "../components/ToolTable.astro";
 import PricingCards from "../components/PricingCards.astro";
 import Proof from "../components/Proof.astro";
+import Featured from "../components/Featured.astro";
 import Faq from "../components/Faq.astro";
 import CtaBand from "../components/CtaBand.astro";
 import { SITE, CTA } from "../lib/site";
@@ -1035,6 +1036,12 @@ const schema = [
 
   <!-- ── Proof ─────────────────────────────────────────────────────────── -->
   <Proof />
+
+  <!-- ── Featured on ───────────────────────────────────────────────────────
+       Directly under Proof, and much quieter than it. Proof is the argument;
+       this is the two directories that carry the product, and the badges they
+       ask for in return for carrying it. -->
+  <Featured />
 
   <!-- ── Questions ─────────────────────────────────────────────────────── -->
   <section class="border-t border-line-soft">

@@ -1,0 +1,103 @@
+---
+import { SITE } from "../lib/site";
+
+/**
+ * The directory badges, in one strip.
+ *
+ * ── Why this exists at all ────────────────────────────────────────────────
+ * Not as social proof. Two directory listings prove nothing that `Proof`
+ * above it does not prove better, and this section makes no claim about
+ * traction — the copy says where the product was listed and nothing else.
+ *
+ * It exists because the badges are the price of the listings. Maidensail, like
+ * Smithery, scans this site for a link back before it treats the listing as
+ * claimed, so these anchors are load-bearing: pull them and the listings
+ * quietly stop being ours. That is also why the Maidensail link keeps its
+ * `rel="dofollow"` exactly as the directory hands it out — it is a no-op to a
+ * browser (follow is the default) but it is what their own snippet contains,
+ * and a scanner comparing against that snippet should find a match.
+ *
+ * ── Why the badges are remote images ──────────────────────────────────────
+ * Everything else on this site is self-hosted, deliberately — no third-party
+ * request before the first paint. These two are the exception, and they earn
+ * it twice: a badge served from the directory is the one the directory can
+ * verify, and the Product Hunt one is generated per post rather than being a
+ * static asset we could copy.
+ *
+ * The cost is bounded. Both are `loading="lazy"` below the fold with their
+ * intrinsic dimensions declared, so nothing blocks the paint and nothing
+ * reflows when they land. If either host is down the row loses a badge and the
+ * page is otherwise unchanged.
+ *
+ * ── Why both badges are the light variant ─────────────────────────────────
+ * Maidensail publishes exactly one badge: a white card. Product Hunt offers
+ * three, and the dark one would sit better against `ink-950` on its own — but
+ * next to a white card it reads as two unrelated things bolted to the page.
+ * Two white plaques read as a row. They also survive the light theme, which a
+ * dark badge on a dark strip would not.
+ */
+
+const BADGES = [
+  {
+    href: `${SITE.productHunt}?utm_source=badge-featured&utm_medium=badge`,
+    src: `https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=${SITE.productHuntPostId}&theme=light`,
+    alt: "MCPulse — Analytics for MCP servers — on Product Hunt",
+    width: 250,
+    height: 54,
+    rel: undefined,
+  },
+  {
+    href: SITE.maidensail,
+    src: "https://maidensail.com/badge/mcpulse.svg",
+    alt: "MCPulse featured on Maidensail",
+    width: 190,
+    height: 44,
+    rel: "dofollow",
+  },
+] as const;
+---
+
+<section class="border-t border-line-soft">
+  <div class="mx-auto max-w-7xl px-5 py-14 sm:px-8">
+    <div
+      class="reveal flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between sm:gap-12"
+    >
+      <div class="max-w-sm">
+        <p class="text-sm font-medium text-cyan">Featured on</p>
+        <p class="mt-2 text-sm leading-6 text-pretty text-ink-500">
+          Launched on Product Hunt in September 2026. Listed where people go looking for tools like
+          this one, rather than only where they already know the name.
+        </p>
+      </div>
+
+      {/* Normalised to a 44px row height. The two badges are drawn at
+          different intrinsic sizes — 250×54 and 190×44 — and left alone they
+          step down the row like a mistake. `w-auto` keeps each one's own
+          aspect ratio while the declared width/height above still reserve the
+          right box before the image arrives. */}
+      <ul class="flex flex-wrap items-center gap-4">
+        {
+          BADGES.map((badge) => (
+            <li>
+              <a
+                href={badge.href}
+                rel={badge.rel}
+                class="inline-block rounded-[10px] transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan"
+              >
+                <img
+                  src={badge.src}
+                  alt={badge.alt}
+                  width={badge.width}
+                  height={badge.height}
+                  loading="lazy"
+                  decoding="async"
+                  class="h-11 w-auto"
+                />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>

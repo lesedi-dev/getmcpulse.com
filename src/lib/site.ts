@@ -122,6 +122,28 @@ export const SITE = {
    * plural, which is fine in a browser and one hop a scanner need not follow.
    */
   smithery: "https://smithery.ai/servers/mcpulse/mcpulse",
+
+  /**
+   * The Product Hunt launch, 8 September 2026.
+   *
+   * `products/mcpulse` rather than `posts/…`: the product page is permanent and
+   * follows the slug, where a post URL is one launch. The badge, however, is
+   * keyed by the *post* — 1243372, launch number one — because that is what
+   * Product Hunt's widget endpoint takes. The two cannot be derived from each
+   * other, so both are written down here.
+   */
+  productHunt: "https://www.producthunt.com/products/mcpulse",
+  productHuntPostId: 1243372,
+
+  /**
+   * The Maidensail listing.
+   *
+   * Same arrangement as Smithery: the badge is the listing's price. Maidensail
+   * checks this site for a link back before the listing counts as claimed, so
+   * the strip in `Featured.astro` is load-bearing rather than decoration —
+   * remove it and the listing goes unverified.
+   */
+  maidensail: "https://maidensail.com/startup/mcpulse",
 } as const;
 
 /**
