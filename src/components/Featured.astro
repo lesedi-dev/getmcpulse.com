@@ -19,22 +19,28 @@ import { SITE } from "../lib/site";
  *
  * ── Why the badges are remote images ──────────────────────────────────────
  * Everything else on this site is self-hosted, deliberately — no third-party
- * request before the first paint. These two are the exception, and they earn
- * it twice: a badge served from the directory is the one the directory can
+ * request before the first paint. These are the exception, and they earn it
+ * twice: a badge served from the directory is the one the directory can
  * verify, and the Product Hunt one is generated per post rather than being a
- * static asset we could copy.
+ * static asset we could copy at all.
  *
  * The cost is bounded. Both are `loading="lazy"` below the fold with their
  * intrinsic dimensions declared, so nothing blocks the paint and nothing
  * reflows when they land. If either host is down the row loses a badge and the
  * page is otherwise unchanged.
  *
- * ── Why both badges are the light variant ─────────────────────────────────
- * Maidensail publishes exactly one badge: a white card. Product Hunt offers
- * three, and the dark one would sit better against `ink-950` on its own — but
- * next to a white card it reads as two unrelated things bolted to the page.
- * Two white plaques read as a row. They also survive the light theme, which a
- * dark badge on a dark strip would not.
+ * ── Why every badge is the light variant ──────────────────────────────────
+ * Maidensail publishes exactly one badge, a white card, and that fixes the
+ * rule for the rest of the row: whatever a directory offers, take the variant
+ * that matches. Product Hunt's dark badge and Better Launch's blue gradient
+ * both look better against `ink-950` on their own, and both read as something
+ * bolted on when they sit next to a white card. Matched plaques read as a row.
+ * They also survive the light theme, which a dark badge would not.
+ *
+ * So Better Launch is `badge-find-light` rather than the `badge-find-gradient`
+ * their embed hands out. Nothing depends on which one is used — their badge is
+ * one static file shared by every listing, so the link is the only half that
+ * identifies us, and it is unchanged.
  */
 
 const BADGES = [
@@ -53,6 +59,14 @@ const BADGES = [
     width: 190,
     height: 44,
     rel: "dofollow",
+  },
+  {
+    href: SITE.betterLaunch,
+    src: "https://www.betterlaunch.co/badge-find-light.svg",
+    alt: "View MCPulse on Better Launch",
+    width: 200,
+    height: 56,
+    rel: undefined,
   },
 ] as const;
 ---

@@ -144,6 +144,16 @@ export const SITE = {
    * remove it and the listing goes unverified.
    */
   maidensail: "https://maidensail.com/startup/mcpulse",
+
+  /**
+   * The Better Launch listing.
+   *
+   * Its badge, unlike the other two, is not generated per product — every
+   * listing embeds the same `badge-find-*.svg`. So this URL is the only part
+   * of the pair that identifies us, which makes it the part worth keeping
+   * right: the badge image proves nothing on its own.
+   */
+  betterLaunch: "https://www.betterlaunch.co/product/mcpulse",
 } as const;
 
 /**
