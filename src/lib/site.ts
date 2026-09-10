@@ -169,6 +169,23 @@ export const SITE = {
    * change.
    */
   starterBest: "https://starterbest.com",
+
+  /**
+   * StartupBase. The utm string is theirs, carried over from their embed so
+   * the click lands in the report they already run.
+   *
+   * ⚠ Not live at the time of writing. `/products/mcpulse` answers 403 with
+   * their own "Page Not Found" page, where every slug they have never heard of
+   * — `mcpulse-2`, `mc-pulse`, `getmcpulse` — answers a clean 404. A 403 for
+   * this one and a 404 for the rest reads as submitted but unpublished, and
+   * their products sitemap agrees: 3,837 listings, rebuilt the same day, and
+   * MCPulse in none of them.
+   *
+   * So the URL is very probably right and merely early. Re-check it before
+   * assuming the badge works — `curl -sI` on it, or search that sitemap.
+   */
+  startupBase:
+    "https://startupbase.io/products/mcpulse?utm_source=startupbase&utm_medium=badge&utm_campaign=featured-badge-light",
 } as const;
 
 /**
