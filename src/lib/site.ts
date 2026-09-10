@@ -154,6 +154,21 @@ export const SITE = {
    * right: the badge image proves nothing on its own.
    */
   betterLaunch: "https://www.betterlaunch.co/product/mcpulse",
+
+  /**
+   * Starter Best — the home page, because there is nothing else to point at.
+   *
+   * The odd one in the strip. Better Launch at least gives the listing its own
+   * URL and shares only the badge image; here *both* halves are generic — the
+   * badge is one file served to everybody, and the link their embed hands out
+   * goes to `starterbest.com` and no further. Nothing in the pair says MCPulse.
+   *
+   * Every plausible listing path (`/mcpulse`, `/product/…`, `/startup/…`) 302s
+   * to their login, so if a public page for us exists it is not reachable to
+   * check. Point this at it if one turns up; the badge row needs no other
+   * change.
+   */
+  starterBest: "https://starterbest.com",
 } as const;
 
 /**

@@ -17,6 +17,13 @@ import { SITE } from "../lib/site";
  * browser (follow is the default) but it is what their own snippet contains,
  * and a scanner comparing against that snippet should find a match.
  *
+ * The one thing not carried over from the embeds is Starter Best's
+ * `target="_blank" rel="noopener noreferrer"`. No link on this site opens a
+ * tab, and outside a new tab `noopener` does nothing — but `noreferrer` does:
+ * it strips the Referer, so the directory cannot see that the click came from
+ * here. On a link exchange that is the wrong way round, and it is the half of
+ * the arrangement we would rather they could measure.
+ *
  * ── Why the badges are remote images ──────────────────────────────────────
  * Everything else on this site is self-hosted, deliberately — no third-party
  * request before the first paint. These are the exception, and they earn it
@@ -68,15 +75,28 @@ const BADGES = [
     height: 56,
     rel: undefined,
   },
+  {
+    href: SITE.starterBest,
+    src: "https://starterbest.com/badages-awards.svg",
+    alt: "MCPulse featured on Starter Best",
+    width: 184,
+    height: 54,
+    rel: undefined,
+  },
 ] as const;
 ---
 
 <section class="border-t border-line-soft">
   <div class="mx-auto max-w-7xl px-5 py-14 sm:px-8">
-    <div
-      class="reveal flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between sm:gap-12"
-    >
-      <div class="max-w-sm">
+    {/* Stacked, not text-left / badges-right.
+        That arrangement held two badges and just held three. The fourth put
+        the row over the width at 1024, and flex-wrap resolved it into a
+        ragged 2×2 block floated against the right margin — worse than either
+        a full row or a clean stack. Below the copy, the badges get the whole
+        column, wrap on a predictable left edge, and a fifth directory costs
+        nothing. */}
+    <div class="reveal">
+      <div class="max-w-xl">
         <p class="text-sm font-medium text-cyan">Featured on</p>
         <p class="mt-2 text-sm leading-6 text-pretty text-ink-500">
           Launched on Product Hunt in September 2026. Listed where people go looking for tools like
@@ -89,7 +109,7 @@ const BADGES = [
           step down the row like a mistake. `w-auto` keeps each one's own
           aspect ratio while the declared width/height above still reserve the
           right box before the image arrives. */}
-      <ul class="flex flex-wrap items-center gap-4">
+      <ul class="mt-8 flex flex-wrap items-center gap-4">
         {
           BADGES.map((badge) => (
             <li>
