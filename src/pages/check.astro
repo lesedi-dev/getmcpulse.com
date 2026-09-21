@@ -42,15 +42,24 @@ const schema = webPage(Astro.site, { path: "/check", title, description });
 const MEASURES = [
   {
     name: "Undescribed parameters",
-    corpus: `${(STUDY.undescribed_parameter_rate * 100).toFixed(1)}%`,
+    // The published figure is absence only. Both are shown because both are
+    // true and the second is the one that matters — quoting 21.5% alone would
+    // repeat the understatement this page now measures its way out of.
+    corpus: `${(STUDY.undescribed_parameter_rate * 100).toFixed(1)}% → ${(STUDY.substantive_undescribed_rate * 100).toFixed(1)}%`,
     blurb:
-      "A parameter with no description is a parameter the model guesses at. It has the name and the type, and that is the whole brief.",
+      "A parameter with no description is a parameter the model guesses at. It has the name and the type, and that is the whole brief. A description that only repeats the name is counted too — it passes every linter, and it takes the survey's rate from 21.5% to 24.7%.",
   },
   {
     name: "Description collisions",
     corpus: `${(STUDY.zero_distinctive_rate * 100).toFixed(1)}%`,
     blurb:
-      "Tools whose description contains no word that its siblings do not also use. Clear English that still cannot tell a model which tool to pick.",
+      "Tools whose description contains no word that its siblings do not also use. Clear English that still cannot tell a model which tool to pick. Measured over names too, because that is what a model falls back to when the descriptions stop discriminating.",
+  },
+  {
+    name: "Tools that act on the same thing",
+    corpus: `${(STUDY.input_overlap_on_servers * 100).toFixed(1)}% of servers`,
+    blurb:
+      "Two tools that operate on the same object can both be correct for one request, however differently they are worded. This is the pair a request routes to by accident, and a distinctive description does not prevent it.",
   },
   {
     name: "Schema token cost",
@@ -172,7 +181,7 @@ const MEASURES = [
       <div class="mx-auto max-w-3xl">
         <h2 class="text-xl font-semibold tracking-tight text-ink-100">What it measures</h2>
         <p class="mt-3 text-[15px] leading-7 text-ink-500">
-          Four things, all of them properties of a schema sitting still. None of them needs a model
+          Five things, all of them properties of a schema sitting still. None of them needs a model
           in the loop, and none of them can tell you how often a model actually gets it wrong —
           that needs traffic, which is <a href="/how-it-works" class="text-cyan hover:underline"
             >the other half of this</a
@@ -204,6 +213,25 @@ const MEASURES = [
           <strong class="font-medium text-ink-300">Collisions are measured within your paste.</strong
           > A tool's description is distinctive relative to the other tools you gave it, so pasting
           half your server will flatter it.
+        </p>
+        <p>
+          <strong class="font-medium text-ink-300"
+            >Acting on the same thing is not the same as being worded alike.</strong
+          > Distinctive share asks whether two descriptions look alike. Input overlap asks whether a
+          request could route to either tool, which is the question that predicts a wrong pick — and a
+          pair can be distinctively worded and still share every object it acts on. Input nouns are a
+          description's content words, minus the opening verb and minus anything after <code
+            class="font-mono">returns</code
+          > or a colon, plus your parameter names. No grammar model behind it, so adjectives survive as
+          nouns: that dilutes an overlap rather than inventing one.
+        </p>
+        <p>
+          <strong class="font-medium text-ink-300">Names are measured the same way.</strong> Authors
+          report that when descriptions stop discriminating, a model falls back to pattern-matching on
+          the tool name — so the name is the backstop, and a server whose descriptions collide and
+          whose names are clear is in a different position from one where both have gone. A prefix
+          every tool shares (<code class="font-mono">gmail_</code>) is stripped first: it says which
+          server a tool belongs to and discriminates nothing inside it.
         </p>
         <p>
           <strong class="font-medium text-ink-300">Tokens are bytes ÷ 4</strong>, the same estimate
@@ -268,6 +296,7 @@ const MEASURES = [
     analyse,
     highlightSegments,
     CheckError,
+    LOW_DISTINCTIVE,
     type Report,
     type ToolReport,
   } from "../lib/check";
@@ -575,10 +604,22 @@ const MEASURES = [
       metricCard({
         label: "Undescribed parameters",
         value: report.params.total === 0 ? "—" : pct(report.params.rate),
+        /**
+         * The headline stays absence-only, because the figure beside it is.
+         *
+         * The survey counted parameters with no `description`, so that is the
+         * only thing its percentage can be compared against. Restatements are
+         * the commoner failure and they are counted — they just cannot be
+         * added into a number printed next to a corpus rate that excludes
+         * them. So they go in the second sentence, with their own list below.
+         */
         detail:
           report.params.total === 0
             ? "No parameters found at the top level of any inputSchema."
-            : `${num(report.params.undescribed)} of ${num(report.params.total)} top-level parameters have no description.`,
+            : `${num(report.params.undescribed)} of ${num(report.params.total)} top-level parameters have no description.` +
+              (report.params.restates_name > 0
+                ? ` Another ${num(report.params.restates_name)} have one that only repeats the parameter name, taking the real rate to ${pct(report.params.substantive_rate)}.`
+                : ""),
         corpus: `survey: ${pct(STUDY.undescribed_parameter_rate)} · your size: ${pct(report.bucket.undescribed)}`,
         better: report.params.total === 0 ? null : report.params.rate <= report.bucket.undescribed,
         // Capped at 60%: the corpus worst bucket is 24.8%, so 60% puts the
@@ -647,8 +688,17 @@ const MEASURES = [
       metricCard({
         label: "Median distinctive share",
         value: pct(report.distinctive.median_share),
+        /**
+         * Two numbers, one card, and no fifth card.
+         *
+         * Output distinctiveness is a refinement of this figure rather than a
+         * separate measurement — same definition, narrower half of the
+         * sentence — so it belongs beside it. A grid of five is also a grid
+         * that stops being four headline numbers and starts being a table.
+         */
         detail:
-          "Of the words your median tool spends, this share is spent on words no sibling uses.",
+          `Of the words your median tool spends, this share is spent on words no sibling uses. ` +
+          `Your median tool *name* scores ${pct(report.distinctive.median_name_share)} the same way — the backstop when a description stops discriminating.`,
         corpus: `survey median: ${pct(STUDY.median_distinctive_share)}`,
         better:
           report.tool_count === 1
@@ -705,6 +755,51 @@ const MEASURES = [
                 "p",
                 "mt-0.5 font-mono text-[12.5px] leading-6 break-words text-ink-500",
                 tool.undescribed_deep.join(", "),
+              ),
+            );
+            return li;
+          },
+          intro,
+        ),
+      );
+    }
+
+    /**
+     * The failure with a populated field.
+     *
+     * Its own list rather than a line in the one above, because it is a
+     * different fix and a different argument. A missing description is work
+     * nobody did; this is work somebody did that landed on nothing, and it
+     * passes every linter, every schema validator and the survey's own
+     * definition. A reader who has just been told "0 undescribed parameters"
+     * has to be told this separately or they will reasonably conclude they
+     * are finished.
+     */
+    const restated = report.per_tool.filter((tool) => tool.restated_deep.length > 0);
+    if (restated.length > 0) {
+      any = true;
+
+      const intro = el("p", "mb-4 text-xs leading-5 text-ink-700");
+      intro.textContent =
+        "These parameters have a description that only repeats the parameter name. The model " +
+        "already has the name — the description needs to say something the name does not, such " +
+        `as the format, the units, or which of several plausible things it means. Across the ` +
+        `survey it is ${pct(STUDY.restated_parameter_rate)} of parameters, on ` +
+        `${pct(STUDY.restated_on_servers)} of servers, which takes the real undescribed rate from ` +
+        `${pct(STUDY.undescribed_parameter_rate)} to ${pct(STUDY.substantive_undescribed_rate)}.`;
+
+      findings.append(
+        detailList(
+          `${plural(report.params.deep_restated, "parameter")} whose description repeats its name, across ${plural(restated.length, "tool")}`,
+          restated,
+          (tool) => {
+            const li = el("li", "text-sm leading-6");
+            li.append(el("span", "font-mono text-ink-100", tool.name));
+            li.append(
+              el(
+                "p",
+                "mt-0.5 font-mono text-[12.5px] leading-6 break-words text-ink-500",
+                tool.restated_deep.join(", "),
               ),
             );
             return li;
@@ -779,6 +874,273 @@ const MEASURES = [
       );
     }
 
+    /**
+     * Pairs that act on the same thing, and could both be right for one
+     * request.
+     *
+     * A *pair* list rather than a per-tool score, because the finding is
+     * relational: what a reader can act on is which other tool a sentence
+     * could land on instead, and averaging that onto one tool turns it back
+     * into a number.
+     *
+     * The healthy-looking pairs come first and are labelled, because those are
+     * the ones nothing else on this page will ever mention — the collision
+     * lists above have already passed them.
+     */
+    const overlap = report.input_overlap;
+    if (overlap.length > 0) {
+      any = true;
+
+      const healthy = overlap.filter((pair) => pair.looks_healthy).length;
+      const intro = el("p", "mb-4 text-xs leading-5 text-ink-700");
+      intro.textContent =
+        `These pairs act on enough of the same thing that a request naming it could route to ` +
+        `either. That is a different question from whether the two descriptions look alike, and ` +
+        `it is the one that predicts a wrong pick` +
+        (healthy > 0
+          ? `. ${plural(healthy, "of them clears", "of them clear")} the survey's median distinctive share, so nothing else on this page flags them — that combination is on ${pct(STUDY.input_overlap_looks_healthy_on_servers)} of servers.`
+          : `. Across the survey a pair like this is on ${pct(STUDY.input_overlap_on_servers)} of servers.`);
+
+      findings.append(
+        detailList(
+          `${plural(overlap.length, "pair")} of tools that act on the same thing`,
+          overlap,
+          (pair) => {
+            const li = el("li", "border-b border-line-soft pb-3 last:border-b-0 last:pb-0");
+
+            const head = el("div", "flex items-baseline justify-between gap-3");
+            const names = el("span", "min-w-0 font-mono text-sm break-words text-ink-100");
+            names.textContent = `${pair.a} · ${pair.b}`;
+            head.append(names);
+            head.append(
+              el("span", "shrink-0 font-mono text-xs text-ink-700", pct0(pair.overlap)),
+            );
+            li.append(head);
+
+            const both = el("p", "mt-1 text-xs leading-5 text-ink-700");
+            both.append(document.createTextNode("Both operate on: "));
+            both.append(el("span", "font-mono text-ink-500", pair.shared.join(", ")));
+            li.append(both);
+
+            if (pair.looks_healthy) {
+              li.append(
+                el(
+                  "p",
+                  "mt-1 text-xs leading-5 text-warn",
+                  "Both descriptions score above the survey median, so the collision lists above do not mention this pair. If both could ever be correct for one sentence, merge them behind a mode parameter, or make each description name what it returns rather than what it takes.",
+                ),
+              );
+            }
+
+            return li;
+          },
+          intro,
+        ),
+      );
+    }
+
+    /**
+     * Nothing left to discriminate on.
+     *
+     * The serious quadrant. A tool whose description has stopped
+     * discriminating still has its name to fall back on, which is what
+     * authors report models actually do; a tool in here has neither.
+     */
+    const both_low = report.per_tool.filter((tool) =>
+      report.distinctive.both_low.includes(tool.name),
+    );
+    if (both_low.length > 0) {
+      any = true;
+
+      const intro = el("p", "mb-4 text-xs leading-5 text-ink-700");
+      intro.textContent =
+        `Under ${pct0(LOW_DISTINCTIVE)} distinctive on the description and on the name. When ` +
+        `descriptions stop discriminating a model falls back to the name; these have nothing left ` +
+        `on either side. Across the survey that is ${pct(STUDY.quadrants.both_low)} of all tools — ` +
+        `names collide harder than descriptions do, not less.` +
+        (report.distinctive.name_prefix
+          ? ` The shared "${report.distinctive.name_prefix}" prefix was taken off before scoring — it says which server a tool belongs to and discriminates nothing inside it.`
+          : "");
+
+      findings.append(
+        detailList(
+          `${plural(both_low.length, "tool")} with neither a distinct description nor a distinct name`,
+          both_low,
+          (tool) => {
+            const li = el("li", "border-b border-line-soft pb-3 last:border-b-0 last:pb-0");
+
+            const head = el("div", "flex items-baseline justify-between gap-3");
+            head.append(el("span", "font-mono text-sm text-ink-100", tool.name));
+            head.append(
+              el(
+                "span",
+                "shrink-0 font-mono text-xs text-ink-700",
+                `${pct0(tool.distinctive_share)} description · ${pct0(tool.name_distinctive_share)} name`,
+              ),
+            );
+            li.append(head);
+            li.append(described(tool));
+
+            const words = el("p", "mt-1 text-xs leading-5 text-ink-700");
+            words.append(document.createTextNode("Name tokens, none of them its own: "));
+            words.append(el("span", "font-mono text-ink-500", tool.name_words.join(", ")));
+            li.append(words);
+
+            return li;
+          },
+          intro,
+        ),
+      );
+    }
+
+    /**
+     * The client and the model are told different things.
+     *
+     * MCP carries `readOnlyHint`, `destructiveHint`, `idempotentHint` and
+     * `openWorldHint`. Authors set those *and* write "Read-only" or "REPLACES"
+     * into the prose by hand, because the two are read by different things at
+     * different moments: the annotation by the client deciding whether to
+     * prompt, the description by the model deciding whether to call. Nothing
+     * requires them to agree.
+     *
+     * No survey figure is printed beside any of this, and that is deliberate.
+     * The registry drops `annotations` for every one of its 82,549 tools, while
+     * the four official reference servers booted locally emit them for all 37
+     * of theirs — so there is no corpus number to compare against, and inventing
+     * a denominator would be worse than leaving the comparison out.
+     */
+    const annotations = report.annotations;
+    if (annotations.findings.length > 0) {
+      any = true;
+
+      const proseOnly = annotations.findings.filter((f) => f.kind === "prose_only");
+      const hintOnly = annotations.findings.filter((f) => f.kind === "hint_only");
+
+      const intro = el("p", "mb-4 text-xs leading-5 text-ink-700");
+      intro.textContent =
+        `Your description and your annotations disagree. The annotation is what a client reads ` +
+        `when it decides whether to ask the user first; the description is what the model reads ` +
+        `when it decides whether to call at all. Nothing keeps them in step. ` +
+        (proseOnly.length > 0
+          ? `Where the prose states a constraint and the hint is unset, the client cannot protect the user. `
+          : "") +
+        (hintOnly.length > 0
+          ? `Where the hint is set and the prose is silent, the model does not know what the tool does at the moment it is choosing. `
+          : "") +
+        `No survey figure sits beside this: the registry strips annotations from every tool it stores, so there is nothing to compare you against.`;
+
+      findings.append(
+        detailList(
+          `${plural(annotations.findings.length, "tool")} whose description and annotations disagree`,
+          annotations.findings,
+          (finding) => {
+            const li = el("li", "border-b border-line-soft pb-3 last:border-b-0 last:pb-0");
+
+            const head = el("div", "flex items-baseline justify-between gap-3");
+            head.append(el("span", "font-mono text-sm text-ink-100", finding.tool));
+            head.append(el("span", "shrink-0 font-mono text-xs text-ink-700", finding.hint));
+            li.append(head);
+
+            const what = el("p", "mt-1 text-xs leading-5 text-ink-700");
+            what.textContent =
+              finding.kind === "prose_only"
+                ? `The description says "${finding.evidence ?? ""}" and ${finding.hint} is not set. The client will not prompt.`
+                : `${finding.hint} is set and the description never says so. The model is choosing blind.`;
+            li.append(what);
+
+            return li;
+          },
+          intro,
+        ),
+      );
+    }
+
+    /**
+     * A safety distinction the client honours and the chooser cannot see.
+     *
+     * The worst arrangement of the three: two tools a model has nothing to pick
+     * between, whose annotations differ — so the host auto-approves one and
+     * prompts for the other, on a difference the chooser is blind to.
+     */
+    if (annotations.annotation_only_pairs.length > 0) {
+      any = true;
+
+      const intro = el("p", "mb-4 text-xs leading-5 text-ink-700");
+      intro.textContent =
+        `These pairs have nothing to tell them apart in either description, and differ only in ` +
+        `their annotations. Your host can tell them apart and will treat them differently — ` +
+        `auto-approving one and prompting for the other. The model choosing between them cannot ` +
+        `tell them apart at all.`;
+
+      findings.append(
+        detailList(
+          `${plural(annotations.annotation_only_pairs.length, "pair")} a client can tell apart and a model cannot`,
+          annotations.annotation_only_pairs,
+          (pair) => {
+            const li = el("li", "border-b border-line-soft pb-3 last:border-b-0 last:pb-0");
+
+            const names = el("span", "min-w-0 font-mono text-sm break-words text-ink-100");
+            names.textContent = `${pair.a} · ${pair.b}`;
+            li.append(names);
+
+            const differs = el("p", "mt-1 text-xs leading-5 text-warn");
+            differs.append(document.createTextNode("Differ only on: "));
+            differs.append(el("span", "font-mono", pair.differs_on.join(", ")));
+            li.append(differs);
+
+            return li;
+          },
+          intro,
+        ),
+      );
+    }
+
+    /**
+     * Shares an object, states different outputs.
+     *
+     * Reported without alarm, and separately, because it is what good design
+     * looks like when two tools take the same argument. A six-tool ticket
+     * server has exactly this pair — flat details for many tickets against a
+     * bounded evidence bundle — and its author is right to dismiss the flag.
+     * Keeping these out of the list above is what makes that list worth reading
+     * on a server with a hundred tools.
+     */
+    if (report.near_misses.length > 0) {
+      const intro = el("p", "mb-4 text-xs leading-5 text-ink-700");
+      intro.textContent =
+        `These share an object and say different things about what they return, so they are not ` +
+        `flagged above. This is informational: two tools taking the same argument and returning ` +
+        `different shapes is a design decision, not a collision.`;
+
+      findings.append(
+        detailList(
+          `${plural(report.near_misses.length, "pair")} that shares an input and states a different output`,
+          report.near_misses,
+          (pair) => {
+            const li = el("li", "border-b border-line-soft pb-3 last:border-b-0 last:pb-0");
+
+            const names = el("span", "min-w-0 font-mono text-sm break-words text-ink-100");
+            names.textContent = `${pair.a} · ${pair.b}`;
+            li.append(names);
+
+            const outputs = el("p", "mt-1 text-xs leading-5 text-ink-700");
+            outputs.append(document.createTextNode("Returns: "));
+            outputs.append(
+              el("span", "font-mono text-ink-500", pair.a_output.join(", ") || "—"),
+            );
+            outputs.append(document.createTextNode(" against "));
+            outputs.append(
+              el("span", "font-mono text-ink-500", pair.b_output.join(", ") || "—"),
+            );
+            li.append(outputs);
+
+            return li;
+          },
+          intro,
+        ),
+      );
+    }
+
     if (report.prose_enums.length > 0) {
       any = true;
       findings.append(
@@ -824,7 +1186,7 @@ const MEASURES = [
         el(
           "p",
           "rounded-xl border border-line bg-surface px-5 py-4 text-sm leading-6.5 text-ink-500",
-          "Nothing to flag: every parameter is described, every tool has a word its siblings do not, and no closed set is left as an open string. A schema can look like this and still fail under real traffic — that is the part only calls can tell you.",
+          "Nothing to flag: every parameter has a description that says more than its name, every tool has a word and a name token its siblings do not, no two tools act on the same thing, and no closed set is left as an open string. A schema can look like this and still fail under real traffic; that is the part only calls can tell you.",
         ),
       );
     }
