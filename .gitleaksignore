@@ -1,0 +1,4 @@
+# Checked by hand: tool *names* in the stem fixture (e.g. "gettwitterpostretweet")
+# that the Twitter rule reads as a key.
+2cf8c230e694f4c837af49597627638f4726b179:tests/fixtures/stem.json:twitter-api-key:5199
+2cf8c230e694f4c837af49597627638f4726b179:tests/fixtures/stem.json:twitter-api-key:5201
